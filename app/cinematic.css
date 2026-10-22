@@ -48,9 +48,10 @@ html.lenis,html.lenis body{height:auto}
   --panel-rough:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M2 1.6C35 3.4 65 2 98 1.2M98.8 3C97 40 99 60 98.2 99M97.6 98.6C70 97 25 99 1 97.6M1.6 99C.2 62 2.4 36 .8 2.6' fill='none' stroke='%232a1d14' stroke-opacity='0.2' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
   --panel-arch:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M2 99L2 30C2 10 26 2 50 2C74 2 98 10 98 30L98 99' fill='none' stroke='%232a1d14' stroke-opacity='0.2' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
   --rough-f2:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M.5 2C30 4.5 70 .5 99 3.4C100 34 99.6 66 98 99C60 96 30 99.6 .8 97.5C2 60 0 30 .5 2Z' fill='%23000'/%3E%3C/svg%3E");
-  --sans:var(--font-sans),system-ui,-apple-system,'Segoe UI',sans-serif;
-  --serif:var(--font-serif),Georgia,'Times New Roman',serif;
-  --hand:var(--font-hand),'Segoe Script','Bradley Hand',cursive;
+  /* Gujarati follows each family, so names and titles typed in Gujarati render properly. Latin text never reaches it. */
+  --sans:var(--font-sans),var(--font-gujarati),system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:var(--font-serif),var(--font-gujarati),Georgia,'Times New Roman',serif;
+  --hand:var(--font-hand),var(--font-gujarati),'Segoe Script','Bradley Hand',cursive;
   --gu:var(--font-gujarati),var(--serif);
   --r-sm:6px;--r-md:12px;
   --gutter:clamp(20px,5vw,72px);

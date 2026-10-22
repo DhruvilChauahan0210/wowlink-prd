@@ -105,8 +105,9 @@ export function toIcs(input: Event | Event[], now = new Date()) {
 }
 
 /** The occasion's events as calendar entries: each schedule item ("Mehndi · Aarav & Meera"), or just the main event. */
-export function calendarEvents(draft: InvitationDraft, url?: string, slug = "") {
-  if (!draft.events.length) return [{ ...draft, url, uid: slug || undefined }];
+export function calendarEvents(draft: InvitationDraft, url?: string, slug = ""): Event[] {
+  const { title, date, time, venue, message } = draft;
+  if (!draft.events.length) return [{ title, date, time, venue, message, url, uid: slug || undefined }];
   return draft.events.map((item) => ({
     title: `${item.name} · ${draft.title}`,
     date: item.date,
@@ -116,4 +117,26 @@ export function calendarEvents(draft: InvitationDraft, url?: string, slug = "") 
     url,
     uid: slug ? `${slug}-${item.id}` : undefined,
   }));
+}
+
+/**
+ * The calendar file a link serves, for the invitation as that link shows it (`view.events` are only that guest's).
+ *   which = null     every event they can see
+ *   which = "main"   the main details (their first celebration, when they only see some)
+ *   which = <id>     one of their celebrations
+ * Event UIDs don't depend on the link, so adding the same event twice updates it instead of duplicating it.
+ */
+export function calendarFile(view: InvitationDraft & { mainEventId?: string; pending?: boolean }, url: string, slug: string, which: string | null) {
+  // While the host is updating it, there's nothing to put in a calendar.
+  if (view.pending) return new Response("This invitation’s details are being updated.", { status: 404 });
+  const all = calendarEvents(view, url, slug);
+  const { title, date, time, venue, message } = view;
+  const events = which === "main"
+    ? view.mainEventId ? all.filter((e) => e.uid === `${slug}-${view.mainEventId}`) : [{ title, date, time, venue, message, url, uid: slug }]
+    : which ? all.filter((e) => e.uid === `${slug}-${which}`) : all;
+  if (!events.length) return new Response("That event isn’t in this invitation.", { status: 404 });
+  const filename = title.replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "invitation";
+  return new Response(toIcs(events), {
+    headers: { "content-type": "text/calendar; charset=utf-8", "content-disposition": `attachment; filename="${filename}.ics"`, "cache-control": "no-store" },
+  });
 }

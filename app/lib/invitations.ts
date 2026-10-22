@@ -110,7 +110,7 @@ export const isTemplateId = (value: unknown): value is TemplateId => invitationT
 export const ATTENDANCE = ["Attending", "Maybe", "Not attending"] as const;
 export type Attendance = (typeof ATTENDANCE)[number];
 
-export const LIMITS = { title: 80, venue: 140, message: 500, guestName: 100, guests: 20, rsvpsPerEvent: 100, events: 8, eventName: 40 } as const;
+export const LIMITS = { title: 80, venue: 140, message: 500, guestName: 100, guests: 20, rsvpsPerEvent: 100, events: 8, eventName: 40, guestList: 100, guestLabel: 80 } as const;
 
 export type DraftErrors = Partial<Record<keyof InvitationDraft, string>>;
 
@@ -139,7 +139,8 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
   const events: ScheduleItem[] = rawEvents.map((raw) => {
     const item = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     const id = text("id", item);
-    return { id: /^[\w-]{1,40}$/.test(id) ? id : newEventId(), name: text("name", item), date: text("date", item), time: text("time", item), venue: text("venue", item) };
+    // "main" is reserved: calendar links use ?event=main for the main occasion.
+    return { id: /^[\w-]{1,40}$/.test(id) && id !== "main" ? id : newEventId(), name: text("name", item), date: text("date", item), time: text("time", item), venue: text("venue", item) };
   });
   const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events };
   const errors: DraftErrors = {};

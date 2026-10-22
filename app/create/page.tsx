@@ -7,6 +7,7 @@ import { WowLinkBrand } from "../ui/brand";
 import { Art } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
 import { CopyField, ShareTools } from "../ui/share-tools";
+import type { Experience, Rsvp } from "../lib/store";
 
 /** A published invitation this browser can edit: its public slug and private manage key. */
 type Owned = { slug: string; key: string };
@@ -27,6 +28,11 @@ export default function CreatePage() {
   const [origin, setOrigin] = useState("");
   const drafts = useRef<Record<string, InvitationDraft>>({});
   const dialog = useRef<HTMLDialogElement>(null);
+  // For a live invitation: the celebrations guests can see now, and how many replies and personal invitations
+  // depend on each. Re-adding one by name brings back the same celebration, so its answers still count.
+  const published = useRef<ScheduleItem[]>([]);
+  const usage = useRef<Record<string, { replies: number; invitations: number }>>({});
+  const [removed, setRemoved] = useState<{ item: ScheduleItem; replies: number; invitations: number } | null>(null);
   const template = getInvitationTemplate(templateId);
 
   useEffect(() => {
@@ -56,9 +62,14 @@ export default function CreatePage() {
     try {
       const response = await fetch(`/api/experiences/${slug}`, { headers: { authorization: `Bearer ${key}` }, cache: "no-store" });
       if (!response.ok) throw new Error();
-      const { experience } = await response.json();
+      const { experience, rsvps } = (await response.json()) as { experience: Experience; rsvps: Rsvp[] };
       setTemplateId(experience.templateId);
       setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [] });
+      published.current = experience.events ?? [];
+      usage.current = Object.fromEntries(published.current.map(e => [e.id, {
+        replies: rsvps.filter(r => r.byEvent && Object.hasOwn(r.byEvent, e.id)).length,
+        invitations: (experience.guests ?? []).filter(g => g.events !== "all" && g.events.includes(e.id)).length,
+      }]));
       setOwned({ slug, key });
       setStatus("Editing your live invitation. Changes reach guests when you press Update.");
     } catch {
@@ -92,9 +103,22 @@ export default function CreatePage() {
   }
   const updateEvent = (id: string, patch: Partial<ScheduleItem>) => setEvents(events => events.map(e => (e.id === id ? { ...e, ...patch } : e)));
   function addEvent(name: string) {
-    const item = name ? presetEvent(template, name, draft) : { id: newEventId(), name: "", date: draft.date, time: "", venue: "" };
+    // A live celebration removed a moment ago comes back as itself, not as a new one with no replies.
+    const before = name ? published.current.find(e => e.name.trim().toLowerCase() === name.toLowerCase() && !draft.events.some(d => d.id === e.id)) : undefined;
+    const item = before ? { ...before } : name ? presetEvent(template, name, draft) : { id: newEventId(), name: "", date: draft.date, time: "", venue: "" };
     setEvents(events => [...events, item]);
+    if (removed?.item.id === item.id) setRemoved(null);
     if (!name) requestAnimationFrame(() => document.getElementById(`event-${item.id}-name`)?.focus());
+  }
+  function removeEvent(item: ScheduleItem) {
+    setEvents(events => events.filter(e => e.id !== item.id));
+    const used = usage.current[item.id];
+    setRemoved(used && (used.replies || used.invitations) ? { item, ...used } : null);
+  }
+  function putBack() {
+    if (!removed) return;
+    setEvents(events => [...events, removed.item]);
+    setRemoved(null);
   }
 
   function changeTemplate(id: string) {
@@ -154,6 +178,8 @@ export default function CreatePage() {
         setOwned(mine);
         history.replaceState(null, "", `/create?edit=${mine.slug}`);
       }
+      published.current = checked.value.events;
+      setRemoved(null);
       setDirty(false);
       setStatus(owned ? "Updated. Guests see your changes now." : "Published! Share it whenever you’re ready.");
       dialog.current?.showModal();
@@ -199,7 +225,7 @@ export default function CreatePage() {
             const problem = checkEvents ? scheduleItemError(item) : "";
             const label = item.name.trim() || `event ${index + 1}`;
             return <div className="studio-event" key={item.id}>
-              <div className="studio-event-head"><span>{item.name.trim() || `Event ${index + 1}`}</span><button type="button" className="studio-event-remove" onClick={() => setEvents(events => events.filter(e => e.id !== item.id))} aria-label={`Remove ${label} from the schedule`}>remove</button></div>
+              <div className="studio-event-head"><span>{item.name.trim() || `Event ${index + 1}`}</span><button type="button" className="studio-event-remove" onClick={() => removeEvent(item)} aria-label={`Remove ${label} from the schedule`}>remove</button></div>
               <div className="studio-field"><label htmlFor={`event-${item.id}-name`}>What’s happening</label><input id={`event-${item.id}-name`} list="event-names" value={item.name} maxLength={LIMITS.eventName} placeholder="Mehndi" onChange={event => updateEvent(item.id, { name: event.target.value })} aria-invalid={problem ? true : undefined} aria-describedby={problem ? `event-${item.id}-error` : undefined}/></div>
               <div className="studio-field-row">
                 <div className="studio-field"><label htmlFor={`event-${item.id}-date`}>Date</label><input id={`event-${item.id}-date`} type="date" value={item.date} onChange={event => updateEvent(item.id, { date: event.target.value })}/></div>
@@ -209,6 +235,10 @@ export default function CreatePage() {
               {problem && <p className="studio-error" id={`event-${item.id}-error`}>{problem}</p>}
             </div>;
           })}
+          {removed && <div className="studio-removed" role="status">
+            <p>Removed the {removed.item.name || "event"}. {[removed.replies && `${removed.replies} ${removed.replies === 1 ? "reply" : "replies"}`, removed.invitations && `${removed.invitations} personal ${removed.invitations === 1 ? "invitation" : "invitations"}`].filter(Boolean).join(" and ")} {removed.replies + removed.invitations === 1 ? "includes" : "include"} it. They won’t count for it once you press Update.</p>
+            <button type="button" className="share-chip" onClick={putBack}>Put it back</button>
+          </div>}
           {draft.events.length < LIMITS.events && <div className="studio-event-add">
             {(SCHEDULE_PRESETS[template.id] ?? []).filter(preset => !draft.events.some(e => e.name.trim().toLowerCase() === preset.name.toLowerCase())).map(preset => <button type="button" className="share-chip" key={preset.name} onClick={() => addEvent(preset.name)}>+ {preset.name}</button>)}
             <button type="button" className="share-chip" onClick={() => addEvent("")}>+ Add an event</button>

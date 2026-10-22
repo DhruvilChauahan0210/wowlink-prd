@@ -21,6 +21,16 @@ export async function publish(request: APIRequestContext, templateId = "wedding"
   return (await response.json()) as { slug: string; key: string };
 }
 
+/** Headers for the owner endpoints. */
+export const ownerHeaders = (key: string) => ({ authorization: `Bearer ${key}`, "x-forwarded-for": freshIp() });
+
+/** Add a personal invitation through the API and return it. */
+export async function addGuest(request: APIRequestContext, slug: string, key: string, name: string, events: string[] | "all" = "all") {
+  const response = await request.post(`/api/experiences/${slug}/guests`, { headers: ownerHeaders(key), data: { name, events } });
+  if (response.status() !== 201) throw new Error(`addGuest failed: ${response.status()} ${await response.text()}`);
+  return ((await response.json()) as { guest: { id: string; name: string; events: string[] | "all" } }).guest;
+}
+
 /** Collect uncaught errors and console errors (ignoring expected 404s for missing resources). */
 export function collectErrors(page: Page) {
   const errors: string[] = [];

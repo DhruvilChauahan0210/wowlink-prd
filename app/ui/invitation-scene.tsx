@@ -7,19 +7,22 @@ import { OPEN_HINT, Opener, ScrollRod } from "./openers";
 
 type Props = {
   template: InvitationTemplate;
-  draft: InvitationDraft;
+  /** `pending`: the details are being updated, so the date and place are left off. */
+  draft: InvitationDraft & { pending?: boolean };
   opened: boolean;
   onOpen: () => void;
   onReplay: () => void;
   onDetails?: () => void;
   compact?: boolean;
+  /** Who a personal link is for ("the Patel family"), written on the invitation like an envelope. */
+  addressee?: string;
 };
 
 /*
  * The guest's invitation. Each occasion opens with its own hand-drawn ritual (see openers.tsx),
  * then the illustrated card comes up in its place.
  */
-export function InvitationScene({ template, draft, opened, onOpen, onReplay, onDetails, compact = false }: Props) {
+export function InvitationScene({ template, draft, opened, onOpen, onReplay, onDetails, compact = false, addressee }: Props) {
   const Title = compact ? "h2" : "h1";
   const long = draft.title.length > 32 ? " is-long" : "";
   const art = template.id as ArtName;
@@ -30,9 +33,10 @@ export function InvitationScene({ template, draft, opened, onOpen, onReplay, onD
     </div>
 
     <div className="inv-intro" aria-hidden={opened} inert={opened}>
+      {addressee && <span className="inv-addressee">For {addressee}</span>}
       <span className="inv-overline">{template.eyebrow}</span>
       <Title className={`inv-title${long}`}>{draft.title || "Your occasion"}</Title>
-      <span className="inv-date">{formatInvitationDate(draft.date)}<i aria-hidden="true">·</i>{city}</span>
+      {draft.pending ? <span className="inv-date">Details to follow</span> : <span className="inv-date">{formatInvitationDate(draft.date)}<i aria-hidden="true">·</i>{city}</span>}
       <Opener name={art} label={template.action} onOpen={onOpen}/>
       <span className="inv-hint">{OPEN_HINT[art]}</span>
     </div>
@@ -40,10 +44,10 @@ export function InvitationScene({ template, draft, opened, onOpen, onReplay, onD
     <article className="inv-card" aria-hidden={!opened} inert={!opened}>
       {art === "wedding" && <ScrollRod/>}
       <div className="inv-card-art"><Art name={art} drawing={opened}/></div>
-      <span className="inv-overline">You make the moment complete</span>
+      <span className="inv-overline">{addressee ? `For ${addressee}` : "You make the moment complete"}</span>
       <h2 className={`inv-title${long}`}>{draft.title || "Your occasion"}</h2>
       {draft.message && <p className="inv-revealed-message">{draft.message}</p>}
-      <div className="inv-revealed-details"><span>{formatInvitationDate(draft.date, true)}{draft.time && ` · ${formatInvitationTime(draft.time)}`}</span><span>{draft.venue || "Your venue"}</span></div>
+      {!draft.pending && <div className="inv-revealed-details"><span>{formatInvitationDate(draft.date, true)}{draft.time && ` · ${formatInvitationTime(draft.time)}`}</span><span>{draft.venue || "Your venue"}</span></div>}
       {draft.events.length > 1 && <span className="inv-card-schedule">{draft.events.length} celebrations · {formatEventDay(sortSchedule(draft.events)[0].date)} to {formatEventDay(sortSchedule(draft.events).at(-1)!.date)}</span>}
       <button className="cin-cta cin-cta-light inv-open-button" onClick={compact ? onReplay : onDetails}>{compact ? "Watch it again" : "See the details"}</button>
     </article>

@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { LIMITS, formatInvitationDate, formatInvitationTime, ownerKey } from "../../lib/invitations";
+import { formatInvitationDate, formatInvitationTime, ownerKey, sortSchedule } from "../../lib/invitations";
+import { answerFor } from "../../lib/guests";
 import type { Experience, Rsvp } from "../../lib/store";
 import { Art, type ArtName } from "../../ui/art";
 import { WowLinkBrand } from "../../ui/brand";
 import { CopyField, ShareTools } from "../../ui/share-tools";
+import { GeneralLinkAudience, GuestList, Headcount } from "./guest-list";
 
 type Loaded = { experience: Experience; rsvps: Rsvp[] };
 type Problem = "" | "no-key" | "invalid" | "offline";
@@ -71,16 +73,21 @@ export default function ManagePage() {
   }
 
   const totals = useMemo(() => {
-    const t = { Attending: 0, Maybe: 0, "Not attending": 0, guests: 0 };
+    const t = { Attending: 0, Maybe: 0, "Not attending": 0, guests: 0, maybeGuests: 0 };
     for (const r of data?.rsvps ?? []) {
       t[r.attendance] += 1;
       if (r.attendance === "Attending") t.guests += r.guestCount;
+      if (r.attendance === "Maybe") t.maybeGuests += r.guestCount;
     }
     return t;
   }, [data]);
 
   const experience = data?.experience;
   const live = experience?.status === "published";
+  const schedule = sortSchedule(experience?.events ?? []);
+  const owner = key ? { slug, ownerKey: key } : null;
+  const reload = useCallback(async () => { if (key) await load(key); }, [key, load]);
+  const guestName = (id?: string) => experience?.guests.find(g => g.id === id)?.name;
   const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
   return <div className="cinema manage-page">
@@ -108,20 +115,41 @@ export default function ManagePage() {
         <section className="sketch-card manage-card" aria-labelledby="share-heading">
           <h2 id="share-heading">Share it</h2>
           {live ? <ShareTools url={`${origin}/e/${slug}`} title={experience.title}/> : <p className="manage-muted">It’s unpublished, so guests opening the link see “not found”. Publish it again to share.</p>}
+          {owner && schedule.length > 1 && <GeneralLinkAudience owner={owner} experience={experience} onSaved={reload}/>}
+        </section>
+
+        <section className="sketch-card manage-card" aria-labelledby="guests-heading">
+          <h2 id="guests-heading">Personal invitations</h2>
+          {owner && <GuestList owner={owner} origin={origin} experience={experience} rsvps={data.rsvps} onChanged={reload}/>}
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="replies-heading">
           <div className="manage-card-head"><h2 id="replies-heading">Replies</h2><button className="inv-replay-link" onClick={() => key && void load(key)}>Refresh</button></div>
           <dl className="manage-totals">
             <div><dt>Coming</dt><dd>{totals.Attending}</dd><span>{totals.guests} {totals.guests === 1 ? "guest" : "guests"} in all</span></div>
-            <div><dt>Maybe</dt><dd>{totals.Maybe}</dd></div>
+            <div><dt>Maybe</dt><dd>{totals.Maybe}</dd>{totals.maybeGuests > 0 && <span>{totals.maybeGuests} {totals.maybeGuests === 1 ? "person" : "people"}</span>}</div>
             <div><dt>Can’t make it</dt><dd>{totals["Not attending"]}</dd></div>
           </dl>
-          {data.rsvps.length ? <div className="manage-table-wrap"><table className="manage-table">
-            <thead><tr><th scope="col">Name</th><th scope="col">Reply</th><th scope="col">Guests</th><th scope="col">When</th></tr></thead>
-            <tbody>{data.rsvps.map(r => <tr key={r.id}><td>{r.name || <span className="manage-muted">No name given</span>}</td><td><span className={`manage-reply is-${r.attendance.replace(" ", "-").toLowerCase()}`}>{r.attendance}</span></td><td>{r.attendance === "Attending" ? r.guestCount : "–"}</td><td>{when(r.createdAt)}</td></tr>)}</tbody>
+          {schedule.length > 0 && <Headcount experience={experience} rsvps={data.rsvps}/>}
+          {data.rsvps.length ? <div className="manage-table-wrap"><table className="manage-table manage-replies">
+            {schedule.length > 0 && <caption className="manage-caption">Every reply</caption>}
+            <thead><tr><th scope="col">Name</th><th scope="col">Reply</th><th scope="col">Guests</th>{schedule.length > 0 && <th scope="col">Celebrations</th>}<th scope="col">When</th></tr></thead>
+            <tbody>{data.rsvps.map(r => {
+              const household = guestName(r.guestId);
+              return <tr key={r.id}>
+                <td>{r.name || household || <span className="manage-muted">No name given</span>}{household && r.name && <span className="manage-via">for {household}</span>}</td>
+                <td><span className={`manage-reply is-${r.attendance.replace(" ", "-").toLowerCase()}`}>{r.attendance}</span></td>
+                <td>{r.attendance === "Not attending" ? "–" : r.guestCount}</td>
+                {schedule.length > 0 && <td><ul className="manage-answers">{schedule.map(e => {
+                  const answer = answerFor(r, e.id);
+                  if (!answer) return null;
+                  const mark = answer.attendance === "Attending" ? "✓" : answer.attendance === "Maybe" ? "?" : "✗";
+                  return <li key={e.id} className={`is-${answer.attendance.replace(" ", "-").toLowerCase()}`}><span aria-hidden="true">{mark}</span> {e.name}{answer.attendance !== "Not attending" && answer.guestCount !== r.guestCount ? ` (${answer.guestCount})` : ""}<span className="studio-sr-only">: {answer.attendance}</span></li>;
+                })}</ul></td>}
+                <td>{when(r.updatedAt ?? r.createdAt)}</td>
+              </tr>;
+            })}</tbody>
           </table></div> : <p className="manage-muted">No replies yet. Share the link and they’ll show up here.</p>}
-          <p className="manage-limit">{data.rsvps.length} of {LIMITS.rsvpsPerEvent} replies on the free plan.</p>
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="private-heading">

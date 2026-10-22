@@ -1,19 +1,17 @@
 import { isTemplateId, validateDraft } from "../../../lib/invitations";
+import { keyFrom, notYours } from "../../../lib/owner";
 import { getOwned, updateOwned } from "../../../lib/store";
 
 type Params = { params: Promise<{ slug: string }> };
 
-const keyFrom = (request: Request) => request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ?? "";
-const notYours = () => Response.json({ error: "This link isn’t valid for that invitation." }, { status: 404 });
-
-/** The owner's view: the invitation and every RSVP. Needs the manage key. */
+/** The owner's view: the invitation, its guest list and every RSVP. Needs the manage key. */
 export async function GET(request: Request, { params }: Params) {
   const { slug } = await params;
   const owned = await getOwned(slug, keyFrom(request));
   return owned ? Response.json(owned, { headers: { "Cache-Control": "no-store" } }) : notYours();
 }
 
-/** Edit the invitation, or publish/unpublish it. Needs the manage key. */
+/** Edit the invitation, publish/unpublish it, or choose what the general link shows. Needs the manage key. */
 export async function PATCH(request: Request, { params }: Params) {
   const { slug } = await params;
   const body = await request.json().catch(() => null);
@@ -32,6 +30,8 @@ export async function PATCH(request: Request, { params }: Params) {
     if (body.status !== "published" && body.status !== "unpublished") return Response.json({ error: "Unknown status." }, { status: 400 });
     patch.status = body.status;
   }
-  const updated = await updateOwned(slug, keyFrom(request), patch);
-  return updated ? Response.json({ experience: updated }) : notYours();
+  if (body.publicEvents !== undefined) patch.publicEvents = body.publicEvents;
+  const result = await updateOwned(slug, keyFrom(request), patch);
+  if (result.ok) return Response.json({ experience: result.experience });
+  return result.reason === "invalid" ? Response.json({ error: "Pick at least one celebration for the general link." }, { status: 422 }) : notYours();
 }

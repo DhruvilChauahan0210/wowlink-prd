@@ -83,10 +83,13 @@ test("the manage link works on another device, and only with the right key", asy
   await expect(page.locator(".manage-hero h1")).toHaveText("Isha & Kabir");
   // The key is remembered on this device and taken out of the address bar.
   await expect(page).toHaveURL(new RegExp(`/manage/${slug}$`));
-  await expect(page.locator(".manage-table tbody tr")).toHaveCount(1);
-  await expect(page.locator(".manage-table tbody tr td").first()).toHaveText("Nani & Nana");
+  await expect(page.locator(".manage-replies tbody tr")).toHaveCount(1);
+  await expect(page.locator(".manage-replies tbody tr td").first()).toHaveText("Nani & Nana");
   await expect(page.locator(".manage-totals > div").first()).toContainText("1");
   await expect(page.locator(".manage-totals > div").first()).toContainText("2 guests in all");
+  // The wedding sample has a schedule, and every celebration was ticked by default: 2 people at each.
+  await expect(page.locator(".manage-headcount tbody tr")).toHaveCount(4);
+  for (const row of await page.locator(".manage-headcount tbody tr").all()) await expect(row.locator("td").first()).toContainText("2 people");
 
   // Editing from this device goes live on the same link.
   await page.getByRole("link", { name: "Edit in studio" }).click();
@@ -106,6 +109,6 @@ test("the manage link works on another device, and only with the right key", asy
   await page.getByRole("button", { name: "Publish again" }).click();
   await expect(page.getByRole("button", { name: "Unpublish" })).toBeVisible();
   expect((await guest.goto(publicUrl))?.status()).toBe(200);
-  await expect(page.locator(".manage-table tbody tr")).toHaveCount(1);
+  await expect(page.locator(".manage-replies tbody tr")).toHaveCount(1);
   await context.close();
 });
