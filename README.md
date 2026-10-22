@@ -15,7 +15,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Current scaffold
 
-- Public landing page with product story, template highlights, steps, and Free plan introduction
+- Cinematic landing page with a pinned invitation reveal, photographic occasion reel, and scroll-drawn sharing journey
+- A single animation loop with Lenis smoothing; scroll transforms update element refs directly
+- Original local celebration imagery and a reduced-motion alternative
 - Template gallery for weddings, birthdays, Garba/Navratri, and grand openings
 - Form-based editor with live local preview
 - Guest-facing sample invitation with event details and RSVP interaction preview
