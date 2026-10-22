@@ -138,6 +138,12 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const attendanceRef = useRef<HTMLFieldSetElement>(null);
   const focusForm = useRef(false);
   useEffect(() => { if (live) setPageUrl(location.origin + location.pathname); }, [live]);
+  // Let the host know the household opened their link. Sent from the browser, so WhatsApp's link preview (which
+  // fetches the page but never runs it) doesn't count, and neither does the host's own preview.
+  useEffect(() => {
+    if (!sends || !guest || !slug) return;
+    fetch(`/api/experiences/${slug}/opened`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ guest: guest.id }), keepalive: true }).catch(() => undefined);
+  }, [sends, guest, slug]);
   useEffect(() => {
     if (state !== "idle" || !focusForm.current) return;
     focusForm.current = false;

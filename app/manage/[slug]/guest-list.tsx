@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { LIMITS, formatEventDay, sortSchedule, type ScheduleItem } from "../../lib/invitations";
+import { LIMITS, formatEventDay, formatShortDay, sortSchedule, type ScheduleItem } from "../../lib/invitations";
 import { answerFor, invitedTo, missingEvents, repliesUsed, tallyByEvent, type EventFilter, type Guest } from "../../lib/guests";
 import { csvName, invitationsCsv } from "../../lib/export";
 import { MESSAGES } from "../../lib/i18n";
@@ -191,6 +191,7 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
       <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{!many ? "Add invitation" : lines ? `Add ${lines} ${lines === 1 ? "invitation" : "invitations"}` : "Add invitations"}</button>
     </form> : <p className="manage-warn">All {LIMITS.rsvpsPerEvent} replies on the free plan are in use, so there’s no room for another personal invitation.</p>}
     <p className="share-status" role="status">{status}</p>
+    {experience.guests.length > 0 && <p className="manage-guest-summary">{experience.guests.filter(g => g.openedAt).length} of {experience.guests.length} opened · {experience.guests.filter(g => rsvps.some(r => r.guestId === g.id)).length} replied</p>}
     {experience.guests.length > 0 && <ul className="manage-guests">{[...experience.guests].reverse().map(guest => <GuestRow key={guest.id} owner={owner} origin={origin} guest={guest} experience={experience} reply={rsvps.find(r => r.guestId === guest.id)} onChanged={onChanged}/>)}</ul>}
     {experience.guests.length > 0 && <div className="manage-downloads"><span>Download</span><button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "invitations"), invitationsCsv({ experience, rsvps }, origin))}>The list, with links (CSV)</button></div>}
     <p className="manage-limit">{used} of {LIMITS.rsvpsPerEvent} replies on the free plan{experience.guests.length ? ", counting one kept for each personal invitation" : ""}.</p>
@@ -200,8 +201,9 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
 /** Celebrations on their invitation that they haven't answered for (all of them, if they haven't replied). */
 const unansweredBy = (reply: Rsvp | undefined, guest: Guest, schedule: ScheduleItem[]) => sortSchedule(schedule).filter(e => invitedTo(guest.events, e.id) && (!reply || !answerFor(reply, e.id)));
 
-function replyStatus(reply: Rsvp | undefined, unanswered: ScheduleItem[]) {
-  if (!reply) return { tone: "waiting", text: "No reply yet" };
+function replyStatus(reply: Rsvp | undefined, unanswered: ScheduleItem[], guest: Guest) {
+  // Before a reply, whether they've opened it is what tells the host to wait or to nudge.
+  if (!reply) return guest.lastOpenedAt ? { tone: "opened", text: `Opened ${formatShortDay(guest.lastOpenedAt)} · no reply yet` } : { tone: "waiting", text: "Not opened yet" };
   const base = reply.attendance === "Attending" ? `Coming · ${reply.guestCount} ${reply.guestCount === 1 ? "person" : "people"}` : reply.attendance === "Maybe" ? "Maybe" : "Can’t make it";
   return { tone: reply.attendance.replace(" ", "-").toLowerCase(), text: unanswered.length ? `${base} · not yet answered for the ${listOf(unanswered.map(e => e.name))}` : base };
 }
@@ -221,7 +223,7 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   const missing = missingEvents(guest.events, schedule);
   const seesNothing = guest.events !== "all" && schedule.length > 0 && !schedule.some(e => invitedTo(guest.events, e.id));
   const unanswered = seesNothing ? [] : unansweredBy(reply, guest, schedule);
-  const status = replyStatus(reply, unanswered);
+  const status = replyStatus(reply, unanswered, guest);
   const words = MESSAGES[experience.language ?? "en"];
   const message = words.personal(guest.name, experience.title, url);
   // A nudge for households that haven't answered (or haven't answered for a celebration added since).

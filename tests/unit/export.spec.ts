@@ -41,8 +41,8 @@ test("the caterer's headcount, one row per celebration", () => {
 
 test("the invitation list, with links and numbers that stay text", () => {
   const [header, patel] = lines(invitationsCsv({ experience, rsvps }, "https://wowlink.example"));
-  expect(header).toBe("Household,Link,WhatsApp,Celebrations,Reply,People,Replied on");
-  expect(patel).toBe("the Patel family,https://wowlink.example/e/abc1234/bcdfghjk,91 98250 12345,Reception,Attending,4,\"20 Oct 2026, 12:00 pm\"");
+  expect(header).toBe("Household,Link,WhatsApp,Celebrations,Opened,Reply,People,Replied on");
+  expect(patel).toBe("the Patel family,https://wowlink.example/e/abc1234/bcdfghjk,91 98250 12345,Reception,Not yet,Attending,4,\"20 Oct 2026, 12:00 pm\"");
   expect(csvName("Isha & Kabir", "replies")).toBe("isha-kabir-replies.csv");
   expect(csvName("રમેશ", "replies")).toBe("invitation-replies.csv");
 });

@@ -16,7 +16,16 @@ export type EventFilter = "all" | string[];
  * A household with its own link. The id is also the secret part of that link. `phone` (digits with the country code,
  * like "919825012345") lets the host's WhatsApp button open that family's chat directly; only the host ever sees it.
  */
-export type Guest = { id: string; name: string; events: EventFilter; createdAt: string; phone?: string };
+export type Guest = {
+  id: string;
+  name: string;
+  events: EventFilter;
+  createdAt: string;
+  phone?: string;
+  /** When the household first opened their link, and most recently (a real visit, not a link preview). */
+  openedAt?: string;
+  lastOpenedAt?: string;
+};
 
 /**
  * An invitation as one audience sees it.
@@ -36,6 +45,12 @@ export type ByEvent = Record<string, EventAnswer>;
 type ReplyLike = { attendance: Attendance; guestCount: number; guestId?: string; byEvent?: ByEvent };
 
 export const invitedTo = (filter: EventFilter, eventId: string) => filter === "all" || filter.includes(eventId);
+
+/** A guest's wish or blessing: trimmed, no runs of blank lines, at most LIMITS.wish characters. */
+export function cleanWish(input: unknown) {
+  if (typeof input !== "string") return "";
+  return input.replace(/\r\n?/g, "\n").replace(/[ \t]+/g, " ").replace(/ ?\n ?/g, "\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, LIMITS.wish).trim();
+}
 
 /** Replies that count towards the free plan's limit: the general link's. A personal link has one reply per household. */
 export const generalReplies = (replies: { guestId?: string }[]) => replies.filter(r => !r.guestId).length;

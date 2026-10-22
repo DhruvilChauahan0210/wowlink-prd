@@ -200,6 +200,32 @@ test("the host downloads the replies and the caterer's headcount", async ({ brow
   await context.close();
 });
 
+test("only a real visit counts as opened: not a link preview, not the host's preview", async ({ browser }) => {
+  const context = await freshContext(browser);
+  const { slug, key } = await publish(context.request, "wedding", { events: SCHEDULE });
+  const patel = await addGuest(context.request, slug, key, "the Patel family");
+  const openedAt = async () => (await owned(context.request, slug, key)).experience.guests[0].openedAt;
+  // WhatsApp fetches the page for its preview but never runs it.
+  expect((await context.request.get(`/e/${slug}/${patel.id}`)).status()).toBe(200);
+  const host = await context.newPage();
+  await host.goto(`/e/${slug}/${patel.id}?preview=1`);
+  await expect(host.locator(".inv-preview-banner")).toBeVisible();
+  await host.waitForTimeout(500);
+  expect(await openedAt()).toBeUndefined();
+  // Unknown links answer the same as real ones.
+  expect((await context.request.post(`/api/experiences/${slug}/opened`, { headers: general(), data: { guest: "bcdfghjk" } })).status()).toBe(204);
+
+  const family = await context.newPage();
+  await family.goto(`/e/${slug}/${patel.id}`);
+  await expect.poll(openedAt).toBeTruthy();
+  const first = await openedAt();
+  // A refresh soon after isn't recorded again.
+  await context.request.post(`/api/experiences/${slug}/opened`, { headers: general(), data: { guest: patel.id } });
+  const { experience } = await owned(context.request, slug, key);
+  expect(experience.guests[0]).toMatchObject({ openedAt: first, lastOpenedAt: first });
+  await context.close();
+});
+
 test("personal invitations keep their place under the free plan's limit", async ({ request }) => {
   const { slug, key } = await publish(request);
   const patel = await addGuest(request, slug, key, "the Patel family");
@@ -236,7 +262,7 @@ test("a personal invitation, from the manage page to the family's reply and back
   await add.getByRole("checkbox", { name: /Secret Mehndi/ }).uncheck();
   await add.getByRole("button", { name: "Add invitation" }).click();
   const row = host.locator(".manage-guest").filter({ hasText: "the Patel family" });
-  await expect(row.locator(".manage-guest-status")).toHaveText("No reply yet");
+  await expect(row.locator(".manage-guest-status")).toHaveText("Not opened yet");
   await expect(row.locator(".manage-guest-events")).toHaveText("Sangeet · Reception");
   await expect(host.locator(".manage-headcount tbody tr").filter({ hasText: "Sangeet" }).locator("td").last()).toHaveText("1 invitation");
   const previewHref = (await row.getByRole("link", { name: "Preview the invitation for the Patel family" }).getAttribute("href"))!;
@@ -249,6 +275,12 @@ test("a personal invitation, from the manage page to the family's reply and back
   const familyErrors = collectErrors(family);
   await family.goto(personal);
   await expect(family.locator(".inv-addressee")).toHaveText("For the Patel family");
+  // The host sees they've opened it (the page reports it once it's running).
+  await expect(async () => {
+    await host.getByRole("button", { name: "Refresh" }).click();
+    await expect(row.locator(".manage-guest-status")).toHaveText(/^Opened \d+ \w+ · no reply yet$/, { timeout: 1000 });
+  }).toPass();
+  await expect(host.locator(".manage-guest-summary")).toHaveText("1 of 1 opened · 0 replied");
   await expect(family.locator(".inv-timeline-item h3")).toHaveText(["Sangeet", "Reception"]);
   await expect(family.locator("#schedule-heading")).toHaveText("Your celebrations");
   await expect(family.getByText("Secret Mehndi")).toHaveCount(0);

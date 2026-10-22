@@ -427,6 +427,8 @@
 .manage-guest h3{font-size:24px;line-height:1.15;overflow-wrap:anywhere}
 .manage-guest-status{font:700 21px/1.2 var(--hand)}
 .manage-guest-status.is-waiting{color:var(--faint)}
+.manage-guest-status.is-opened{color:#b9721a}
+.manage-guest-summary{margin:14px 0 0;font:700 22px/1.2 var(--hand);color:var(--text)}
 .manage-guest-status.is-attending{color:#4f7a3c}
 .manage-guest-status.is-maybe{color:#b9721a}
 .manage-guest-status.is-not-attending{color:var(--muted)}

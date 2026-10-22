@@ -263,6 +263,26 @@ export function updateGuest(slug: string, key: string, guestId: string, input: u
   });
 }
 
+const OPEN_GAP_MS = 10 * 60 * 1000;
+
+/**
+ * A household opened their personal link (reported by the page itself, so link previews don't count). Refreshes
+ * within ten minutes aren't recorded again, which keeps the file from being rewritten on every visit.
+ */
+export function markOpened(slug: string, guestId: string) {
+  return write((db): { ok: boolean } => {
+    if (!isGuestId(guestId)) return { ok: false };
+    const found = db.experiences.find((e) => e.slug === slug && e.status === "published");
+    const guest = found?.guests.find((g) => g.id === guestId);
+    if (!guest) return { ok: false };
+    const now = new Date();
+    if (guest.lastOpenedAt && now.getTime() - Date.parse(guest.lastOpenedAt) < OPEN_GAP_MS) return { ok: false };
+    guest.openedAt ??= now.toISOString();
+    guest.lastOpenedAt = now.toISOString();
+    return { ok: true };
+  });
+}
+
 /** Their link stops working and their reply is removed with it, so the headcount only has people still invited. */
 export function removeGuest(slug: string, key: string, guestId: string) {
   return write((db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {

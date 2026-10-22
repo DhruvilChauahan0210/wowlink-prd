@@ -144,7 +144,7 @@ export const isTemplateId = (value: unknown): value is TemplateId => invitationT
 export const ATTENDANCE = ["Attending", "Maybe", "Not attending"] as const;
 export type Attendance = (typeof ATTENDANCE)[number];
 
-export const LIMITS = { title: 80, venue: 140, message: 500, guestName: 100, guests: 20, rsvpsPerEvent: 100, events: 8, eventName: 40, guestList: 100, guestLabel: 80 } as const;
+export const LIMITS = { title: 80, venue: 140, message: 500, guestName: 100, guests: 20, rsvpsPerEvent: 100, events: 8, eventName: 40, guestList: 100, guestLabel: 80, wish: 300 } as const;
 
 export type DraftErrors = Partial<Record<keyof InvitationDraft, string>>;
 
