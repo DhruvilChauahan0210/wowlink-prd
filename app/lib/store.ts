@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { answersFor, isGuestId, repliesUsed, validateGuest, validatePublicEvents, viewFor, type AudienceView, type ByEvent, type EventFilter, type Guest, type GuestErrors } from "./guests";
+import { answersFor, isGuestId, repliesUsed, validateGuest, validateGuestList, validatePublicEvents, viewFor, type AudienceView, type ByEvent, type EventFilter, type Guest, type GuestErrors } from "./guests";
 import { LIMITS, type Attendance, type InvitationDraft, type TemplateId } from "./invitations";
 
 /*
@@ -212,9 +212,31 @@ export function addGuest(slug: string, key: string, input: unknown) {
     if (found.guests.length >= LIMITS.guestList || repliesUsed(rsvpsOf(db, found), found.guests) >= LIMITS.rsvpsPerEvent) return { ok: false, reason: "full" };
     const checked = validateGuest(input, found.events);
     if (!checked.ok) return { ok: false, reason: "invalid", errors: checked.errors };
-    const guest: Guest = { id: newGuestId(db, found), name: checked.value.name!, events: checked.value.events!, createdAt: new Date().toISOString() };
+    const { name, events, phone } = checked.value;
+    const guest: Guest = { id: newGuestId(db, found), name: name!, events: events!, createdAt: new Date().toISOString(), ...(phone && { phone }) };
     found.guests.push(guest);
     return { ok: true, guest };
+  });
+}
+
+type GuestListResult = { ok: true; guests: Guest[]; skipped: string[] } | { ok: false; reason: "not-yours" } | { ok: false; reason: "full"; room: number } | { ok: false; reason: "invalid"; errors: GuestErrors };
+
+/** Add several households at once (a pasted list), all with the same celebrations. All or nothing. */
+export function addGuests(slug: string, key: string, input: unknown) {
+  return write((db): GuestListResult => {
+    const found = db.experiences.find((e) => e.slug === slug);
+    if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
+    const checked = validateGuestList(input, found.events, found.guests);
+    if (!checked.ok) return { ok: false, reason: "invalid", errors: checked.errors };
+    const room = Math.max(0, Math.min(LIMITS.guestList - found.guests.length, LIMITS.rsvpsPerEvent - repliesUsed(rsvpsOf(db, found), found.guests)));
+    if (checked.value.guests.length > room) return { ok: false, reason: "full", room };
+    const now = new Date().toISOString();
+    const added = checked.value.guests.map(({ name, phone }) => {
+      const guest: Guest = { id: newGuestId(db, found), name, events: checked.value.events, createdAt: now, ...(phone && { phone }) };
+      found.guests.push(guest);
+      return guest;
+    });
+    return { ok: true, guests: added, skipped: checked.value.skipped };
   });
 }
 
@@ -231,6 +253,7 @@ export function updateGuest(slug: string, key: string, guestId: string, input: u
     const checked = validateGuest(input, found.events, true);
     if (!checked.ok) return { ok: false, reason: "invalid", errors: checked.errors };
     Object.assign(guest, checked.value);
+    if ("phone" in checked.value && !checked.value.phone) delete guest.phone;
     if ((input as { newLink?: unknown } | null)?.newLink === true) {
       const id = newGuestId(db, found);
       for (const reply of rsvpsOf(db, found)) if (reply.guestId === guest.id) reply.guestId = id;

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { answerFor, answersFor, isGuestId, missingEvents, repliesUsed, tallyByEvent, validateGuest, validatePublicEvents, viewFor, type Guest } from "../../app/lib/guests";
+import { answerFor, answersFor, isGuestId, missingEvents, normalizePhone, parseGuestLine, repliesUsed, tallyByEvent, validateGuest, validateGuestList, validatePublicEvents, viewFor, type Guest } from "../../app/lib/guests";
 import type { InvitationDraft, ScheduleItem } from "../../app/lib/invitations";
 
 // Studio order on purpose: the Haldi was added last but happens before the Sangeet.
@@ -162,6 +162,41 @@ test("editing changes only what's given", () => {
   expect(validateGuest({}, events, true)).toEqual({ ok: true, value: {} });
   expect(validatePublicEvents("all", events)).toBe("all");
   expect(validatePublicEvents([], events)).toBeNull();
+});
+
+test("WhatsApp numbers: Indian mobiles get +91, others need their country code", () => {
+  expect(normalizePhone("98250 12345")).toBe("919825012345");
+  expect(normalizePhone("098250-12345")).toBe("919825012345");
+  expect(normalizePhone("+91 98250 12345")).toBe("919825012345");
+  expect(normalizePhone("919825012345")).toBe("919825012345");
+  expect(normalizePhone("+44 7700 900123")).toBe("447700900123");
+  expect(normalizePhone("0044 7700 900123")).toBe("447700900123");
+  for (const bad of ["12345", "call me", "+1", "98250 1234"]) expect(normalizePhone(bad)).toBeNull();
+});
+
+test("a pasted line is a name, optionally followed by a number", () => {
+  expect(parseGuestLine("  the Patel   family ")).toEqual({ name: "the Patel family" });
+  expect(parseGuestLine("the Patel family, 98250 12345")).toEqual({ name: "the Patel family", phone: "919825012345" });
+  expect(parseGuestLine("Kakaji & Kaki\t+44 7700 900123")).toEqual({ name: "Kakaji & Kaki", phone: "447700900123" });
+  expect(parseGuestLine("Riya - 9825012345")).toEqual({ name: "Riya", phone: "919825012345" });
+  // Numbers that aren't phone numbers stay part of the name.
+  expect(parseGuestLine("Flat 302 Shah family")).toEqual({ name: "Flat 302 Shah family" });
+  expect(parseGuestLine("Tower 12345678")).toEqual({ name: "Tower 12345678" });
+});
+
+test("a pasted list skips blank lines and households already invited", () => {
+  const result = validateGuestList({ list: "the Patel family, 98250 12345\n\nKAKAJI & kaki\nthe Shah family\nthe  shah family", events: ["sangeet"] }, events, [{ name: "Kakaji & Kaki" }]);
+  expect(result).toEqual({ ok: true, value: { guests: [{ name: "the Patel family", phone: "919825012345" }, { name: "the Shah family" }], skipped: ["KAKAJI & kaki", "the shah family"], events: ["sangeet"] } });
+  expect(validateGuestList({ list: " \n " }, events, [])).toMatchObject({ ok: false, errors: { list: expect.any(String) } });
+  expect(validateGuestList({ list: `ok\n${"x".repeat(81)}` }, events, [])).toMatchObject({ ok: false, errors: { list: expect.stringContaining("Line 2") } });
+  expect(validateGuestList({ list: "Patel", events: [] }, events, [])).toMatchObject({ ok: false, errors: { events: expect.any(String) } });
+});
+
+test("a personal invitation's number: checked, and cleared when blank", () => {
+  expect(validateGuest({ name: "Patel", phone: "98250 12345" }, events)).toMatchObject({ ok: true, value: { phone: "919825012345" } });
+  expect(validateGuest({ name: "Patel", phone: "nope" }, events)).toMatchObject({ ok: false, errors: { phone: expect.any(String) } });
+  const cleared = validateGuest({ phone: " " }, events, true);
+  expect(cleared.ok && "phone" in cleared.value && cleared.value.phone).toBeUndefined();
 });
 
 test("personal link ids are 8 characters from the slug alphabet", () => {

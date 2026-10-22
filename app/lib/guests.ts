@@ -12,8 +12,11 @@ import { LIMITS, sortSchedule, type Attendance, type InvitationDraft, type Sched
 /** Which celebrations an audience sees: every one, including any added later, or only these schedule ids. */
 export type EventFilter = "all" | string[];
 
-/** A household with its own link. The id is also the secret part of that link. */
-export type Guest = { id: string; name: string; events: EventFilter; createdAt: string };
+/**
+ * A household with its own link. The id is also the secret part of that link. `phone` (digits with the country code,
+ * like "919825012345") lets the host's WhatsApp button open that family's chat directly; only the host ever sees it.
+ */
+export type Guest = { id: string; name: string; events: EventFilter; createdAt: string; phone?: string };
 
 /**
  * An invitation as one audience sees it.
@@ -156,15 +159,39 @@ function eventFilter(input: unknown, schedule: ScheduleItem[]): EventFilter | nu
   return ids.length ? ids : null;
 }
 
-export type GuestErrors = { name?: string; events?: string };
+export type GuestErrors = { name?: string; events?: string; phone?: string; list?: string };
 
-/** A new or edited personal invitation. With `partial`, missing fields are left as they are. */
-export function validateGuest(input: unknown, schedule: ScheduleItem[], partial = false): { ok: true; value: Partial<Pick<Guest, "name" | "events">> } | { ok: false; errors: GuestErrors } {
+const cleanName = (text: string) => text.trim().replace(/\s+/g, " ");
+/** Names that differ only in case or spacing are the same household. */
+export const sameName = (a: string, b: string) => cleanName(a).toLowerCase() === cleanName(b).toLowerCase();
+
+/**
+ * A WhatsApp number as digits with the country code. Ten digits (with or without a leading 0) are an Indian mobile,
+ * so +91 is added; anything else needs its country code (+44…). Null if it can't be a phone number.
+ */
+export function normalizePhone(input: string): string | null {
+  const digits = input.trim().replace(/[\s().-]/g, "");
+  if (/^\+\d{8,15}$/.test(digits)) return digits.slice(1);
+  if (/^00\d{8,15}$/.test(digits)) return digits.slice(2);
+  if (/^0?\d{10}$/.test(digits)) return `91${digits.slice(-10)}`;
+  if (/^91\d{10}$/.test(digits)) return digits;
+  return null;
+}
+
+/** One pasted line: "the Patel family", or with a number after it: "the Patel family, 98250 12345" (comma, tab or space). */
+export function parseGuestLine(line: string): { name: string; phone?: string } {
+  const match = line.match(/^(.*?)[\s,;|]*(\+?\d[\d\s().-]{6,}\d)\s*$/);
+  const phone = match && cleanName(match[1]) ? normalizePhone(match[2]) : null;
+  return phone ? { name: cleanName(match![1]).replace(/[\s,;|-]+$/, ""), phone } : { name: cleanName(line) };
+}
+
+/** A new or edited personal invitation. With `partial`, missing fields are left as they are; a blank phone removes it. */
+export function validateGuest(input: unknown, schedule: ScheduleItem[], partial = false): { ok: true; value: Partial<Pick<Guest, "name" | "events" | "phone">> } | { ok: false; errors: GuestErrors } {
   const data = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
-  const value: Partial<Pick<Guest, "name" | "events">> = {};
+  const value: Partial<Pick<Guest, "name" | "events" | "phone">> = {};
   const errors: GuestErrors = {};
   if (!partial || data.name !== undefined) {
-    const name = typeof data.name === "string" ? data.name.trim().replace(/\s+/g, " ") : "";
+    const name = typeof data.name === "string" ? cleanName(data.name) : "";
     if (!name) errors.name = "Add who it’s for, like “the Patel family”.";
     else if (name.length > LIMITS.guestLabel) errors.name = `Keep it under ${LIMITS.guestLabel} characters.`;
     else value.name = name;
@@ -174,7 +201,38 @@ export function validateGuest(input: unknown, schedule: ScheduleItem[], partial 
     if (!events) errors.events = "Pick at least one celebration.";
     else value.events = events;
   }
+  if (typeof data.phone === "string") {
+    if (!data.phone.trim()) value.phone = undefined;
+    else {
+      const phone = normalizePhone(data.phone);
+      if (!phone) errors.phone = "That doesn’t look like a WhatsApp number. Include the country code if it’s not Indian (+44…).";
+      else value.phone = phone;
+    }
+  }
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value };
+}
+
+/**
+ * A pasted list: one household per line, optionally with a WhatsApp number after the name. Blank lines are ignored;
+ * households already on the list (or repeated in the paste) are skipped rather than added twice.
+ */
+export function validateGuestList(input: unknown, schedule: ScheduleItem[], existing: Pick<Guest, "name">[]): { ok: true; value: { guests: { name: string; phone?: string }[]; skipped: string[]; events: EventFilter } } | { ok: false; errors: GuestErrors } {
+  const data = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const errors: GuestErrors = {};
+  const lines = (typeof data.list === "string" ? data.list : "").split(/\r?\n/).map(parseGuestLine).filter(l => l.name);
+  const tooLong = lines.map((l, i) => (l.name.length > LIMITS.guestLabel ? i + 1 : 0)).filter(Boolean);
+  if (!lines.length) errors.list = "Add at least one household, one per line.";
+  else if (tooLong.length) errors.list = `Line ${tooLong.join(", ")} ${tooLong.length === 1 ? "is" : "are"} too long. Keep each name under ${LIMITS.guestLabel} characters.`;
+  const events = eventFilter(data.events ?? "all", schedule);
+  if (!events) errors.events = "Pick at least one celebration.";
+  if (Object.keys(errors).length || !events) return { ok: false, errors };
+  const guests: { name: string; phone?: string }[] = [];
+  const skipped: string[] = [];
+  for (const line of lines) {
+    if (existing.some(g => sameName(g.name, line.name)) || guests.some(g => sameName(g.name, line.name))) skipped.push(line.name);
+    else guests.push(line);
+  }
+  return { ok: true, value: { guests, skipped, events } };
 }
 
 /** What the general link shows. Same rules as a guest's celebrations; null if invalid. */

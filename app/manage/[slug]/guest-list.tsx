@@ -11,20 +11,26 @@ import type { Experience, Rsvp } from "../../lib/store";
  */
 
 type Owner = { slug: string; ownerKey: string };
-type Errors = { name?: string; events?: string; form?: string };
+type Errors = { name?: string; events?: string; phone?: string; list?: string; form?: string };
 
 /** Call an owner endpoint. Resolves to the JSON body, or throws an Error carrying field errors. */
-async function ownerCall(owner: Owner, path: string, method: string, body?: object) {
+async function ownerCall<T = unknown>(owner: Owner, path: string, method: string, body?: object): Promise<T> {
   const response = await fetch(`/api/experiences/${owner.slug}${path}`, {
     method,
     headers: { "content-type": "application/json", authorization: `Bearer ${owner.ownerKey}` },
     body: body ? JSON.stringify(body) : undefined,
   }).catch(() => null);
-  const data = (await response?.json().catch(() => null)) as { error?: string; fields?: Errors } | null;
+  const data = (await response?.json().catch(() => null)) as ({ error?: string; fields?: Errors } & T) | null;
   if (!response?.ok) throw Object.assign(new Error(data?.error ?? "Couldn’t save that. Check your connection and try again."), { fields: data?.fields ?? {} });
-  return data;
+  return data as T;
 }
 const errorsFrom = (failure: unknown): Errors => ({ ...(failure as { fields?: Errors }).fields, form: (failure as Error).message });
+
+/** "+91 98250 12345" for an Indian mobile, "+447700900123" otherwise. */
+export const showPhone = (phone: string) => (/^91\d{10}$/.test(phone) ? `+91 ${phone.slice(2, 7)} ${phone.slice(7)}` : `+${phone}`);
+/** A WhatsApp message link: straight to their chat when there's a number, otherwise WhatsApp asks who to send it to. */
+const whatsApp = (text: string, phone?: string) => `https://wa.me/${phone ?? ""}?text=${encodeURIComponent(text)}`;
+const listOf = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`);
 
 /** "Every celebration", or the chosen ones by name. */
 export function celebrationsLabel(filter: EventFilter, schedule: ScheduleItem[]) {
@@ -109,23 +115,36 @@ export function Headcount({ experience, rsvps }: { experience: Experience; rsvps
 /** Personal invitations: add one, then copy or send its link. */
 export function GuestList({ owner, origin, experience, rsvps, onChanged }: { owner: Owner; origin: string; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void> }) {
   const schedule = experience.events;
+  const [many, setMany] = useState(false);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [list, setList] = useState("");
   const [events, setEvents] = useState<EventFilter>("all");
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const used = repliesUsed(rsvps, experience.guests);
   const full = used >= LIMITS.rsvpsPerEvent || experience.guests.length >= LIMITS.guestList;
+  const lines = list.split(/\r?\n/).filter(line => line.trim()).length;
+  const edit = <T,>(set: (value: T) => void) => (value: T) => { set(value); setErrors({}); setStatus(""); };
 
   async function add(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setErrors({});
     try {
-      await ownerCall(owner, "/guests", "POST", { name, events });
-      await onChanged();
-      setStatus(`Added ${name.trim()}. Copy their link or send it on WhatsApp.`);
-      setName("");
+      if (many) {
+        const { guests, skipped } = await ownerCall<{ guests: Guest[]; skipped: string[] }>(owner, "/guests", "POST", { list, events });
+        await onChanged();
+        setStatus(`Added ${guests.length} ${guests.length === 1 ? "invitation" : "invitations"}.${skipped.length ? ` ${listOf(skipped)} ${skipped.length === 1 ? "was" : "were"} already on your list.` : ""}`);
+        setList("");
+      } else {
+        await ownerCall(owner, "/guests", "POST", { name, events, phone });
+        await onChanged();
+        setStatus(`Added ${name.trim()}. Copy their link or send it on WhatsApp.`);
+        setName("");
+        setPhone("");
+      }
       setEvents("all");
     } catch (failure) {
       setErrors(errorsFrom(failure));
@@ -136,15 +155,31 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
   return <>
     <p className="manage-muted">Send each household its own link. It opens with their name on it{schedule.length > 1 ? " and shows only the celebrations you pick for them" : ""}, and you’ll see who hasn’t replied yet.</p>
     {!full ? <form className="manage-guest-add" onSubmit={add}>
-      <div className="studio-field">
-        <label htmlFor="new-guest-name">Who’s it for?</label>
-        <p className="inv-field-hint" id="new-guest-hint">Write it as you’d address the envelope, like “the Patel family”.</p>
-        <input id="new-guest-name" value={name} maxLength={LIMITS.guestLabel} placeholder="the Patel family" onChange={e => { setName(e.target.value); setErrors({}); }} aria-describedby={errors.name ? "new-guest-error new-guest-hint" : "new-guest-hint"} aria-invalid={errors.name ? true : undefined}/>
-        {errors.name && <p className="studio-error" id="new-guest-error">{errors.name}</p>}
+      <div className="manage-picker-modes manage-add-modes" role="radiogroup" aria-label="How to add">
+        <label className={!many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={!many} onChange={() => { setMany(false); setErrors({}); }}/><span>One household</span></label>
+        <label className={many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={many} onChange={() => { setMany(true); setErrors({}); }}/><span>Paste a list</span></label>
       </div>
-      {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={next => { setEvents(next); setErrors({}); }} legend="Which celebrations?" error={errors.events}/>}
-      {errors.form && !errors.name && !errors.events && <p className="studio-error" role="alert">{errors.form}</p>}
-      <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>Add invitation</button>
+      {many ? <div className="studio-field">
+        <label htmlFor="new-guest-list">Households, one per line</label>
+        <p className="inv-field-hint" id="new-guest-list-hint">Put a WhatsApp number after a name to send their link straight to their chat, like “the Patel family, 98250 12345”. Anyone already on your list is skipped.</p>
+        <textarea id="new-guest-list" rows={7} value={list} placeholder={"the Patel family, 98250 12345\nKakaji & Kaki\nરમેશભાઈ પટેલ પરિવાર"} onChange={e => edit(setList)(e.target.value)} aria-describedby={errors.list ? "new-guest-list-error new-guest-list-hint" : "new-guest-list-hint"} aria-invalid={errors.list ? true : undefined}/>
+        {errors.list && <p className="studio-error" id="new-guest-list-error">{errors.list}</p>}
+      </div> : <>
+        <div className="studio-field">
+          <label htmlFor="new-guest-name">Who’s it for?</label>
+          <p className="inv-field-hint" id="new-guest-hint">Write it as you’d address the envelope, like “the Patel family”.</p>
+          <input id="new-guest-name" value={name} maxLength={LIMITS.guestLabel} placeholder="the Patel family" onChange={e => edit(setName)(e.target.value)} aria-describedby={errors.name ? "new-guest-error new-guest-hint" : "new-guest-hint"} aria-invalid={errors.name ? true : undefined}/>
+          {errors.name && <p className="studio-error" id="new-guest-error">{errors.name}</p>}
+        </div>
+        <div className="studio-field">
+          <label htmlFor="new-guest-phone">WhatsApp number <span>Optional</span></label>
+          <input id="new-guest-phone" type="tel" inputMode="tel" autoComplete="off" value={phone} placeholder="98250 12345" onChange={e => edit(setPhone)(e.target.value)} aria-describedby={errors.phone ? "new-guest-phone-error" : undefined} aria-invalid={errors.phone ? true : undefined}/>
+          {errors.phone && <p className="studio-error" id="new-guest-phone-error">{errors.phone}</p>}
+        </div>
+      </>}
+      {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={edit(setEvents)} legend={many ? "Which celebrations, for everyone on this list?" : "Which celebrations?"} error={errors.events}/>}
+      {errors.form && !errors.name && !errors.events && !errors.phone && !errors.list && <p className="studio-error" role="alert">{errors.form}</p>}
+      <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{!many ? "Add invitation" : lines ? `Add ${lines} ${lines === 1 ? "invitation" : "invitations"}` : "Add invitations"}</button>
     </form> : <p className="manage-warn">All {LIMITS.rsvpsPerEvent} replies on the free plan are in use, so there’s no room for another personal invitation.</p>}
     <p className="share-status" role="status">{status}</p>
     {experience.guests.length > 0 && <ul className="manage-guests">{[...experience.guests].reverse().map(guest => <GuestRow key={guest.id} owner={owner} origin={origin} guest={guest} experience={experience} reply={rsvps.find(r => r.guestId === guest.id)} onChanged={onChanged}/>)}</ul>}
@@ -152,16 +187,19 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
   </>;
 }
 
-function replyStatus(reply: Rsvp | undefined, guest: Guest, schedule: ScheduleItem[]) {
+/** Celebrations on their invitation that they haven't answered for (all of them, if they haven't replied). */
+const unansweredBy = (reply: Rsvp | undefined, guest: Guest, schedule: ScheduleItem[]) => sortSchedule(schedule).filter(e => invitedTo(guest.events, e.id) && (!reply || !answerFor(reply, e.id)));
+
+function replyStatus(reply: Rsvp | undefined, unanswered: ScheduleItem[]) {
   if (!reply) return { tone: "waiting", text: "No reply yet" };
-  const unanswered = sortSchedule(schedule).filter(e => invitedTo(guest.events, e.id) && !answerFor(reply, e.id));
   const base = reply.attendance === "Attending" ? `Coming · ${reply.guestCount} ${reply.guestCount === 1 ? "person" : "people"}` : reply.attendance === "Maybe" ? "Maybe" : "Can’t make it";
-  return { tone: reply.attendance.replace(" ", "-").toLowerCase(), text: unanswered.length ? `${base} · not yet answered for the ${unanswered.map(e => e.name).join(" and ")}` : base };
+  return { tone: reply.attendance.replace(" ", "-").toLowerCase(), text: unanswered.length ? `${base} · not yet answered for the ${listOf(unanswered.map(e => e.name))}` : base };
 }
 
 function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owner: Owner; origin: string; guest: Guest; experience: Experience; reply?: Rsvp; onChanged: () => Promise<void> }) {
   const [mode, setMode] = useState<"view" | "edit" | "remove" | "relink">("view");
   const [name, setName] = useState(guest.name);
+  const [phone, setPhone] = useState(guest.phone ? showPhone(guest.phone) : "");
   const [events, setEvents] = useState<EventFilter>(guest.events);
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState(false);
@@ -172,8 +210,13 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   const url = `${origin}/e/${experience.slug}/${guest.id}`;
   const missing = missingEvents(guest.events, schedule);
   const seesNothing = guest.events !== "all" && schedule.length > 0 && !schedule.some(e => invitedTo(guest.events, e.id));
-  const status = replyStatus(reply, guest, schedule);
+  const unanswered = seesNothing ? [] : unansweredBy(reply, guest, schedule);
+  const status = replyStatus(reply, unanswered);
   const message = `For ${guest.name}\nYou’re invited: ${experience.title}\n${url}`;
+  // A nudge for households that haven't answered (or haven't answered for a celebration added since).
+  const reminder = !seesNothing && (!reply || unanswered.length > 0)
+    ? `Hello ${guest.name}! A gentle reminder from ${experience.title}: we’d love to know if you can ${reply ? `come to the ${listOf(unanswered.map(e => e.name))}` : "make it"}. You can reply here:\n${url}`
+    : "";
 
   async function run(task: () => Promise<unknown>) {
     setBusy(true);
@@ -199,15 +242,20 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   }
 
   if (mode === "edit") return <li className="manage-guest is-editing">
-    <form onSubmit={event => { event.preventDefault(); void run(() => ownerCall(owner, `/guests/${guest.id}`, "PATCH", { name, events })); }}>
+    <form onSubmit={event => { event.preventDefault(); void run(() => ownerCall(owner, `/guests/${guest.id}`, "PATCH", { name, events, phone })); }}>
       <div className="studio-field">
         <label htmlFor={`${id}-name`}>Who’s it for?</label>
         <input id={`${id}-name`} value={name} maxLength={LIMITS.guestLabel} onChange={e => setName(e.target.value)} aria-invalid={errors.name ? true : undefined} aria-describedby={errors.name ? `${id}-error` : undefined}/>
         {errors.name && <p className="studio-error" id={`${id}-error`}>{errors.name}</p>}
       </div>
+      <div className="studio-field">
+        <label htmlFor={`${id}-phone`}>WhatsApp number <span>Optional</span></label>
+        <input id={`${id}-phone`} type="tel" inputMode="tel" autoComplete="off" value={phone} placeholder="98250 12345" onChange={e => setPhone(e.target.value)} aria-invalid={errors.phone ? true : undefined} aria-describedby={errors.phone ? `${id}-phone-error` : undefined}/>
+        {errors.phone && <p className="studio-error" id={`${id}-phone-error`}>{errors.phone}</p>}
+      </div>
       {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={setEvents} legend="Which celebrations?" error={errors.events}/>}
-      {errors.form && !errors.name && !errors.events && <p className="studio-error" role="alert">{errors.form}</p>}
-      <div className="manage-guest-buttons"><button type="submit" className="cin-cta cin-cta-light" disabled={busy}>Save</button><button type="button" className="share-chip" onClick={() => { setMode("view"); setName(guest.name); setEvents(guest.events); setErrors({}); }}>Cancel</button></div>
+      {errors.form && !errors.name && !errors.events && !errors.phone && <p className="studio-error" role="alert">{errors.form}</p>}
+      <div className="manage-guest-buttons"><button type="submit" className="cin-cta cin-cta-light" disabled={busy}>Save</button><button type="button" className="share-chip" onClick={() => { setMode("view"); setName(guest.name); setPhone(guest.phone ? showPhone(guest.phone) : ""); setEvents(guest.events); setErrors({}); }}>Cancel</button></div>
     </form>
   </li>;
 
@@ -216,7 +264,7 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
       <h3>{guest.name}</h3>
       <span className={`manage-guest-status is-${status.tone}`}>{status.text}</span>
     </div>
-    {schedule.length > 1 && <p className="manage-guest-events">{celebrationsLabel(guest.events, schedule)}</p>}
+    {(schedule.length > 1 || guest.phone) && <p className="manage-guest-events">{[schedule.length > 1 && celebrationsLabel(guest.events, schedule), guest.phone && showPhone(guest.phone)].filter(Boolean).join(" · ")}</p>}
     {(missing.length > 0 || seesNothing) && <p className="manage-warn">{seesNothing ? "Every celebration picked for them was removed from the schedule, so their link says “details to follow”. Edit to pick again." : "A celebration picked for them was removed from the schedule. Edit to check theirs."}</p>}
     {mode === "remove" ? <div className="manage-confirm" role="group" aria-label={`Remove ${guest.name}`}>
       <p>Remove this invitation? Their link stops working{reply ? " and their reply is removed from your counts" : ""}.</p>
@@ -228,7 +276,8 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
       <button type="button" className="share-chip" onClick={() => setMode("view")}>Cancel</button>
     </div> : <div className="manage-guest-actions">
       <button type="button" className="share-chip" onClick={() => void copy()} aria-label={`Copy link for ${guest.name}`}>{copied ? "Copied!" : "Copy link"}</button>
-      <a className="share-chip" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer" aria-label={`Send ${guest.name} their link on WhatsApp`}>WhatsApp</a>
+      <a className="share-chip" href={whatsApp(message, guest.phone)} target="_blank" rel="noreferrer" aria-label={`Send ${guest.name} their link on WhatsApp`}>WhatsApp</a>
+      {reminder && <a className="share-chip" href={whatsApp(reminder, guest.phone)} target="_blank" rel="noreferrer" aria-label={`Remind ${guest.name} on WhatsApp`}>Remind</a>}
       <a className="share-chip" href={`/e/${experience.slug}/${guest.id}?preview=1`} target="_blank" rel="noreferrer" aria-label={`Preview the invitation for ${guest.name}`}>Preview</a>
       <button type="button" className="share-chip" onClick={() => setMode("edit")} aria-label={`Edit the invitation for ${guest.name}`}>Edit</button>
       <button type="button" className="share-chip" onClick={() => setMode("relink")} aria-label={`Make a new link for ${guest.name}`}>New link</button>

@@ -116,6 +116,69 @@ test("a personal link has one reply per household; a new link keeps it, removing
   expect(rsvps).toHaveLength(0);
 });
 
+test("a pasted list adds several households at once; their numbers stay with the host", async ({ request }) => {
+  const { slug, key } = await publish(request, "wedding", { events: SCHEDULE });
+  await addGuest(request, slug, key, "Kakaji & Kaki");
+  const response = await request.post(`/api/experiences/${slug}/guests`, { headers: ownerHeaders(key), data: { list: "the Patel family, 98250 12345\nkakaji & KAKI\n\nthe Shah family", events: ["reception-eve"] } });
+  expect(response.status()).toBe(201);
+  const { guests, skipped } = await response.json();
+  expect(guests.map((g: { name: string }) => g.name)).toEqual(["the Patel family", "the Shah family"]);
+  expect(guests[0]).toMatchObject({ phone: "919825012345", events: ["reception-eve"] });
+  expect(skipped).toEqual(["kakaji & KAKI"]);
+  // A guest never sees anyone's number, not even their own.
+  expect(await (await request.get(`/e/${slug}/${guests[0].id}`)).text()).not.toContain("9825012345");
+
+  // All or nothing: a list that doesn't fit adds no one.
+  const { slug: small, key: smallKey } = await publish(request);
+  for (let i = 0; i < 97; i++) await request.post(`/api/experiences/${small}/rsvps`, { headers: general(), data: { attendance: "Maybe" } });
+  const tooMany = await request.post(`/api/experiences/${small}/guests`, { headers: ownerHeaders(smallKey), data: { list: "A\nB\nC\nD" } });
+  expect(tooMany.status()).toBe(409);
+  expect((await tooMany.json()).error).toContain("room for 3 more");
+  expect((await owned(request, small, smallKey)).experience.guests).toHaveLength(0);
+});
+
+test("the host pastes a list, then reminds the households who haven't replied", async ({ browser }) => {
+  const context = await freshContext(browser);
+  const { slug, key } = await publish(context.request, "wedding", { title: "Isha & Kabir", events: SCHEDULE });
+  const host = await context.newPage();
+  const errors = collectErrors(host);
+  await host.goto(`/manage/${slug}#k=${key}`);
+  const add = host.locator(".manage-guest-add");
+  await add.getByRole("radio", { name: "Paste a list" }).check();
+  await add.locator("#new-guest-list").fill("the Patel family, 98250 12345\nthe Shah family\n");
+  await expect(add.getByRole("button", { name: "Add 2 invitations" })).toBeVisible();
+  await add.getByRole("button", { name: "Add 2 invitations" }).click();
+  await expect(host.locator(".manage-guest-add + .share-status")).toHaveText("Added 2 invitations.");
+  const patel = host.locator(".manage-guest").filter({ hasText: "the Patel family" });
+  await expect(patel.locator(".manage-guest-events")).toContainText("+91 98250 12345");
+
+  // With a number, WhatsApp opens their chat; without one, WhatsApp asks who to send it to.
+  await expect(patel.getByRole("link", { name: "Send the Patel family their link on WhatsApp" })).toHaveAttribute("href", /^https:\/\/wa\.me\/919825012345\?text=/);
+  const shah = host.locator(".manage-guest").filter({ hasText: "the Shah family" });
+  await expect(shah.getByRole("link", { name: "Send the Shah family their link on WhatsApp" })).toHaveAttribute("href", /^https:\/\/wa\.me\/\?text=/);
+  const remind = patel.getByRole("link", { name: "Remind the Patel family on WhatsApp" });
+  expect(decodeURIComponent((await remind.getAttribute("href"))!)).toContain("A gentle reminder from Isha & Kabir");
+
+  // Once they've replied, there's nothing to remind them about.
+  const patelId = (await patel.getByRole("link", { name: /^Preview/ }).getAttribute("href"))!.split("/")[3].split("?")[0];
+  await context.request.post(`/api/experiences/${slug}/rsvps`, { headers: general(), data: { attendance: "Attending", guest: patelId } });
+  await host.getByRole("button", { name: "Refresh" }).click();
+  await expect(patel.locator(".manage-guest-status")).toHaveText("Coming · 1 person");
+  await expect(remind).toHaveCount(0);
+  await expect(shah.getByRole("link", { name: "Remind the Shah family on WhatsApp" })).toBeVisible();
+
+  // Fixing a number in the edit form.
+  await shah.getByRole("button", { name: "Edit the invitation for the Shah family" }).click();
+  await host.locator(".manage-guest.is-editing input[type=tel]").fill("12");
+  await host.locator(".manage-guest.is-editing").getByRole("button", { name: "Save" }).click();
+  await expect(host.locator(".manage-guest.is-editing .studio-error")).toContainText("doesn’t look like a WhatsApp number");
+  await host.locator(".manage-guest.is-editing input[type=tel]").fill("+44 7700 900123");
+  await host.locator(".manage-guest.is-editing").getByRole("button", { name: "Save" }).click();
+  await expect(shah.locator(".manage-guest-events")).toContainText("+447700900123");
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
 test("personal invitations keep their place under the free plan's limit", async ({ request }) => {
   const { slug, key } = await publish(request);
   const patel = await addGuest(request, slug, key, "the Patel family");
