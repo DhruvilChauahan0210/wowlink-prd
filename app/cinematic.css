@@ -11,7 +11,6 @@ html.lenis,html.lenis body{height:auto}
 .cinema :focus-visible{outline:2px solid #d9bc8e;outline-offset:6px}
 .cinema h1,.cinema h2,.cinema h3,.cinema p{margin:0}
 .cinema a{color:inherit;text-decoration:none}
-.cinema button{font:inherit}
 .cin-label{font:400 9px/1.7 var(--cin-mono);letter-spacing:.13em;text-transform:uppercase}
 .cin-gold{color:var(--cin-gold)}.cin-dim{opacity:.46}
 .cin-catalog{padding:0 6vw}.cin-catalog-nav{height:100px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #d9bc8e26}.cin-catalog-nav>.cin-label{font-size:8px;color:#9b9f94}.cin-catalog-heading{padding:85px 0 65px}.cin-catalog-heading h1{font:300 clamp(50px,6vw,95px)/1.04 var(--cin-sans);letter-spacing:-.05em;margin:22px 0}.cin-catalog-heading h1 em{font:400 italic 1.2em/.9 var(--cin-serif);color:#e3c99e}.cin-catalog-heading>p{font-size:12px;color:#9ea59a;line-height:1.8}.cin-catalog-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px;padding-bottom:80px}.cin-catalog-grid .cin-occasion-card{width:100%;min-width:0}.cin-catalog-grid .cin-occasion-image{height:400px}.cin-catalog-grid .cin-card-title h3{font-size:35px}.cin-catalog-grid .cin-card-bottom{flex-direction:column;gap:10px}.cin-catalog-footer{padding:30px 0;display:flex;justify-content:space-between;gap:20px;border-top:1px solid #d9bc8e26;color:#92998d}

@@ -1,24 +1,74 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { templates } from "../components";
+import { draftKey, getInvitationTemplate, initialDraft, invitationTemplates, readDraft, type InvitationDraft } from "../lib/invitations";
+import { WowLinkBrand } from "../ui/brand";
+import { InvitationScene } from "../ui/invitation-scene";
 
 export default function CreatePage() {
   const [templateId, setTemplateId] = useState("wedding");
-  const [title, setTitle] = useState("Aarav & Meera");
-  const [date, setDate] = useState("2026-11-08");
-  const [venue, setVenue] = useState("The Garden House, Surat");
-  const [message, setMessage] = useState("We’d love to celebrate with you.");
+  const [draft, setDraft] = useState<InvitationDraft>(initialDraft(invitationTemplates[0]));
   const [opened, setOpened] = useState(false);
-  const template = templates.find(item => item.id === templateId) ?? templates[0];
+  const [ready, setReady] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [status, setStatus] = useState("Your canvas is ready");
+  const [mobilePanel, setMobilePanel] = useState<"edit" | "preview">("edit");
+  const drafts = useRef<Record<string, InvitationDraft>>({});
+  const template = getInvitationTemplate(templateId);
 
   useEffect(() => {
-    const selected = new URLSearchParams(window.location.search).get("template");
-    if (selected && templates.some(item => item.id === selected)) setTemplateId(selected);
+    const selected = getInvitationTemplate(new URLSearchParams(location.search).get("template"));
+    const saved = readDraft(selected.id);
+    setTemplateId(selected.id);
+    setDraft(saved ?? initialDraft(selected));
+    setStatus(saved ? "Saved draft restored from this device" : "Your canvas is ready");
+    setReady(true);
   }, []);
 
-  const displayDate = date ? new Date(`${date}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "Your event date";
+  function update<K extends keyof InvitationDraft>(key: K, value: InvitationDraft[K]) {
+    setDraft(current => ({ ...current, [key]: value }));
+    setDirty(true);
+    setStatus("Unsaved changes");
+  }
 
-  return <main className="editor-shell"><header className="editor-header"><Link className="editor-back" href="/templates">← <span>Templates</span></Link><Link className="brand" href="/"><span className="brand-mark">w</span><span>wowlink</span></Link><span className="draft-status"><i /> Draft saved locally</span></header><div className="editor-layout"><section className="editor-form"><span className="eyebrow">YOUR OCCASION, YOUR WAY</span><h1>Let’s make<br /><em>it yours.</em></h1><p className="editor-lede">A few details are all it takes. Your preview updates as you go.</p><label className="field-label" htmlFor="template">Choose a template</label><select id="template" value={templateId} onChange={event => setTemplateId(event.target.value)}>{templates.map(item => <option value={item.id} key={item.id}>{item.title}</option>)}</select><label className="field-label" htmlFor="title">Names or occasion title</label><input id="title" value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Aarav & Meera" /><label className="field-label" htmlFor="date">Date</label><input id="date" type="date" value={date} onChange={event => setDate(event.target.value)} /><label className="field-label" htmlFor="venue">Venue</label><input id="venue" value={venue} onChange={event => setVenue(event.target.value)} placeholder="Venue name" /><label className="field-label" htmlFor="message">A note for your guests</label><textarea id="message" rows={3} value={message} onChange={event => setMessage(event.target.value)} /><button className="button button-dark button-full publish-button" onClick={() => alert("Your draft is ready. Account signup and publishing will be connected in a later build.")}>Save and continue <span>↗</span></button><p className="editor-footnote">You can make changes any time before sharing.</p></section><aside className="editor-preview-wrap"><div className="preview-topline"><span>LIVE PREVIEW</span><span>↗ Opens on mobile</span></div><div className={`experience-preview art-${template.color}`}><span className="preview-overline">A LITTLE SOMETHING SPECIAL</span><button onClick={() => setOpened(!opened)} className={`preview-emoji${opened ? " preview-opened" : ""}`} aria-label={opened ? "Close invitation" : template.label}>{opened ? "✿" : template.emoji}</button><span className="preview-name">{title || "Your names here"}</span><span className="preview-invite">{template.category === "WEDDING" ? "INVITE YOU TO CELEBRATE" : "YOU’RE INVITED TO"}</span><span className="preview-divider"/><span className="preview-date">{displayDate}</span><span className="preview-venue">{venue || "Your venue"}</span><p className="preview-message">{message}</p><button className="preview-cta" onClick={() => setOpened(!opened)}>{opened ? "Lovely, isn’t it?" : template.label} <b>→</b></button><span className="preview-branding">MADE WITH WOWLINK</span></div><p className="preview-hint">↖ Tap the card to try the interaction</p></aside></div></main>;
+  function changeTemplate(id: string) {
+    if (id === templateId) return;
+    drafts.current[templateId] = draft;
+    const selected = getInvitationTemplate(id);
+    setTemplateId(id);
+    setDraft(drafts.current[id] ?? readDraft(id) ?? initialDraft(selected));
+    setOpened(false);
+    setDirty(true);
+    setStatus("Unsaved changes");
+    history.replaceState(null, "", `/create?template=${id}`);
+  }
+
+  function saveDraft() {
+    try {
+      localStorage.setItem(draftKey(templateId), JSON.stringify(draft));
+      setDirty(false);
+      setStatus("Saved on this device");
+      return true;
+    } catch {
+      setStatus("This browser couldn’t save the draft. Keep this tab open and try again.");
+      return false;
+    }
+  }
+
+  return <div className="cinema studio-page" aria-busy={!ready}>
+    <header className="studio-header"><WowLinkBrand/><span className="studio-header-label cin-label">THE CREATOR’S STUDIO</span><div className="studio-header-actions"><Link className="studio-fullscreen" href={`/e/preview?template=${templateId}&draft=1`} target="_blank" rel="noreferrer" onClick={event => { if (!saveDraft()) event.preventDefault(); }}>Full preview <span>↗</span></Link><button className="cin-cta cin-cta-light studio-save" onClick={saveDraft} disabled={!ready}>Save draft <span>↗</span></button></div></header>
+    <div className="studio-mobile-tabs" role="tablist" aria-label="Editor view"><button role="tab" aria-selected={mobilePanel === "edit"} aria-controls="studio-edit" onClick={() => setMobilePanel("edit")}>01 / Edit details</button><button role="tab" aria-selected={mobilePanel === "preview"} aria-controls="studio-live" onClick={() => setMobilePanel("preview")}>02 / Live preview</button></div>
+    <main className={`studio-grid studio-show-${mobilePanel}`}>
+      <section className="studio-edit-panel" id="studio-edit" aria-label="Invitation settings">
+        <Link className="studio-back cin-label" href="/templates">← BACK TO THE COLLECTION</Link>
+        <div className="studio-intro"><span className="cin-label cin-gold">YOUR OCCASION. YOUR STORY.</span><h1>A little more<br/><em>you.</em></h1><p>Make the details personal.<br/>Watch the feeling come to life.</p></div>
+        <fieldset className="studio-fieldset"><legend><span>01</span> CHOOSE YOUR OCCASION</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><img src={`/media/${item.image}`} alt=""/><span>{item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : "↗"}</i></button>)}</div></fieldset>
+        <fieldset className="studio-fieldset"><legend><span>02</span> SET THE SCENE</legend><div className="studio-field"><label htmlFor="title">NAMES OR OCCASION TITLE</label><input id="title" value={draft.title} maxLength={80} placeholder="The names at the heart of your day" onChange={event => update("title", event.target.value)}/></div><div className="studio-field-row"><div className="studio-field"><label htmlFor="date">THE DATE</label><input id="date" type="date" value={draft.date} onChange={event => update("date", event.target.value)}/></div><div className="studio-field"><label htmlFor="time">THE TIME</label><input id="time" type="time" value={draft.time} onChange={event => update("time", event.target.value)}/></div></div><div className="studio-field"><label htmlFor="venue">THE PLACE</label><input id="venue" value={draft.venue} maxLength={140} placeholder="Venue name, city" onChange={event => update("venue", event.target.value)}/></div></fieldset>
+        <fieldset className="studio-fieldset studio-message-field"><legend><span>03</span> A NOTE FROM THE HEART</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">Your message to guests</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder="A few words for the people you love…" onChange={event => update("message", event.target.value)}/><span className="studio-character-count">{draft.message.length} / 500</span></div></fieldset>
+        <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status}</span></div><p className="studio-storage-note">Drafts are saved on this device. You can return and keep creating.</p>
+      </section>
+      <aside className="studio-preview-panel" id="studio-live" aria-label="Live invitation preview"><div className="studio-preview-inner"><div className="studio-preview-toolbar"><span className="cin-label"><i/>LIVE CANVAS</span><button onClick={() => setOpened(false)} aria-label="Replay invitation reveal">Replay <span>↺</span></button></div><div className="studio-canvas-frame"><InvitationScene template={template} draft={draft} compact opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)}/></div><div className="studio-preview-bottom"><span className="cin-label">{template.category}</span><span>Tap to try the experience <span>↗</span></span></div><div className="studio-preview-caption"><span>YOUR STORY, BEAUTIFULLY TOLD.</span><span>WOWLINK STUDIO / 01</span></div></div></aside>
+    </main>
+  </div>;
 }

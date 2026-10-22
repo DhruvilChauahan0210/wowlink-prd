@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./cinematic.css";
+import "./studio.css";
 
 export const metadata: Metadata = {
   title: "WowLink — Make it a moment",

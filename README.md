@@ -19,11 +19,12 @@ Open [http://localhost:3000](http://localhost:3000).
 - A single animation loop with Lenis smoothing; scroll transforms update element refs directly
 - Original local celebration imagery and a reduced-motion alternative
 - Template gallery for weddings, birthdays, Garba/Navratri, and grand openings
-- Form-based editor with live local preview
-- Guest-facing sample invitation with event details and RSVP interaction preview
+- Cinematic editor and guest view sharing the same invitation scene and four reveal interactions
+- Live form preview with drafts saved on the current device
+- Guest-facing invitation with event details and an inline RSVP interaction preview
 - Responsive styling and reduced-motion support
 
-The editor and RSVP actions are front-end prototypes. Authentication, persistence, uploads, QR generation, server-side publishing, RSVP storage, subscriptions, and analytics are not connected yet. Do not use this scaffold to collect real guest data or take payments.
+The editor stores drafts in this browser’s local storage. Full preview opens those saved details on the same device. The RSVP form demonstrates the interaction without sending or storing responses. Authentication, cloud persistence, uploads, QR generation, server-side publishing, RSVP storage, subscriptions, and analytics are not connected yet.
 
 ## Product direction
 

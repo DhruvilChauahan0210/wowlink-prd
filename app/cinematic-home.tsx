@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { clamp, ease, onSceneFrame, progress, range, sceneNavigate, startSceneScroll } from "./lib/scene-scroll";
-import "./cinematic.css";
 
 function Mark() {
   return <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2c0 9-5 14-14 14 9 0 14 5 14 14 0-9 5-14 14-14C21 16 16 11 16 2Z" fill="none" stroke="currentColor" strokeWidth="1.3"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg>;
