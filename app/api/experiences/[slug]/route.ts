@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: Params) {
   return owned ? Response.json(owned, { headers: { "Cache-Control": "no-store" } }) : notYours();
 }
 
-/** Edit the invitation, publish/unpublish it, or choose what the general link shows. Needs the manage key. */
+/** Edit the invitation, publish/unpublish it, choose what the general link shows, or show guests’ wishes. Needs the manage key. */
 export async function PATCH(request: Request, { params }: Params) {
   const { slug } = await params;
   const body = await request.json().catch(() => null);
@@ -31,6 +31,10 @@ export async function PATCH(request: Request, { params }: Params) {
     patch.status = body.status;
   }
   if (body.publicEvents !== undefined) patch.publicEvents = body.publicEvents;
+  if (body.showWishes !== undefined) {
+    if (typeof body.showWishes !== "boolean") return Response.json({ error: "Unknown setting." }, { status: 400 });
+    patch.showWishes = body.showWishes;
+  }
   const result = await updateOwned(slug, keyFrom(request), patch);
   if (result.ok) return Response.json({ experience: result.experience });
   return result.reason === "invalid" ? Response.json({ error: "Pick at least one celebration for the general link." }, { status: 422 }) : notYours();

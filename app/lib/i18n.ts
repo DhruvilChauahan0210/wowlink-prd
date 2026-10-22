@@ -97,6 +97,12 @@ const en = {
   canChange: "Plans change, so you can update it any time.",
   notSent: "This is a preview. Your response hasn’t been sent.",
   again: { preview: "Try another response", personal: "Change the reply", general: "Reply for someone else" },
+  // wishes
+  wishLabel: "A wish or a blessing",
+  wishHint: (shown: boolean): string => (shown ? "The hosts may show it on this page, with your name." : "Only the hosts will see it."),
+  wishPlaceholder: "Wishing you a lifetime of happiness…",
+  wishesHeading: ["Blessings &", "wishes"] as Pair,
+  aGuest: "A guest",
   // footer
   madeWith: "Made with WowLink",
   createYours: "Create yours free",
@@ -184,6 +190,11 @@ const gu: GuestText = {
   canChange: "યોજના બદલાય તો આપ ગમે ત્યારે જવાબ બદલી શકો છો.",
   notSent: "આ પૂર્વદર્શન છે. આપનો જવાબ મોકલાયો નથી.",
   again: { preview: "બીજો જવાબ અજમાવો", personal: "જવાબ બદલો", general: "બીજા કોઈ માટે જવાબ આપો" },
+  wishLabel: "આપની શુભેચ્છા કે આશીર્વાદ",
+  wishHint: (shown: boolean) => (shown ? "યજમાન તે આ પાના પર આપના નામ સાથે બતાવી શકે છે." : "ફક્ત યજમાન જ તે જોઈ શકશે."),
+  wishPlaceholder: "જીવનભર સુખી રહો…",
+  wishesHeading: ["આશીર્વાદ અને", "શુભેચ્છાઓ"],
+  aGuest: "એક મહેમાન",
   madeWith: "WowLink થી બનાવેલું",
   createYours: "આપનું મફત બનાવો",
   countdown: {

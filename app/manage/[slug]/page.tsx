@@ -10,7 +10,7 @@ import { Art, type ArtName } from "../../ui/art";
 import { WowLinkBrand } from "../../ui/brand";
 import { CopyField, ShareTools } from "../../ui/share-tools";
 import { csvName, headcountCsv, repliesCsv } from "../../lib/export";
-import { GeneralLinkAudience, GuestList, Headcount, saveCsv } from "./guest-list";
+import { GeneralLinkAudience, GuestList, Headcount, WishesCard, saveCsv } from "./guest-list";
 
 type Loaded = { experience: Experience; rsvps: Rsvp[] };
 type Problem = "" | "no-key" | "invalid" | "offline";
@@ -155,6 +155,11 @@ export default function ManagePage() {
             <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "replies"), repliesCsv(data))}>Every reply (CSV)</button>
             {schedule.length > 0 && <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "headcount"), headcountCsv(data))}>Headcount per celebration (CSV)</button>}
           </div>}
+        </section>
+
+        <section className="sketch-card manage-card" aria-labelledby="wishes-heading">
+          <h2 id="wishes-heading">Blessings &amp; wishes</h2>
+          {owner && <WishesCard owner={owner} experience={experience} rsvps={data.rsvps} onChanged={reload}/>}
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="private-heading">

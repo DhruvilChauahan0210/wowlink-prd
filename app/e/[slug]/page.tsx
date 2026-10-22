@@ -18,6 +18,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublishedInvitation({ params }: Props) {
   const experience = await getPublished((await params).slug);
   if (!experience) notFound();
-  const { slug, templateId, ...view } = experience;
-  return <GuestExperience template={getInvitationTemplate(templateId)} draft={view} mode="live" slug={slug}/>;
+  const { slug, templateId, wishes, ...view } = experience;
+  return <GuestExperience template={getInvitationTemplate(templateId)} draft={view} mode="live" slug={slug} wishes={wishes}/>;
 }

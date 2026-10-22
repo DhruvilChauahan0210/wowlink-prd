@@ -31,7 +31,7 @@ const celebration = (e: { name: string; date: string }) => `${e.name} (${formatE
 export function repliesCsv({ experience, rsvps }: { experience: Experience; rsvps: Rsvp[] }) {
   const schedule = sortSchedule(experience.events);
   const households = new Map(experience.guests.map(g => [g.id, g]));
-  const rows: Cell[][] = [["Name", "Household", "Reply", "People", ...schedule.map(celebration), "Sent"]];
+  const rows: Cell[][] = [["Name", "Household", "Reply", "People", ...schedule.map(celebration), "Sent", "Wish"]];
   for (const r of rsvps) {
     const household = r.guestId ? households.get(r.guestId) : undefined;
     rows.push([
@@ -46,6 +46,7 @@ export function repliesCsv({ experience, rsvps }: { experience: Experience; rsvp
         return !answer ? "" : answer.attendance === "Attending" ? answer.guestCount : answer.attendance === "Maybe" ? `Maybe (${answer.guestCount})` : "No";
       }),
       when(r.updatedAt ?? r.createdAt),
+      r.wish ?? "",
     ]);
   }
   return toCsv(rows);

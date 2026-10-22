@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { answerFor, answersFor, isGuestId, missingEvents, normalizePhone, parseGuestLine, repliesUsed, tallyByEvent, validateGuest, validateGuestList, validatePublicEvents, viewFor, type Guest } from "../../app/lib/guests";
+import { answerFor, answersFor, cleanWish, isGuestId, missingEvents, normalizePhone, parseGuestLine, repliesUsed, tallyByEvent, validateGuest, validateGuestList, validatePublicEvents, viewFor, type Guest } from "../../app/lib/guests";
 import type { InvitationDraft, ScheduleItem } from "../../app/lib/invitations";
 
 // Studio order on purpose: the Haldi was added last but happens before the Sangeet.
@@ -202,4 +202,10 @@ test("a personal invitation's number: checked, and cleared when blank", () => {
 test("personal link ids are 8 characters from the slug alphabet", () => {
   expect(isGuestId("bKLRnYc2")).toBe(true);
   for (const bad of ["bKLRnYc", "bKLRnYc23", "aKLRnYc2", "bKLRnYl2", "../../xx", 12345678, null]) expect(isGuestId(bad)).toBe(false);
+});
+
+test("a wish is tidied: trimmed, no runs of blank lines, at most 300 characters", () => {
+  expect(cleanWish("  Wishing you   both\r\n\r\n\r\n\r\nall the joy  ")).toBe("Wishing you both\n\nall the joy");
+  expect(cleanWish("x".repeat(400))).toHaveLength(300);
+  expect(cleanWish(42)).toBe("");
 });

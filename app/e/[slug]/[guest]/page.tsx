@@ -24,6 +24,6 @@ export default async function PersonalInvitation({ params, searchParams }: Props
   const [{ slug, guest }, { preview }] = await Promise.all([params, searchParams]);
   const found = await getGuestView(slug, guest);
   if (!found) notFound();
-  const { experience: { slug: _slug, templateId, ...view }, reply } = found;
-  return <GuestExperience template={getInvitationTemplate(templateId)} draft={view} mode="live" slug={slug} guest={found.guest} reply={reply} previewOnly={preview === "1"}/>;
+  const { experience: { slug: _slug, templateId, wishes, ...view }, reply } = found;
+  return <GuestExperience template={getInvitationTemplate(templateId)} draft={view} mode="live" slug={slug} guest={found.guest} reply={reply} wishes={wishes} previewOnly={preview === "1"}/>;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { LIMITS, formatEventDay, formatShortDay, sortSchedule, type ScheduleItem } from "../../lib/invitations";
 import { answerFor, invitedTo, missingEvents, repliesUsed, tallyByEvent, type EventFilter, type Guest } from "../../lib/guests";
 import { csvName, invitationsCsv } from "../../lib/export";
@@ -299,4 +299,51 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
     {showUrl && <div className="share-url"><label className="studio-sr-only" htmlFor={`${id}-url`}>Link for {guest.name}</label><input id={`${id}-url`} readOnly value={url} autoFocus onFocus={e => e.currentTarget.select()}/></div>}
     {errors.form && <p className="studio-error" role="alert">{errors.form}</p>}
   </li>;
+}
+
+/** Guests' wishes: all of them for the host, and a choice of which (if any) the invitation shows. */
+export function WishesCard({ owner, experience, rsvps, onChanged }: { owner: Owner; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  // The switch moves as soon as it's pressed, and moves back if saving fails.
+  const [show, setShow] = useState(experience.showWishes);
+  useEffect(() => setShow(experience.showWishes), [experience.showWishes]);
+  const withWishes = rsvps.filter(r => r.wish);
+  const household = (id?: string) => experience.guests.find(g => g.id === id)?.name;
+
+  async function run(task: () => Promise<unknown>) {
+    setBusy(true);
+    setError("");
+    try {
+      await task();
+      await onChanged();
+    } catch (failure) {
+      setError((failure as Error).message);
+    }
+    setBusy(false);
+  }
+
+  return <>
+    <label className="manage-wishes-toggle">
+      <input type="checkbox" checked={show} disabled={busy} onChange={e => {
+        const next = e.target.checked;
+        setShow(next);
+        void run(() => ownerCall(owner, "", "PATCH", { showWishes: next }).catch(failure => { setShow(!next); throw failure; }));
+      }}/>
+      Show them on the invitation
+    </label>
+    <p className="manage-muted">{show ? "Guests see the latest 30 as notes under the reply form, with the name each writer typed. Hide any you’d rather keep to yourself." : "Only you can see them. Guests are told so when they write one."}</p>
+    {error && <p className="studio-error" role="alert">{error}</p>}
+    {withWishes.length ? <ul className="manage-wishes">{withWishes.map(r => {
+      const from = [r.name, household(r.guestId) && `for ${household(r.guestId)}`].filter(Boolean).join(" ") || "No name given";
+      return <li key={r.id} className={`manage-wish${r.wishHidden ? " is-hidden" : ""}`}>
+        <blockquote>{r.wish}</blockquote>
+        <div className="manage-wish-meta">
+          <span>— {from}</span>
+          {r.wishHidden && <span className="manage-wish-hidden">Hidden from the invitation</span>}
+          <button type="button" className="share-chip" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/rsvps/${r.id}`, "PATCH", { hidden: !r.wishHidden }))} aria-label={`${r.wishHidden ? "Show" : "Hide"} the wish from ${from}${r.wishHidden ? " on" : " from"} the invitation`}>{r.wishHidden ? "Show on the invitation" : "Hide from the invitation"}</button>
+        </div>
+      </li>;
+    })}</ul> : <p className="manage-muted">No wishes yet. Guests can leave one when they reply.</p>}
+  </>;
 }

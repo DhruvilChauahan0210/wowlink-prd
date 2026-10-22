@@ -6,11 +6,12 @@ import { ATTENDANCE, LIMITS, formatEventDay, formatInvitationDate, formatInvitat
 import { calendarEvents, daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../lib/calendar";
 import { answerFor, type AudienceView, type ByEvent } from "../lib/guests";
 import { GUEST_TEXT, LANG_KEY, type GuestText } from "../lib/i18n";
+import type { PublicWish } from "../lib/store";
 import { MomentMark, WowLinkBrand } from "./brand";
 import { Bowl, Diya, Flower, Leaf, Note, Ring, Star } from "./doodles";
 import { InvitationScene } from "./invitation-scene";
 
-type Reply = { name: string; attendance: Attendance; guestCount: number; byEvent?: ByEvent; at?: string };
+type Reply = { name: string; attendance: Attendance; guestCount: number; byEvent?: ByEvent; wish?: string; at?: string };
 
 type Props = {
   template: InvitationTemplate;
@@ -25,6 +26,8 @@ type Props = {
   reply?: Reply | null;
   /** A host checking a personal link: everything as the guest sees it, but replies aren't sent. */
   previewOnly?: boolean;
+  /** Guests' wishes the host shows on the invitation; null when the host keeps them private. */
+  wishes?: PublicWish[] | null;
 };
 
 const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth") as ScrollBehavior;
@@ -88,7 +91,7 @@ function Countdown({ date, time, events, t }: { date: string; time: string; even
 }
 
 /** Everything a guest sees: the opening, the details, the message and the RSVP. */
-export function GuestExperience({ template, draft, mode, slug, guest, reply, previewOnly = false }: Props) {
+export function GuestExperience({ template, draft, mode, slug, guest, reply, previewOnly = false, wishes = null }: Props) {
   const live = mode === "live";
   const sends = live && !previewOnly;
   const earlier = sends ? reply ?? null : null;
@@ -124,6 +127,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const [counts, setCounts] = useState<Record<string, string>>(() => Object.fromEntries(Object.entries(earlier?.byEvent ?? {}).filter(([, a]) => a.guestCount > 0).map(([id, a]) => [id, String(a.guestCount)])));
   const [perEvent, setPerEvent] = useState(() => new Set(Object.values(counts)).size > 1);
   const [name, setName] = useState(earlier?.name ?? "");
+  const [wish, setWish] = useState(earlier?.wish ?? "");
   // "done" shows the reply. A household that has already replied starts there, so a relative opening a forwarded
   // link sees the family's reply before changing it.
   const [state, setState] = useState<"idle" | "sending" | "done">(earlier ? "done" : "idle");
@@ -199,6 +203,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
           shown: allIds,
           ...(splitCounts && { counts: Object.fromEntries(chosen.map(e => [e.id, countFor(e.id)])) }),
           guest: guest?.id,
+          wish,
           website: form.get("website"),
         }),
       });
@@ -219,6 +224,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
     // A personal link changes the household's one reply; the general link starts a fresh one for someone else.
     if (sends && !guest) {
       setName("");
+      setWish("");
       setCount("1");
       setCounts({});
       setPerEvent(false);
@@ -302,6 +308,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
             <h3>{t.replyTitle[attendance]}</h3>
             <p className="inv-rsvp-summary">{describeReply(t, attendance, chosen, schedule.length, countFor, party)}</p>
             {sends && guest && !justSent && <p className="inv-rsvp-meta">{t.sentBy(name, sentOn)}</p>}
+            {wish.trim() && <p className="inv-rsvp-wish">“{wish.trim()}”</p>}
             {fresh.length > 0 && <p className="inv-rsvp-fresh">{t.fresh(fresh.map(e => e.name))}</p>}
             <p>{!sends ? t.notSent : justSent ? t.thanks(draft.title) : t.canChange}</p>
             <button className="cin-cta cin-cta-outline" onClick={replyAgain}>{!sends ? t.again.preview : guest ? t.again.personal : t.again.general}</button>
@@ -335,12 +342,21 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
               {askWhich && chosen.length > 1 && <button type="button" className="inv-text-button" aria-expanded={splitCounts} onClick={() => setPerEvent(!perEvent)}>{t.splitToggle(splitCounts)}</button>}
             </div>}
             <div className="studio-field"><label htmlFor="guest-name">{t.yourName} <span>{t.optional}</span></label><input id="guest-name" name="guest-name" autoComplete="name" maxLength={LIMITS.guestName} placeholder={t.namePlaceholder(!!guest)} value={name} onChange={e => setName(e.target.value)}/></div>
+            <div className="studio-field inv-wish-field">
+              <label htmlFor="guest-wish">{t.wishLabel} <span>{t.optional}</span></label>
+              <p className="inv-field-hint" id="guest-wish-hint">{t.wishHint(wishes !== null)}</p>
+              <textarea id="guest-wish" name="guest-wish" rows={3} maxLength={LIMITS.wish} placeholder={t.wishPlaceholder} value={wish} onChange={e => setWish(e.target.value)} aria-describedby="guest-wish-hint"/>
+            </div>
             <div className="inv-honeypot" aria-hidden="true"><label htmlFor="website">Leave this empty</label><input id="website" name="website" tabIndex={-1} autoComplete="off"/></div>
             {error && <p className="inv-rsvp-error" role="alert">{error}</p>}
             <button type="submit" className="cin-cta cin-cta-light" disabled={state === "sending"}>{sends ? (state === "sending" ? t.sending : replied ? t.update : t.send) : t.previewSubmit}</button>
             {!sends && <p className="inv-rsvp-preview-note">{t.previewNote}</p>}
           </form>}
         </div>
+      </section>}
+      {!draft.pending && wishes && wishes.length > 0 && <section className="inv-wishes-section theme-paper" aria-labelledby="wishes-heading">
+        <h2 id="wishes-heading">{t.wishesHeading[0]} <span className="scribble">{t.wishesHeading[1]}</span></h2>
+        <ul className="inv-wishes">{wishes.map((w, i) => <li key={i} className="inv-wish"><p>{w.text}</p><span>— {w.name || t.aGuest}</span></li>)}</ul>
       </section>}
     </main>
     <footer className="invitation-footer"><WowLinkBrand/><span>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link href="/templates">{t.createYours} <span aria-hidden="true">→</span></Link></footer>

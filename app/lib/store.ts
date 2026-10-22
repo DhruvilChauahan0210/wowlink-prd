@@ -27,6 +27,8 @@ export type Experience = InvitationDraft & {
   guests: Guest[];
   /** The celebrations the general link shows. */
   publicEvents: EventFilter;
+  /** Whether guests' wishes are shown on the invitation (the host always sees them). */
+  showWishes: boolean;
 };
 export type Rsvp = {
   id: string;
@@ -41,11 +43,19 @@ export type Rsvp = {
   guestId?: string;
   /** The answer for each celebration the guest was shown. Missing on replies sent before this existed. */
   byEvent?: ByEvent;
+  /** A wish or blessing left with the reply, and whether the host has hidden it from the invitation. */
+  wish?: string;
+  wishHidden?: boolean;
 };
-/** What a guest is allowed to see: the invitation as their link shows it. */
-export type PublicExperience = AudienceView & Pick<Experience, "slug" | "templateId">;
+/** A wish as guests see it on the invitation: the words, and the name its writer typed (if any). */
+export type PublicWish = { name: string; text: string };
+/**
+ * What a guest is allowed to see: the invitation as their link shows it, and the wishes on show
+ * (null when the host keeps wishes to themselves, so the reply form can say who will see one).
+ */
+export type PublicExperience = AudienceView & Pick<Experience, "slug" | "templateId"> & { wishes: PublicWish[] | null };
 /** A household's reply as their link shows it back to them: who sent it, when, and what it said. */
-export type HouseholdReply = Pick<Rsvp, "name" | "attendance" | "guestCount" | "byEvent"> & { at: string };
+export type HouseholdReply = Pick<Rsvp, "name" | "attendance" | "guestCount" | "byEvent" | "wish"> & { at: string };
 /** A personal link's household, and their reply so far. */
 export type GuestView = { experience: PublicExperience; guest: Pick<Guest, "id" | "name">; reply: HouseholdReply | null };
 
@@ -65,7 +75,7 @@ function serialized<T>(task: () => Promise<T>): Promise<T> {
 }
 
 // Invitations saved before schedules, guest lists or languages existed: none of the first two, and English.
-const withDefaults = (e: StoredExperience): StoredExperience => ({ ...e, events: e.events ?? [], guests: e.guests ?? [], publicEvents: e.publicEvents ?? "all", language: e.language ?? "en" });
+const withDefaults = (e: StoredExperience): StoredExperience => ({ ...e, events: e.events ?? [], guests: e.guests ?? [], publicEvents: e.publicEvents ?? "all", language: e.language ?? "en", showWishes: e.showWishes ?? false });
 
 async function load(): Promise<Db> {
   try {
@@ -114,8 +124,20 @@ function newSlug(taken: Set<string>, length = 7) {
 }
 
 const draftOf = ({ title, date, time, venue, message, events, language }: Experience): InvitationDraft => ({ title, date, time, venue, message, events, language });
+/** The most wishes an invitation shows (the latest ones). */
+const SHOWN_WISHES = 30;
+/**
+ * The wishes on show, latest first. Only the name the writer typed goes with each: never a household's name from
+ * the host's list, which would reveal who else is invited.
+ */
+const publicWishes = (db: Db, e: Experience): PublicWish[] | null =>
+  !e.showWishes ? null : db.rsvps
+    .filter((r) => r.experienceId === e.id && r.wish && !r.wishHidden)
+    .sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt))
+    .slice(0, SHOWN_WISHES)
+    .map((r) => ({ name: r.name, text: r.wish! }));
 /** The invitation as one link shows it: only the fields a guest may see, and only their celebrations. */
-const toPublic = (e: Experience, filter: EventFilter): PublicExperience => ({ slug: e.slug, templateId: e.templateId, ...viewFor(draftOf(e), filter) });
+const toPublic = (db: Db, e: Experience, filter: EventFilter): PublicExperience => ({ slug: e.slug, templateId: e.templateId, ...viewFor(draftOf(e), filter), wishes: publicWishes(db, e) });
 const strip = ({ keyHash: _keyHash, ...experience }: StoredExperience): Experience => experience;
 
 // ---------- experiences ----------
@@ -134,6 +156,7 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft)
       updatedAt: now,
       guests: [],
       publicEvents: "all",
+      showWishes: false,
       keyHash: hash(key),
     };
     db.experiences.push(stored);
@@ -145,7 +168,7 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft)
 export function getPublished(slug: string) {
   return read((db) => {
     const found = db.experiences.find((e) => e.slug === slug && e.status === "published");
-    return found ? toPublic(found, found.publicEvents) : null;
+    return found ? toPublic(db, found, found.publicEvents) : null;
   });
 }
 
@@ -157,13 +180,13 @@ export function getGuestView(slug: string, guestId: string) {
     const guest = found?.guests.find((g) => g.id === guestId);
     if (!found || !guest) return null;
     const reply = db.rsvps.find((r) => r.experienceId === found.id && r.guestId === guest.id);
-    const experience = toPublic(found, guest.events);
+    const experience = toPublic(db, found, guest.events);
     // Only answers for celebrations this link still shows.
     const byEvent = reply?.byEvent && Object.fromEntries(Object.entries(reply.byEvent).filter(([id]) => experience.events.some((e) => e.id === id)));
     return {
       experience,
       guest: { id: guest.id, name: guest.name },
-      reply: reply ? { name: reply.name, attendance: reply.attendance, guestCount: reply.guestCount, ...(byEvent && { byEvent }), at: reply.updatedAt ?? reply.createdAt } : null,
+      reply: reply ? { name: reply.name, attendance: reply.attendance, guestCount: reply.guestCount, ...(byEvent && { byEvent }), ...(reply.wish && { wish: reply.wish }), at: reply.updatedAt ?? reply.createdAt } : null,
     };
   });
 }
@@ -179,7 +202,7 @@ export function getOwned(slug: string, key: string) {
   });
 }
 
-type Patch = { templateId?: TemplateId; draft?: InvitationDraft; status?: Experience["status"]; publicEvents?: unknown };
+type Patch = { templateId?: TemplateId; draft?: InvitationDraft; status?: Experience["status"]; publicEvents?: unknown; showWishes?: boolean };
 
 /** Edit an invitation. `publicEvents` is checked here, against the schedule as it is after this edit. */
 export function updateOwned(slug: string, key: string, patch: Patch) {
@@ -192,6 +215,7 @@ export function updateOwned(slug: string, key: string, patch: Patch) {
     if (patch.draft) Object.assign(found, patch.draft);
     if (patch.status) found.status = patch.status;
     if (publicEvents) found.publicEvents = publicEvents;
+    if (patch.showWishes !== undefined) found.showWishes = patch.showWishes;
     found.updatedAt = new Date().toISOString();
     return { ok: true, experience: strip(found) };
   });
@@ -298,7 +322,7 @@ export function removeGuest(slug: string, key: string, guestId: string) {
 
 // ---------- RSVPs ----------
 
-type RsvpInput = { name: string; attendance: Attendance; guestCount: number; events?: unknown; shown?: unknown; counts?: unknown; guestId?: string };
+type RsvpInput = { name: string; attendance: Attendance; guestCount: number; events?: unknown; shown?: unknown; counts?: unknown; guestId?: string; wish?: string };
 type RsvpResult = { ok: true; updated: boolean } | { ok: false; reason: "missing" | "full" | "guest" } | { ok: false; reason: "invalid"; error: string };
 
 /**
@@ -317,8 +341,10 @@ export function addRsvp(slug: string, input: RsvpInput) {
     const now = new Date().toISOString();
     const earlier = guest && db.rsvps.find((r) => r.experienceId === found.id && r.guestId === guest.id);
     const kept = Object.fromEntries(Object.entries(earlier?.byEvent ?? {}).filter(([id]) => view.events.some((e) => e.id === id)));
-    const reply = { name: input.name, attendance: input.attendance, guestCount: answers.guestCount, byEvent: { ...kept, ...answers.byEvent } };
+    const reply = { name: input.name, attendance: input.attendance, guestCount: answers.guestCount, byEvent: { ...kept, ...answers.byEvent }, ...(input.wish && { wish: input.wish }) };
     if (earlier) {
+      // A wish taken out of the reply is removed (whether the host hid it stays as it was).
+      if (!input.wish) delete earlier.wish;
       Object.assign(earlier, reply, { updatedAt: now });
       return { ok: true, updated: true };
     }
@@ -326,5 +352,18 @@ export function addRsvp(slug: string, input: RsvpInput) {
     if (!guest && repliesUsed(rsvpsOf(db, found), found.guests) >= LIMITS.rsvpsPerEvent) return { ok: false, reason: "full" };
     db.rsvps.push({ id: randomUUID(), experienceId: found.id, ...reply, ...(guest && { guestId: guest.id }), createdAt: now });
     return { ok: true, updated: false };
+  });
+}
+
+/** Hide a wish from the invitation, or show it again. Owner only. */
+export function setWishHidden(slug: string, key: string, rsvpId: string, hidden: boolean) {
+  return write((db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
+    const found = db.experiences.find((e) => e.slug === slug);
+    if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
+    const reply = db.rsvps.find((r) => r.experienceId === found.id && r.id === rsvpId);
+    if (!reply?.wish) return { ok: false, reason: "missing" };
+    if (hidden) reply.wishHidden = true;
+    else delete reply.wishHidden;
+    return { ok: true };
   });
 }

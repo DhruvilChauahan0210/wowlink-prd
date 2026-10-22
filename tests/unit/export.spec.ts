@@ -10,10 +10,11 @@ const experience: Experience = {
     { id: "mehndi", name: "Mehndi", date: "2026-11-06", time: "", venue: "Patel home" },
   ],
   publicEvents: "all",
+  showWishes: false,
   guests: [{ id: "bcdfghjk", name: "the Patel family", events: ["reception"], createdAt: "", phone: "919825012345" }],
 };
 const rsvps: Rsvp[] = [
-  { id: "1", experienceId: "x", name: "Rameshbhai", attendance: "Attending", guestCount: 4, guestId: "bcdfghjk", createdAt: "2026-10-20T06:30:00Z", byEvent: { reception: { attendance: "Attending", guestCount: 4 } } },
+  { id: "1", experienceId: "x", name: "Rameshbhai", attendance: "Attending", guestCount: 4, guestId: "bcdfghjk", createdAt: "2026-10-20T06:30:00Z", byEvent: { reception: { attendance: "Attending", guestCount: 4 } }, wish: "Bless you both, always" },
   { id: "2", experienceId: "x", name: "=HYPERLINK(\"evil\")", attendance: "Maybe", guestCount: 2, createdAt: "2026-10-21T06:30:00Z", byEvent: { mehndi: { attendance: "Maybe", guestCount: 2 }, reception: { attendance: "Not attending", guestCount: 0 } } },
 ];
 const lines = (csv: string) => csv.replace(/^﻿/, "").trimEnd().split("\r\n");
@@ -26,10 +27,10 @@ test("CSV: a byte-order mark for Excel, quoting, and no formulas from guests' na
 
 test("every reply, with a column per celebration in date order", () => {
   const [header, patel, other] = lines(repliesCsv({ experience, rsvps }));
-  expect(header).toBe("Name,Household,Reply,People,\"Mehndi (Fri, 6 Nov)\",\"Reception (Sun, 8 Nov)\",Sent");
+  expect(header).toBe("Name,Household,Reply,People,\"Mehndi (Fri, 6 Nov)\",\"Reception (Sun, 8 Nov)\",Sent,Wish");
   // The Patels weren't invited to the Mehndi: blank, not "No".
-  expect(patel).toBe("Rameshbhai,the Patel family,Attending,4,,4,\"20 Oct 2026, 12:00 pm\"");
-  expect(other).toBe("\"'=HYPERLINK(\"\"evil\"\")\",,Maybe,2,Maybe (2),No,\"21 Oct 2026, 12:00 pm\"");
+  expect(patel).toBe("Rameshbhai,the Patel family,Attending,4,,4,\"20 Oct 2026, 12:00 pm\",\"Bless you both, always\"");
+  expect(other).toBe("\"'=HYPERLINK(\"\"evil\"\")\",,Maybe,2,Maybe (2),No,\"21 Oct 2026, 12:00 pm\",");
 });
 
 test("the caterer's headcount, one row per celebration", () => {

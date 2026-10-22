@@ -1,3 +1,4 @@
+import { cleanWish } from "../../../../lib/guests";
 import { ATTENDANCE, LIMITS, type Attendance } from "../../../../lib/invitations";
 import { allow, clientId } from "../../../../lib/rate-limit";
 import { addRsvp } from "../../../../lib/store";
@@ -6,6 +7,7 @@ import { addRsvp } from "../../../../lib/store";
  * A guest's reply. No account needed; guarded by a honeypot field and rate limits.
  *   events   the celebrations they ticked        shown   the celebrations their page showed
  *   counts   party size per celebration, when it differs     guest   set when replying from a personal link
+ *   wish     an optional wish or blessing for the hosts
  */
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -23,7 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const name = typeof body.name === "string" ? body.name.trim().slice(0, LIMITS.guestName) : "";
   const count = Number(body.guestCount);
   const guestCount = attendance === "Not attending" ? 0 : Number.isInteger(count) && count >= 1 && count <= LIMITS.guests ? count : 1;
-  const result = await addRsvp(slug, { name, attendance, guestCount, events: body.events, shown: body.shown, counts: body.counts, guestId });
+  const result = await addRsvp(slug, { name, attendance, guestCount, events: body.events, shown: body.shown, counts: body.counts, guestId, wish: cleanWish(body.wish) });
   if (result.ok) return Response.json({ ok: true, updated: result.updated }, { status: result.updated ? 200 : 201 });
   switch (result.reason) {
     case "invalid": return Response.json({ error: result.error }, { status: 422 });
