@@ -30,7 +30,8 @@ export type PublicExperience = Pick<Experience, "slug" | "templateId" | "title" 
 type StoredExperience = Experience & { keyHash: string };
 type Db = { experiences: StoredExperience[]; rsvps: Rsvp[] };
 
-const FILE = path.join(process.cwd(), ".data", "wowlink.json");
+// Tests point this at their own file so they never touch real data.
+const FILE = process.env.WOWLINK_DATA_FILE ? path.resolve(process.env.WOWLINK_DATA_FILE) : path.join(process.cwd(), ".data", "wowlink.json");
 
 // Survives dev-server hot reloads, so there is only ever one queue.
 const g = globalThis as typeof globalThis & { __wowlinkQueue?: Promise<unknown> };
