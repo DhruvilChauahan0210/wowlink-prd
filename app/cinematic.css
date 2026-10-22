@@ -1,5 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..600,0..100;1,9..144,300..600,0..100&family=Figtree:wght@400;500;600;700&family=Caveat:wght@500;600;700&family=Noto+Serif+Gujarati:wght@500&display=swap');
-
+/*
+ * WowLink's look: warm paper, ink and hand-drawn marks.
+ * This file is the source of truth (it used to be generated; it no longer is).
+ * The hand-drawn shapes (--rough-*, --tick, --arrow-r, --torana, --grain, …) are SVGs inlined as data URIs
+ * near the top of .cinema. They are used as CSS masks, so they take on whatever ink colour the theme gives them.
+ * Fonts come from next/font in app/layout.tsx as --font-serif, --font-sans, --font-hand and --font-gujarati.
+ */
 /* ---------- Foundations ---------- */
 html:has(.cinema){scroll-behavior:auto;background:#16110e}
 body:has(.cinema){background:#16110e}
@@ -43,10 +48,10 @@ html.lenis,html.lenis body{height:auto}
   --panel-rough:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M2 1.6C35 3.4 65 2 98 1.2M98.8 3C97 40 99 60 98.2 99M97.6 98.6C70 97 25 99 1 97.6M1.6 99C.2 62 2.4 36 .8 2.6' fill='none' stroke='%232a1d14' stroke-opacity='0.2' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
   --panel-arch:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M2 99L2 30C2 10 26 2 50 2C74 2 98 10 98 30L98 99' fill='none' stroke='%232a1d14' stroke-opacity='0.2' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
   --rough-f2:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M.5 2C30 4.5 70 .5 99 3.4C100 34 99.6 66 98 99C60 96 30 99.6 .8 97.5C2 60 0 30 .5 2Z' fill='%23000'/%3E%3C/svg%3E");
-  --sans:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --serif:'Fraunces',Georgia,'Times New Roman',serif;
-  --hand:'Caveat','Segoe Script','Bradley Hand',cursive;
-  --gu:'Noto Serif Gujarati',var(--serif);
+  --sans:var(--font-sans),system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:var(--font-serif),Georgia,'Times New Roman',serif;
+  --hand:var(--font-hand),'Segoe Script','Bradley Hand',cursive;
+  --gu:var(--font-gujarati),var(--serif);
   --r-sm:6px;--r-md:12px;
   --gutter:clamp(20px,5vw,72px);
   background:var(--bg);color:var(--text);font:400 16px/1.6 var(--sans);overflow-x:clip;

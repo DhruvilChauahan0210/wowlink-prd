@@ -144,8 +144,8 @@ function Ribbon({ label, onOpen }: { label: string; onOpen: () => void }) {
         <g className="o-sign">
           <path className="o-wash" fill={MARIGOLD} d="M160 60H360V140H160Z" />
           <g className="o-ink"><path d="M160 60H360V140H160Z" /></g>
-          <text className="soon" x="260" y="118" textAnchor="middle" fontFamily="Caveat, cursive" fontWeight="700" fontSize="56" fill="#2a1d14">SOON</text>
-          <text className="open" x="260" y="118" textAnchor="middle" fontFamily="Caveat, cursive" fontWeight="700" fontSize="56" fill="#2a1d14">OPEN</text>
+          <text className="soon" x="260" y="118" textAnchor="middle" style={{ fontFamily: "var(--font-hand), cursive" }} fontWeight="700" fontSize="56" fill="#2a1d14">SOON</text>
+          <text className="open" x="260" y="118" textAnchor="middle" style={{ fontFamily: "var(--font-hand), cursive" }} fontWeight="700" fontSize="56" fill="#2a1d14">OPEN</text>
         </g>
         <g className="o-rib-l">
           <path className="o-wash" fill={RED} d="M16 190C100 186 200 194 300 190L300 206C200 210 100 202 16 206Z" />

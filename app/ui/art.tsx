@@ -296,7 +296,7 @@ function Opening() {
         <path d="M160 250H200V320H160Z" strokeWidth="1.4" />
         <circle cx="200" cy="330" r="3" />
         <path d="M118 66H242V104H118ZM140 66L150 30M220 66L210 30M150 30H210" />
-        <text x="180" y="96" textAnchor="middle" fill={INK} stroke="none" fontFamily="Caveat, cursive" fontWeight="700" fontSize="30">OPEN</text>
+        <text x="180" y="96" textAnchor="middle" fill={INK} stroke="none" style={{ fontFamily: "var(--font-hand), cursive" }} fontWeight="700" fontSize="30">OPEN</text>
         <path d="M94 352H118L114 380H98ZM242 352H266L262 380H246Z" />
         <path d={leaves(106)} />
         <path d={leaves(254)} />
