@@ -13,19 +13,29 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Current scaffold
+## What's here
 
-- Cinematic landing page with a pinned invitation reveal, photographic occasion reel, and scroll-drawn sharing journey
-- A single animation loop with Lenis smoothing; scroll transforms update element refs directly
-- Original local celebration imagery and a reduced-motion alternative
-- Template gallery for weddings, birthdays, Garba/Navratri, and grand openings
-- Cinematic editor and guest view sharing the same invitation scene and four reveal interactions
-- Live form preview with drafts saved on the current device
-- Guest-facing invitation with event details and an inline RSVP interaction preview
-- Responsive styling and reduced-motion support
+- **A hand-drawn product.** There's no photography. Each occasion (wedding, birthday, Garba, grand opening) has an ink-and-watercolour illustration in `app/ui/art.tsx`. The home page hero is a sketchbook that draws itself.
+- **A different opening for each occasion** (`app/ui/openers.tsx`). Untie a kankotri scroll, pull a gift's bow, light a diya so the rangoli blooms, or cut a ribbon.
+- **The studio** (`/create`): edit the details with a live preview, then publish.
+- **Publishing:** a short public link (`/e/<slug>`), with sharing by link, WhatsApp, the native share sheet or a printable QR code. Each link gets its own share preview image for WhatsApp and social apps.
+- **Guests** open the link, play the opening, see a countdown, add the event to their calendar (Google or `.ics`), and RSVP without an account.
+- **The manage page** (`/manage/<slug>#k=…`): a private link for reply totals and the list, editing, and unpublishing.
 
-The editor stores drafts in this browser’s local storage. Full preview opens those saved details on the same device. The RSVP form demonstrates the interaction without sending or storing responses. Authentication, cloud persistence, uploads, QR generation, server-side publishing, RSVP storage, subscriptions, and analytics are not connected yet.
+## Configuration
 
-## Product direction
+| Variable | Used for |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
 
-The recommended MVP stack is Next.js, React, Supabase, and a recurring-payment provider selected for the Indian market. The first implementation step after this scaffold is to configure the data model and authentication, then replace the local editor state and preview alerts with persisted drafts and guest responses.
+## Current limits
+
+- Published invitations and RSVPs are stored in a local JSON file, `.data/wowlink.json` (git-ignored), behind `app/lib/store.ts`. It works for local use but won't persist on serverless hosting. The PRD's target is Supabase, which means replacing that one module.
+- There are no accounts yet. Ownership is the private manage link, so a lost manage link can't be recovered.
+- Rate limiting is in memory, for one server process.
+- Times are read as India Standard Time for the countdown and calendar files.
+- Subscriptions, analytics and the free plan's 60-day expiry aren't built yet.
+
+## Fonts
+
+The fonts are self-hosted in `app/fonts/` (OFL-licensed) so builds never need to reach Google Fonts. `app/fonts/og/` holds static TTF copies for the share-preview image renderer, which can't read woff2.

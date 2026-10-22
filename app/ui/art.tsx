@@ -44,6 +44,32 @@ export function Art({ name, className = "", drawing = false, fit = "meet", label
   );
 }
 
+/** The paint filters every drawing uses. The page mounts them once (layout.tsx); standalone images carry their own. */
+export function ArtFilters({ boil = false }: { boil?: boolean }) {
+  return <>
+    {/* a steady hand-drawn wobble for ink */}
+    <filter id="wobble" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".022" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>
+    {/* the same wobble, redrawn a few times a second, like hand-drawn animation */}
+    {boil && <filter id="boil" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="1" result="n"><animate attributeName="seed" values="1;4;7" dur="0.42s" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter>}
+    {/* loose, mottled colour that bleeds past the lines */}
+    <filter id="wash" x="-8%" y="-8%" width="116%" height="116%" colorInterpolationFilters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="3" result="warp"/><feDisplacementMap in="SourceGraphic" in2="warp" scale="8" xChannelSelector="R" yChannelSelector="G" result="shape"/><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="1" seed="8" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -.9 1.15" result="mottle"/><feComposite in="shape" in2="mottle" operator="in" result="tex"/><feOffset in="tex" dx="2.5" dy="2"/></filter>
+  </>;
+}
+
+/** The same drawing as a self-contained SVG: its own filters and no page CSS. For images rendered off the page (share previews). */
+export function StandaloneArt({ name }: { name: ArtName }) {
+  const Scene = SCENES[name];
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 440" width="360" height="440">
+      <defs>
+        <style>{".ink{filter:url(#wobble)}"}</style>
+        <ArtFilters/>
+      </defs>
+      <Scene />
+    </svg>
+  );
+}
+
 // ---------- shared pieces ----------
 
 const delay = (d: number): CSSProperties => ({ "--d": `${d}s` } as CSSProperties);

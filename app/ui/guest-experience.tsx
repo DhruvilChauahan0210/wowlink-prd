@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ATTENDANCE, LIMITS, formatInvitationDate, formatInvitationTime, type Attendance, type InvitationDraft, type InvitationTemplate } from "../lib/invitations";
+import { daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../lib/calendar";
 import { MomentMark, WowLinkBrand } from "./brand";
 import { InvitationScene } from "./invitation-scene";
 
@@ -16,6 +17,31 @@ type Props = {
 
 const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth") as ScrollBehavior;
 const REPLY_TITLE: Record<Attendance, string> = { Attending: "Joyfully, yes.", Maybe: "A little maybe.", "Not attending": "With you in spirit." };
+const hasDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
+
+/** "17 days to go", worked out on India's calendar. Rendered only in the browser so it never disagrees with the server. */
+function Countdown({ date, time }: { date: string; time: string }) {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const tick = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(tick);
+  }, []);
+  if (now === null || !hasDate(date)) return null;
+  const days = daysUntil(date, now);
+  const start = eventStartMs(date, time);
+  let count: number | null = null;
+  let label: string;
+  if (days > 1) {
+    count = days;
+    label = "days to go";
+  } else if (days === 1) label = "Tomorrow!";
+  else if (days === 0) {
+    const hours = Math.ceil((start - now) / 3_600_000);
+    label = time && hours > 0 ? (hours === 1 ? "Today, within the hour!" : `Today, in ${hours} hours`) : time ? "Happening now!" : "It’s today!";
+  } else label = "This day has passed. Thank you for being part of it.";
+  return <p className="inv-countdown">{count !== null && <span className="inv-countdown-n">{count}</span>}<span>{label}</span></p>;
+}
 
 /** Everything a guest sees: the opening, the details, the message and the RSVP. */
 export function GuestExperience({ template, draft, mode, slug }: Props) {
@@ -24,6 +50,16 @@ export function GuestExperience({ template, draft, mode, slug }: Props) {
   const [attendance, setAttendance] = useState<Attendance>("Attending");
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState("");
+  const [pageUrl, setPageUrl] = useState<string | undefined>();
+  useEffect(() => { if (live) setPageUrl(location.origin + location.pathname); }, [live]);
+
+  // Previews have no server route for the calendar file, so build it here and hand it over as a download.
+  function downloadIcs() {
+    const blob = new Blob([toIcs(draft)], { type: "text/calendar;charset=utf-8" });
+    const link = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "invitation.ics" });
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
 
   async function reply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,9 +90,11 @@ export function GuestExperience({ template, draft, mode, slug }: Props) {
     <main>
       <InvitationScene template={template} draft={draft} opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)} onDetails={() => document.getElementById("occasion-details")?.scrollIntoView({ behavior: smooth() })}/>
       <section className="inv-details-section theme-paper" id="occasion-details">
-        <div className="inv-details-heading"><h2>Save the <span className="scribble">date</span></h2><button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>Replay the invitation</button></div>
+        <div className="inv-details-heading"><h2>Save the <span className="scribble">date</span></h2><Countdown date={draft.date} time={draft.time}/><button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>Replay the invitation</button></div>
         <div className="inv-details-grid">
-          <div><span className="inv-detail-label">When</span><h3>{formatInvitationDate(draft.date, true)}</h3><p>{formatInvitationTime(draft.time)}</p></div>
+          <div><span className="inv-detail-label">When</span><h3>{formatInvitationDate(draft.date, true)}</h3><p>{formatInvitationTime(draft.time)}</p>
+            {hasDate(draft.date) && <div className="inv-calendar"><span>Add to calendar</span><a href={googleCalendarUrl({ ...draft, url: pageUrl })} target="_blank" rel="noreferrer">Google</a>{live && slug ? <a href={`/e/${slug}/invite.ics`}>Apple / Outlook</a> : <button type="button" onClick={downloadIcs}>Apple / Outlook</button>}</div>}
+          </div>
           <div><span className="inv-detail-label">Where</span><h3>{draft.venue || "A place to remember"}</h3>{draft.venue && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(draft.venue)}`} target="_blank" rel="noreferrer">Open in Maps <span aria-hidden="true">→</span></a>}</div>
         </div>
       </section>

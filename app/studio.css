@@ -253,6 +253,13 @@
 .inv-not-found p{font-size:18px;line-height:1.6;color:var(--muted);max-width:28em;margin-bottom:32px}
 .inv-not-found .inv-replay-link{margin-top:24px}
 
+/* ---------- Guest page: countdown and add-to-calendar ---------- */
+.inv-countdown{display:flex;align-items:center;gap:12px;margin:16px 0 0;font:700 30px/1.1 var(--hand);color:var(--accent);rotate:-1.5deg}
+.inv-countdown-n{display:grid;place-items:center;min-width:86px;height:74px;padding:0 16px;font:400 46px/1 var(--serif);color:var(--text);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 100' preserveAspectRatio='none'%3E%3Cpath d='M64 8C30 5 7 27 9 53 11 81 41 95 69 91 99 87 115 63 111 39 107 17 82 5 55 9 45 11 37 15 30 21' fill='none' stroke='%23a8341f' stroke-width='3' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+.inv-calendar{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;margin-top:16px}
+.inv-calendar>span{font-size:14px;color:var(--muted)}
+.cinema .inv-calendar a,.cinema .inv-calendar button{margin:0;padding:0;border:0;background:none;cursor:pointer;font:700 26px/1 var(--hand);color:var(--accent-soft);text-decoration:underline wavy;text-underline-offset:6px}
+
 /* ---------- Publishing: field errors, share tools, the "it's live" panel ---------- */
 .studio-error{margin:6px 2px 0;font:700 20px/1.15 var(--hand);color:var(--accent)}
 .studio-field input[aria-invalid=true],.studio-field textarea[aria-invalid=true]{background-image:var(--in-rough-focus)}
