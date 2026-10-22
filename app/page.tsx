@@ -1,8 +1,8 @@
 import CinematicHome from "./cinematic-home";
 
 export const metadata = {
-  title: "WowLink — Make it unforgettable",
-  description: "Beautiful, interactive invitation websites for weddings, birthdays, Garba, and new beginnings. Create a little world for your biggest moments.",
+  title: "WowLink — Hand-drawn invitations, shared with one link",
+  description: "Hand-drawn invitation pages for weddings, birthdays, Garba and grand openings. Pick a drawing, add your story, and share it with one link.",
 };
 
 export default function Home() {

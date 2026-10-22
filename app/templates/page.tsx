@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { invitationTemplates } from "../lib/invitations";
+import { Art } from "../ui/art";
 import { WowLinkBrand } from "../ui/brand";
+import { Flower } from "../ui/doodles";
 
 export const metadata = {
   title: "Explore invitation templates — WowLink",
@@ -14,15 +16,15 @@ const collection = [
 ];
 
 export default function TemplatesPage() {
-  return <div className="cinema cin-catalog">
-    <header className="cin-catalog-nav"><WowLinkBrand/><Link href="/" className="cin-label">BACK TO THE BEGINNING ↗</Link></header>
+  return <div className="cinema cin-catalog theme-paper">
+    <header className="cin-catalog-nav"><WowLinkBrand/><Link href="/" className="cin-catalog-back">← Back to home</Link></header>
     <main>
-      <div className="cin-catalog-heading"><span className="cin-label cin-gold">THE WOWLINK COLLECTION / 01—04</span><h1>An occasion.<br/><em>A whole world.</em></h1><p>Choose a scene that feels like your day.<br/>Add your story. Make it yours.</p></div>
+      <div className="cin-catalog-heading"><h1>Pick a <em>drawing.</em><Flower className="doodle h-flower"/></h1><p>Every invitation starts as a sketch. Choose one that feels like your day, add your story, share one link.</p></div>
       <div className="cin-catalog-grid">{invitationTemplates.map((item, index) => <article className="cin-occasion-card" key={item.id}>
-        <Link className="cin-occasion-image" href={`/e/preview?template=${item.id}`} aria-label={`Preview ${item.category.toLowerCase()}`}><img src={`/media/${item.image}`} alt={item.category.toLowerCase()} loading={index === 0 ? "eager" : "lazy"}/><div className="cin-card-shade"/><span className="cin-card-tag cin-label">0{index + 1} / {item.category}</span><div className="cin-card-title"><h3>{collection[index].title}</h3><span className="cin-card-preview">PREVIEW THE EXPERIENCE <b>↗</b></span></div></Link>
-        <div className="cin-card-bottom"><p>{collection[index].detail}</p><Link href={`/create?template=${item.id}`}>Make it yours ↗</Link></div>
+        <Link className="cin-occasion-image" href={`/e/preview?template=${item.id}`} aria-label={`Preview ${item.category.toLowerCase()}`}><span className="cin-photo"><Art name={item.id} fit="slice" decorative/></span><span className="cin-card-title"><span className="cin-card-kind">{item.category}</span><h3>{collection[index].title}</h3></span></Link>
+        <div className="cin-card-bottom"><p>{collection[index].detail}</p><Link href={`/create?template=${item.id}`}>Make it yours <span aria-hidden="true">→</span></Link></div>
       </article>)}</div>
     </main>
-    <footer className="cin-catalog-footer"><span className="cin-label">A LITTLE WORLD FOR YOUR BIGGEST MOMENTS.</span><Link href="/" className="cin-label">© 2026 WOWLINK</Link></footer>
+    <footer className="cin-catalog-footer"><span>Made with love, shared with one link.</span><Link href="/">© 2026 WowLink</Link></footer>
   </div>;
 }
