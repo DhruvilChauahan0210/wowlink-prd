@@ -1,0 +1,49 @@
+name: Tests
+
+# Every push to main runs the whole Playwright suite (unit + end-to-end) against a production build.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push makes an older run of the same branch pointless.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Pinned rather than ubuntu-latest, so a runner image change can't break Playwright's system dependencies.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Run the tests
+        run: npm test
+
+      - name: Keep the report when something fails
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

@@ -22,6 +22,14 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Guests** open the link, play the opening, see a countdown, add the event to their calendar (Google or `.ics`), and RSVP without an account.
 - **The manage page** (`/manage/<slug>#k=…`): a private link for reply totals and the list, editing, and unpublishing.
 
+## Tests
+
+```bash
+npm test
+```
+
+Playwright runs the unit and end-to-end tests against a production build on port 3100, with its own build folder and data file, so a running `npm run dev` isn't affected. GitHub Actions runs the same suite on every push to `main` (`.github/workflows/test.yml`). If a run fails, its report is attached to the run.
+
 ## Configuration
 
 | Variable | Used for |
