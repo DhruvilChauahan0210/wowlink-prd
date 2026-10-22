@@ -2,17 +2,21 @@
 
 import { useEffect, useId, useState } from "react";
 import QRCode from "qrcode";
+import { MESSAGES } from "../lib/i18n";
+import type { Lang } from "../lib/invitations";
 
-type Props = { url: string; title: string };
+/** `lang`: the invitation's language, for the message guests receive. */
+type Props = { url: string; title: string; lang?: Lang };
 
 /** Copy, WhatsApp, the phone's share sheet, and a printable QR code for a published invitation. */
-export function ShareTools({ url, title }: Props) {
+export function ShareTools({ url, title, lang = "en" }: Props) {
   const fieldId = useId();
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [qr, setQr] = useState("");
   const [showQr, setShowQr] = useState(false);
-  const message = `You’re invited: ${title}\n${url}`;
+  const invited = MESSAGES[lang].invited(title);
+  const message = `${invited}\n${url}`;
 
   useEffect(() => setCanShare(typeof navigator !== "undefined" && "share" in navigator), []);
   useEffect(() => {
@@ -39,7 +43,7 @@ export function ShareTools({ url, title }: Props) {
     </div>
     <div className="share-actions">
       <a className="share-chip" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer">WhatsApp</a>
-      {canShare && <button type="button" className="share-chip" onClick={() => navigator.share({ title, text: `You’re invited: ${title}`, url }).catch(() => undefined)}>Share…</button>}
+      {canShare && <button type="button" className="share-chip" onClick={() => navigator.share({ title, text: invited, url }).catch(() => undefined)}>Share…</button>}
       <button type="button" className="share-chip" aria-expanded={showQr} onClick={() => setShowQr(!showQr)}>{showQr ? "Hide QR code" : "QR code"}</button>
       <a className="share-chip" href={url} target="_blank" rel="noreferrer">Open</a>
     </div>

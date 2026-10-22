@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { formatEventDay, formatInvitationDate, formatInvitationTime, getInvitationTemplate, presetEvent, scheduleItemError, shiftDate, sortSchedule, validateDraft, type ScheduleItem } from "../../app/lib/invitations";
+import { formatEventDay, formatInvitationDate, formatInvitationTime, formatShortDay, getInvitationTemplate, presetEvent, scheduleItemError, shiftDate, sortSchedule, validateDraft, type ScheduleItem } from "../../app/lib/invitations";
 
 const good = { title: "Aarav & Meera", date: "2026-11-08", time: "18:00", venue: "Surat", message: "", events: [] as ScheduleItem[] };
 const event = (overrides: Partial<ScheduleItem> = {}): ScheduleItem => ({ id: "mehndi", name: "Mehndi", date: "2026-11-06", time: "16:00", venue: "", ...overrides });
 
 test("a complete draft is valid, and its text is trimmed", () => {
   const result = validateDraft({ ...good, title: "  Aarav & Meera  ", venue: " Surat " });
-  expect(result).toEqual({ ok: true, value: { ...good } });
+  expect(result).toEqual({ ok: true, value: { ...good, language: "en" } });
 });
 
 test("title, date and venue are required", () => {
@@ -91,4 +91,29 @@ test("the schedule is shown in the order things happen", () => {
   ]).map((e) => e.id);
   expect(order).toEqual(["mehndi", "puja", "wedding", "reception"]);
   expect(formatEventDay("2026-11-06")).toBe("Fri, 6 Nov");
+});
+
+// ---------- Gujarati ----------
+
+test("the language is English unless Gujarati is chosen", () => {
+  expect(validateDraft({ ...good, language: "gu" })).toMatchObject({ ok: true, value: { language: "gu" } });
+  expect(validateDraft({ ...good, language: "fr" })).toMatchObject({ ok: true, value: { language: "en" } });
+});
+
+test("dates and times read naturally in Gujarati, the way an invitation says them", () => {
+  expect(formatInvitationDate("2026-11-08", true, "gu")).toBe("8 નવેમ્બર 2026");
+  expect(formatInvitationDate("2026-11-08", false, "gu")).toBe("8 નવે 2026");
+  expect(formatEventDay("2026-11-06", "gu")).toBe("શુક્ર, 6 નવે");
+  expect(formatInvitationTime("10:00", "gu")).toBe("સવારે 10:00 વાગ્યે");
+  expect(formatInvitationTime("13:30", "gu")).toBe("બપોરે 1:30 વાગ્યે");
+  expect(formatInvitationTime("18:00", "gu")).toBe("સાંજે 6:00 વાગ્યે");
+  expect(formatInvitationTime("21:00", "gu")).toBe("રાત્રે 9:00 વાગ્યે");
+  expect(formatInvitationTime("00:30", "gu")).toBe("રાત્રે 12:30 વાગ્યે");
+  expect(formatInvitationDate("nope", true, "gu")).toBe("યાદગાર દિવસ");
+});
+
+test("a moment's day is on India's calendar", () => {
+  // 19:00 UTC on 21 October is already 22 October in India.
+  expect(formatShortDay("2026-10-21T19:00:00Z")).toBe("22 Oct");
+  expect(formatShortDay("2026-10-21T19:00:00Z", "gu")).toBe("22 ઑક્ટો");
 });

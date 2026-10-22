@@ -64,8 +64,8 @@ function serialized<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
-// Invitations saved before schedules or guest lists existed simply have none.
-const withDefaults = (e: StoredExperience): StoredExperience => ({ ...e, events: e.events ?? [], guests: e.guests ?? [], publicEvents: e.publicEvents ?? "all" });
+// Invitations saved before schedules, guest lists or languages existed: none of the first two, and English.
+const withDefaults = (e: StoredExperience): StoredExperience => ({ ...e, events: e.events ?? [], guests: e.guests ?? [], publicEvents: e.publicEvents ?? "all", language: e.language ?? "en" });
 
 async function load(): Promise<Db> {
   try {
@@ -113,7 +113,7 @@ function newSlug(taken: Set<string>, length = 7) {
   }
 }
 
-const draftOf = ({ title, date, time, venue, message, events }: Experience): InvitationDraft => ({ title, date, time, venue, message, events });
+const draftOf = ({ title, date, time, venue, message, events, language }: Experience): InvitationDraft => ({ title, date, time, venue, message, events, language });
 /** The invitation as one link shows it: only the fields a guest may see, and only their celebrations. */
 const toPublic = (e: Experience, filter: EventFilter): PublicExperience => ({ slug: e.slug, templateId: e.templateId, ...viewFor(draftOf(e), filter) });
 const strip = ({ keyHash: _keyHash, ...experience }: StoredExperience): Experience => experience;

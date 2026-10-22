@@ -51,7 +51,7 @@ html.lenis,html.lenis body{height:auto}
   /* Gujarati follows each family, so names and titles typed in Gujarati render properly. Latin text never reaches it. */
   --sans:var(--font-sans),var(--font-gujarati),system-ui,-apple-system,'Segoe UI',sans-serif;
   --serif:var(--font-serif),var(--font-gujarati),Georgia,'Times New Roman',serif;
-  --hand:var(--font-hand),var(--font-gujarati),'Segoe Script','Bradley Hand',cursive;
+  --hand:var(--font-hand),var(--font-hand-gujarati),var(--font-gujarati),'Segoe Script','Bradley Hand',cursive;
   --gu:var(--font-gujarati),var(--serif);
   --r-sm:6px;--r-md:12px;
   --gutter:clamp(20px,5vw,72px);

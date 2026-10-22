@@ -1,6 +1,11 @@
 /** One event in an occasion's schedule, e.g. the mehndi or the sangeet. A blank venue means "the main venue". */
 export type ScheduleItem = { id: string; name: string; date: string; time: string; venue: string };
 
+/** The languages a guest can read their invitation in. */
+export const LANGS = ["en", "gu"] as const;
+export type Lang = (typeof LANGS)[number];
+export const isLang = (value: unknown): value is Lang => LANGS.includes(value as Lang);
+
 export type InvitationDraft = {
   title: string;
   date: string;
@@ -9,6 +14,8 @@ export type InvitationDraft = {
   message: string;
   /** Optional: the separate events of a multi-day occasion, like a Gujarati wedding. */
   events: ScheduleItem[];
+  /** The language guests see first (they can switch). Missing means English. */
+  language?: Lang;
 };
 
 export const invitationTemplates = [
@@ -66,7 +73,7 @@ const SAMPLE_SCHEDULE: Partial<Record<InvitationTemplate["id"], ScheduleItem[]>>
 };
 
 export function initialDraft(template: InvitationTemplate): InvitationDraft {
-  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })) };
+  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })), language: "en" };
 }
 export const draftKey = (id: string) => `wowlink:draft:${id}`;
 
@@ -80,26 +87,53 @@ export function readDraft(id: string): InvitationDraft | null {
     if (!["title", "date", "time", "venue", "message"].every(key => typeof data[key] === "string")) return null;
     // Drafts saved before schedules existed simply have none.
     const events = Array.isArray(data.events) ? data.events.filter(isScheduleItem) : [];
-    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events };
+    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events, language: isLang(data.language) ? data.language : "en" };
   } catch { return null; }
 }
 
-export function formatInvitationDate(value: string, long = false) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "A date to remember";
-  const date = new Date(`${value}T12:00:00`);
-  if (Number.isNaN(date.getTime())) return "A date to remember";
-  return date.toLocaleDateString("en-IN", { day: "numeric", month: long ? "long" : "short", year: "numeric" });
+// ---------- dates and times, in English or Gujarati ----------
+// Written out from fixed tables (not the browser's or server's locale data), so a page renders the same everywhere.
+
+const MONTHS = {
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  gu: ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઑગસ્ટ", "સપ્ટેમ્બર", "ઑક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"],
+};
+const MONTHS_SHORT = {
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  gu: ["જાન્યુ", "ફેબ્રુ", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઑગસ્ટ", "સપ્ટે", "ઑક્ટો", "નવે", "ડિસે"],
+};
+const WEEKDAYS = { en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], gu: ["રવિ", "સોમ", "મંગળ", "બુધ", "ગુરુ", "શુક્ર", "શનિ"] };
+const dateParts = (value: string) => {
+  const d = new Date(`${value}T12:00:00Z`);
+  return { day: d.getUTCDate(), month: d.getUTCMonth(), year: d.getUTCFullYear(), weekday: d.getUTCDay() };
+};
+
+/** "8 November 2026" / "8 Nov 2026"; in Gujarati "8 નવેમ્બર 2026" / "8 નવે 2026". */
+export function formatInvitationDate(value: string, long = false, lang: Lang = "en") {
+  if (!isRealDate(value)) return lang === "gu" ? "યાદગાર દિવસ" : "A date to remember";
+  const { day, month, year } = dateParts(value);
+  return `${day} ${(long ? MONTHS : MONTHS_SHORT)[lang][month]} ${year}`;
 }
 /** "Fri, 6 Nov": for schedule entries, where the year is already obvious. */
-export function formatEventDay(value: string) {
-  if (!isRealDate(value)) return "Date to come";
-  return new Date(`${value}T12:00:00`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+export function formatEventDay(value: string, lang: Lang = "en") {
+  if (!isRealDate(value)) return lang === "gu" ? "તારીખ હવે પછી" : "Date to come";
+  const { day, month, weekday } = dateParts(value);
+  return `${WEEKDAYS[lang][weekday]}, ${day} ${MONTHS_SHORT[lang][month]}`;
 }
-export function formatInvitationTime(value: string) {
+/** "22 Oct" for a moment (an ISO timestamp), on India's calendar. */
+export function formatShortDay(iso: string, lang: Lang = "en") {
+  const d = new Date(Date.parse(iso) + 5.5 * 3600_000);
+  return Number.isNaN(d.getTime()) ? "" : `${d.getUTCDate()} ${MONTHS_SHORT[lang][d.getUTCMonth()]}`;
+}
+/** "6:00 PM"; in Gujarati the way an invitation says it, with the part of the day: "સાંજે 6:00 વાગ્યે". */
+export function formatInvitationTime(value: string, lang: Lang = "en") {
   if (!/^\d{2}:\d{2}$/.test(value)) return "";
   const [hours, minutes] = value.split(":").map(Number);
   if (hours > 23 || minutes > 59) return "";
-  return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${hours >= 12 ? "PM" : "AM"}`;
+  const clock = `${hours % 12 || 12}:${String(minutes).padStart(2, "0")}`;
+  if (lang === "en") return `${clock} ${hours >= 12 ? "PM" : "AM"}`;
+  const part = hours >= 4 && hours < 12 ? "સવારે" : hours >= 12 && hours < 16 ? "બપોરે" : hours >= 16 && hours < 20 ? "સાંજે" : "રાત્રે";
+  return `${part} ${clock} વાગ્યે`;
 }
 
 // ---------- publishing: shared by the studio (to show errors) and the server (to enforce them) ----------
@@ -142,7 +176,7 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
     // "main" is reserved: calendar links use ?event=main for the main occasion.
     return { id: /^[\w-]{1,40}$/.test(id) && id !== "main" ? id : newEventId(), name: text("name", item), date: text("date", item), time: text("time", item), venue: text("venue", item) };
   });
-  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events };
+  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events, language: isLang(data.language) ? data.language : "en" };
   const errors: DraftErrors = {};
   if (!value.title) errors.title = "Add the names or a title for the occasion.";
   else if (value.title.length > LIMITS.title) errors.title = `Keep the title under ${LIMITS.title} characters.`;

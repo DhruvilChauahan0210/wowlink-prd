@@ -4,7 +4,7 @@ let counter = 0;
 /** A different pretend client address each call, so per-client rate limits don't couple unrelated tests. */
 export const freshIp = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${(counter++ % 250) + 1}`;
 
-export type Draft = { title: string; date: string; time: string; venue: string; message: string; events?: { id: string; name: string; date: string; time: string; venue: string }[] };
+export type Draft = { title: string; date: string; time: string; venue: string; message: string; events?: { id: string; name: string; date: string; time: string; venue: string }[]; language?: "en" | "gu" };
 export const sampleDraft = (overrides: Partial<Draft> = {}): Draft => ({
   title: "Aarav & Meera",
   date: "2026-11-08",

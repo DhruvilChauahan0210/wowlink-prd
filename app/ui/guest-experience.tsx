@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ATTENDANCE, LIMITS, formatEventDay, formatInvitationDate, formatInvitationTime, sortSchedule, type Attendance, type InvitationTemplate, type ScheduleItem } from "../lib/invitations";
+import { ATTENDANCE, LIMITS, formatEventDay, formatInvitationDate, formatInvitationTime, formatShortDay, isLang, sortSchedule, type Attendance, type InvitationTemplate, type Lang, type ScheduleItem } from "../lib/invitations";
 import { calendarEvents, daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../lib/calendar";
 import { answerFor, type AudienceView, type ByEvent } from "../lib/guests";
+import { GUEST_TEXT, LANG_KEY, type GuestText } from "../lib/i18n";
 import { MomentMark, WowLinkBrand } from "./brand";
 import { Bowl, Diya, Flower, Leaf, Note, Ring, Star } from "./doodles";
 import { InvitationScene } from "./invitation-scene";
@@ -27,34 +28,26 @@ type Props = {
 };
 
 const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth") as ScrollBehavior;
-const REPLY_TITLE: Record<Attendance, string> = { Attending: "Joyfully, yes.", Maybe: "A little maybe.", "Not attending": "With you in spirit." };
 const maps = (place: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
-const people = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
-
-/** "Mehndi", "Mehndi and Sangeet", "Mehndi, Sangeet and Reception" */
-const listOf = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`);
 
 /** One line on what a reply said, e.g. "Coming to the Sangeet and Reception · 4 people". */
-function describeReply(attendance: Attendance, chosen: ScheduleItem[], shown: number, countFor: (id: string) => number, party: number) {
-  if (attendance === "Not attending") return "Can’t make it this time.";
+function describeReply(t: GuestText, attendance: Attendance, chosen: ScheduleItem[], shown: number, countFor: (id: string) => number, party: number) {
   const counts = chosen.map(e => countFor(e.id));
   const same = counts.every(n => n === counts[0]);
-  const names = shown > 1 && chosen.length ? listOf(chosen.map((e, i) => (same ? e.name : `${e.name} (${counts[i]})`))) : "";
-  const size = same ? ` · ${people(chosen.length ? counts[0] : party)}` : "";
-  if (attendance === "Maybe") return names ? `A maybe for the ${names}${size}.` : `A maybe${size}.`;
-  return names ? `Coming to the ${names}${size}.` : `Coming${size}.`;
+  const names = shown > 1 ? chosen.map((e, i) => (same ? e.name : `${e.name} (${counts[i]})`)) : [];
+  return t.describe(attendance, names, same ? ` · ${t.people(chosen.length ? counts[0] : party)}` : "");
 }
 
 /** A little drawing that fits each kind of event. */
 function EventDoodle({ name }: { name: string }) {
   const n = name.toLowerCase();
-  if (/mehndi|mehendi|henna/.test(n)) return <Leaf className="doodle"/>;
-  if (/haldi|pithi|turmeric/.test(n)) return <Bowl className="doodle"/>;
-  if (/sangeet|garba|dandiya|raas|music|dance/.test(n)) return <Note className="doodle"/>;
-  if (/engage|sagai|ring|roka/.test(n)) return <Ring className="doodle"/>;
-  if (/puja|pooja|ganesh|havan/.test(n)) return <Diya className="doodle"/>;
-  if (/wedding|lagna|lagan|vivah|phera|ceremony|shaadi/.test(n)) return <MomentMark className="doodle"/>;
-  if (/reception|dinner|party|cocktail/.test(n)) return <Star className="doodle"/>;
+  if (/mehndi|mehendi|henna|મહેંદી/.test(n)) return <Leaf className="doodle"/>;
+  if (/haldi|pithi|turmeric|પીઠી|હલદી/.test(n)) return <Bowl className="doodle"/>;
+  if (/sangeet|garba|dandiya|raas|music|dance|સંગીત|ગરબા|રાસ/.test(n)) return <Note className="doodle"/>;
+  if (/engage|sagai|ring|roka|સગાઈ/.test(n)) return <Ring className="doodle"/>;
+  if (/puja|pooja|ganesh|havan|પૂજા|ગણેશ/.test(n)) return <Diya className="doodle"/>;
+  if (/wedding|lagna|lagan|vivah|phera|ceremony|shaadi|લગ્ન|વિવાહ/.test(n)) return <MomentMark className="doodle"/>;
+  if (/reception|dinner|party|cocktail|રિસેપ્શન|ભોજન/.test(n)) return <Star className="doodle"/>;
   return <Flower className="doodle"/>;
 }
 
@@ -64,7 +57,7 @@ const hasDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
  * "17 days to go", worked out on India's calendar. Rendered only in the browser so it never disagrees with the server.
  * Once the main day has passed it counts to the next celebration still to come ("Tomorrow: the Reception!").
  */
-function Countdown({ date, time, events }: { date: string; time: string; events: ScheduleItem[] }) {
+function Countdown({ date, time, events, t }: { date: string; time: string; events: ScheduleItem[]; t: GuestText }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     setNow(Date.now());
@@ -77,20 +70,20 @@ function Countdown({ date, time, events }: { date: string; time: string; events:
     const next = events.find(e => hasDate(e.date) && daysUntil(e.date, now) >= 0);
     if (next) target = next;
   }
-  const what = target.name ? `the ${target.name}` : "";
+  const what = target.name;
   const days = daysUntil(target.date, now);
   const start = eventStartMs(target.date, target.time);
+  const c = t.countdown;
   let count: number | null = null;
   let label: string;
   if (days > 1) {
     count = days;
-    label = what ? `days to ${what}` : "days to go";
-  } else if (days === 1) label = what ? `Tomorrow: ${what}!` : "Tomorrow!";
+    label = c.days(what);
+  } else if (days === 1) label = c.tomorrow(what);
   else if (days === 0) {
     const hours = Math.ceil((start - now) / 3_600_000);
-    const today = what ? `Today: ${what}` : "Today";
-    label = target.time && hours > 0 ? (hours === 1 ? `${today}, within the hour!` : `${today}, in ${hours} hours`) : target.time ? (what ? `Happening now: ${what}!` : "Happening now!") : what ? `${today}!` : "It’s today!";
-  } else label = "This day has passed. Thank you for being part of it.";
+    label = target.time && hours > 0 ? (hours === 1 ? c.withinHour(what) : c.inHours(what, hours)) : target.time ? c.now(what) : c.today(what);
+  } else label = c.passed;
   return <p className="inv-countdown">{count !== null && <span className="inv-countdown-n">{count}</span>}<span>{label}</span></p>;
 }
 
@@ -102,6 +95,22 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const schedule = sortSchedule(draft.events);
   const allIds = schedule.map(e => e.id);
   const [opened, setOpened] = useState(false);
+
+  // The host's language first; on a live link, a guest's own choice (kept on their device) wins once the page is up.
+  const [lang, setLang] = useState<Lang>(draft.language ?? "en");
+  const t = GUEST_TEXT[lang];
+  useEffect(() => {
+    if (!live) return setLang(draft.language ?? "en");
+    try {
+      const saved = localStorage.getItem(LANG_KEY);
+      if (isLang(saved)) setLang(saved);
+    } catch { /* storage blocked: keep the host's choice */ }
+  }, [live, draft.language]);
+  function switchLanguage() {
+    const next = lang === "en" ? "gu" : "en";
+    setLang(next);
+    if (live) try { localStorage.setItem(LANG_KEY, next); } catch { /* fine: this visit only */ }
+  }
 
   // The form, seeded from the household's reply when there is one. It keeps its values between sends.
   const [attendance, setAttendance] = useState<Attendance>(earlier?.attendance ?? "Attending");
@@ -123,7 +132,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const [replied, setReplied] = useState(!!earlier);
   const [sentAt, setSentAt] = useState(earlier?.at);
   const [error, setError] = useState("");
-  const [whichError, setWhichError] = useState("");
+  const [whichError, setWhichError] = useState(false);
   const [pageUrl, setPageUrl] = useState<string | undefined>();
   const whichRef = useRef<HTMLFieldSetElement>(null);
   const attendanceRef = useRef<HTMLFieldSetElement>(null);
@@ -162,7 +171,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
     event.preventDefault();
     setError("");
     if (askWhich && !chosen.length) {
-      setWhichError("Tick at least one celebration, or choose Not attending.");
+      setWhichError(true);
       whichRef.current?.querySelector("input")?.focus();
       return;
     }
@@ -195,7 +204,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
       setJustSent(true);
       setState("done");
     } catch (failure) {
-      setError((failure as Error).message || "Your reply didn’t go through. Check your connection and try again.");
+      setError((failure as Error).message || t.offline);
       setState("idle");
     }
   }
@@ -215,41 +224,46 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
 
   const toggle = (id: string) => {
     setTicked(now => (now.includes(id) ? now.filter(x => x !== id) : [...now, id]));
-    setWhichError("");
+    setWhichError(false);
   };
-  const countLabel = attendance === "Maybe" ? "How many of you might come?" : guest ? "How many of you are coming, in all?" : schedule.length > 1 ? "How many of you are coming?" : "How many guests?";
-  // India time on both server and browser, so the first render matches wherever either one is.
-  const sentOn = sentAt ? new Date(sentAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" }) : "";
+  // Written from fixed tables on India's calendar, so server and browser render the same text.
+  const sentOn = sentAt ? formatShortDay(sentAt, lang) : "";
+  const [saveThe, saveWord] = t.saveThe;
+  const [pendingThe, pendingWord] = t.pendingHeading;
+  const [celebrationsThe, celebrationsWord] = t.celebrationsHeading(!!guest);
 
-  return <div className="cinema invitation-page">
+  return <div className="cinema invitation-page" lang={lang}>
     <header className="invitation-header theme-paper">
       <WowLinkBrand/>
       {!live && <span className="invitation-context">{mode === "draft" ? "Draft preview" : "Template preview"}<i aria-hidden="true">·</i>{template.category}</span>}
       {previewOnly && <span className="invitation-context">Host preview</span>}
-      <Link className="cin-cta cin-cta-outline" href={`/create?template=${template.id}`}>{mode === "draft" ? "Back to editor" : live ? "Make your own" : "Make it yours"}</Link>
+      <div className="invitation-header-actions">
+        <button type="button" className="inv-lang" aria-label={t.switchTo} onClick={switchLanguage}><span lang={lang === "en" ? "gu" : "en"}>{lang === "en" ? "ગુજરાતી" : "English"}</span></button>
+        <Link className="cin-cta cin-cta-outline" href={`/create?template=${template.id}`}>{mode === "draft" ? "Back to editor" : live ? t.makeYourOwn : "Make it yours"}</Link>
+      </div>
     </header>
     <main>
-      {previewOnly && guest && <p className="inv-preview-banner" role="note">This is how {guest.name} sees their invitation. Replies sent from this preview don’t count.</p>}
-      <InvitationScene template={template} draft={draft} addressee={guest?.name} opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)} onDetails={() => document.getElementById("occasion-details")?.scrollIntoView({ behavior: smooth() })}/>
+      {previewOnly && guest && <p className="inv-preview-banner" role="note" lang="en">This is how {guest.name} sees their invitation. Replies sent from this preview don’t count.</p>}
+      <InvitationScene template={template} draft={draft} lang={lang} addressee={guest?.name} opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)} onDetails={() => document.getElementById("occasion-details")?.scrollIntoView({ behavior: smooth() })}/>
       {draft.pending ? <section className="inv-details-section inv-pending theme-paper" id="occasion-details">
-        <h2>Details to <span className="scribble">follow</span></h2>
-        <p>The hosts are updating the details of your invitation. Please check back soon.</p>
+        <h2>{pendingThe} <span className="scribble">{pendingWord}</span></h2>
+        <p>{t.pendingBody}</p>
       </section> : <>
         <section className="inv-details-section theme-paper" id="occasion-details">
-          <div className="inv-details-heading"><h2>Save the <span className="scribble">date</span></h2><Countdown date={draft.date} time={draft.time} events={schedule}/><button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>Replay the invitation</button></div>
+          <div className="inv-details-heading"><h2>{saveThe} <span className="scribble">{saveWord}</span></h2><Countdown date={draft.date} time={draft.time} events={schedule} t={t}/><button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>{t.replay}</button></div>
           <div className="inv-details-grid">
-            <div><span className="inv-detail-label">When</span><h3>{formatInvitationDate(draft.date, true)}</h3><p>{[mainItem?.name, formatInvitationTime(draft.time)].filter(Boolean).join(" · ")}</p>
-              {hasDate(draft.date) && <div className="inv-calendar"><span>Add to calendar</span><a href={googleCalendarUrl(mainEntry)} target="_blank" rel="noreferrer">Google</a>{base ? <a href={`${base}/invite.ics${schedule.length ? "?event=main" : ""}`}>Apple / Outlook</a> : <button type="button" onClick={() => downloadIcs([mainEntry])}>Apple / Outlook</button>}</div>}
+            <div><span className="inv-detail-label">{t.when}</span><h3>{formatInvitationDate(draft.date, true, lang)}</h3><p>{[mainItem?.name, formatInvitationTime(draft.time, lang)].filter(Boolean).join(" · ")}</p>
+              {hasDate(draft.date) && <div className="inv-calendar"><span>{t.addToCalendar}</span><a href={googleCalendarUrl(mainEntry)} target="_blank" rel="noreferrer">Google</a>{base ? <a href={`${base}/invite.ics${schedule.length ? "?event=main" : ""}`}>Apple / Outlook</a> : <button type="button" onClick={() => downloadIcs([mainEntry])}>Apple / Outlook</button>}</div>}
             </div>
-            <div><span className="inv-detail-label">Where</span><h3>{draft.venue || "A place to remember"}</h3>{draft.venue && <a href={maps(draft.venue)} target="_blank" rel="noreferrer">Open in Maps <span aria-hidden="true">→</span></a>}</div>
+            <div><span className="inv-detail-label">{t.where}</span><h3>{draft.venue || t.somewhere}</h3>{draft.venue && <a href={maps(draft.venue)} target="_blank" rel="noreferrer">{t.openInMaps} <span aria-hidden="true">→</span></a>}</div>
           </div>
         </section>
         {showSchedule && <section className="inv-schedule-section theme-paper" aria-labelledby="schedule-heading">
           <div className="inv-schedule-head">
-            <h2 id="schedule-heading">{guest ? "Your" : "The"} <span className="scribble">celebrations</span></h2>
+            <h2 id="schedule-heading">{celebrationsThe} <span className="scribble">{celebrationsWord}</span></h2>
             {base
-              ? <a className="cin-text-link" href={`${base}/invite.ics`}>Add every event to your calendar <span aria-hidden="true">→</span></a>
-              : <button type="button" className="cin-text-link" onClick={() => downloadIcs(calendarEvents(draft))}>Add every event to your calendar <span aria-hidden="true">→</span></button>}
+              ? <a className="cin-text-link" href={`${base}/invite.ics`}>{t.addAll} <span aria-hidden="true">→</span></a>
+              : <button type="button" className="cin-text-link" onClick={() => downloadIcs(calendarEvents(draft))}>{t.addAll} <span aria-hidden="true">→</span></button>}
           </div>
           <ol className="inv-timeline">
             {schedule.map(item => {
@@ -257,72 +271,72 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
               const entry = { title: `${item.name} · ${draft.title}`, date: item.date, time: item.time, venue, message: draft.message, url: pageUrl };
               return <li key={item.id} className="inv-timeline-item">
                 <span className="inv-timeline-mark" aria-hidden="true"><EventDoodle name={item.name}/></span>
-                <span className="inv-timeline-day">{formatEventDay(item.date)}</span>
+                <span className="inv-timeline-day">{formatEventDay(item.date, lang)}</span>
                 <h3>{item.name}</h3>
-                <p>{[formatInvitationTime(item.time) || "All day", venue].filter(Boolean).join(" · ")}</p>
+                <p>{[formatInvitationTime(item.time, lang) || t.allDay, venue].filter(Boolean).join(" · ")}</p>
                 <div className="inv-calendar">
-                  <a href={googleCalendarUrl(entry)} target="_blank" rel="noreferrer" aria-label={`Add the ${item.name} to Google Calendar`}>Google</a>
+                  <a href={googleCalendarUrl(entry)} target="_blank" rel="noreferrer" aria-label={t.addGoogle(item.name)}>Google</a>
                   {base
-                    ? <a href={`${base}/invite.ics?event=${item.id}`} aria-label={`Add the ${item.name} to Apple or Outlook calendar`}>Apple / Outlook</a>
-                    : <button type="button" onClick={() => downloadIcs([entry])} aria-label={`Add the ${item.name} to Apple or Outlook calendar`}>Apple / Outlook</button>}
-                  {item.venue && item.venue !== draft.venue && <a href={maps(item.venue)} target="_blank" rel="noreferrer" aria-label={`Map for the ${item.name}`}>Map</a>}
+                    ? <a href={`${base}/invite.ics?event=${item.id}`} aria-label={t.addApple(item.name)}>Apple / Outlook</a>
+                    : <button type="button" onClick={() => downloadIcs([entry])} aria-label={t.addApple(item.name)}>Apple / Outlook</button>}
+                  {item.venue && item.venue !== draft.venue && <a href={maps(item.venue)} target="_blank" rel="noreferrer" aria-label={t.mapFor(item.name)}>{t.map}</a>}
                 </div>
               </li>;
             })}
           </ol>
         </section>}
       </>}
-      <section className="inv-message-section theme-dark"><MomentMark/><blockquote>{draft.message || "We would love to share this moment with you."}</blockquote><span className="inv-message-sign">With love, {draft.title}</span></section>
+      <section className="inv-message-section theme-dark"><MomentMark/><blockquote>{draft.message || t.defaultMessage}</blockquote><span className="inv-message-sign">{t.withLove(draft.title)}</span></section>
       {!draft.pending && <section className="inv-rsvp-section theme-paper" aria-labelledby="rsvp-heading">
-        <div><h2 id="rsvp-heading">Will you be there?</h2><p>{schedule.length > 1 ? "A quick reply means a lot. Let us know which celebrations you can be part of." : "A quick reply means a lot. Let us know if you can be part of the day."}</p></div>
+        <div><h2 id="rsvp-heading">{t.rsvpHeading}</h2><p>{t.rsvpIntro(schedule.length > 1)}</p></div>
         <div className="inv-rsvp-card">
           {state === "done" ? <div className="inv-rsvp-confirmation" role="status">
             <MomentMark/>
-            <span className="inv-confirm-label">{!sends ? "Reply preview" : justSent ? (updated ? "Reply updated" : "Reply sent") : guest ? `Reply from ${guest.name}` : "Your reply"}</span>
-            <h3>{REPLY_TITLE[attendance]}</h3>
-            <p className="inv-rsvp-summary">{describeReply(attendance, chosen, schedule.length, countFor, party)}</p>
-            {sends && guest && !justSent && <p className="inv-rsvp-meta">{name ? `Sent by ${name}` : "Sent"}{sentOn && ` on ${sentOn}`}. It’s one reply for everyone on this invitation.</p>}
-            {fresh.length > 0 && <p className="inv-rsvp-fresh">New since then: the {listOf(fresh.map(e => e.name))}. Let them know if you can come.</p>}
-            <p>{!sends ? "This is a preview. Your response hasn’t been sent." : justSent ? `Your reply is on its way to ${draft.title}. Thank you!` : "Plans change, so you can update it any time."}</p>
-            <button className="cin-cta cin-cta-outline" onClick={replyAgain}>{!sends ? "Try another response" : guest ? "Change the reply" : "Reply for someone else"}</button>
+            <span className="inv-confirm-label">{!sends ? t.labelPreview : justSent ? (updated ? t.labelUpdated : t.labelSent) : guest ? t.labelFrom(guest.name) : t.labelYours}</span>
+            <h3>{t.replyTitle[attendance]}</h3>
+            <p className="inv-rsvp-summary">{describeReply(t, attendance, chosen, schedule.length, countFor, party)}</p>
+            {sends && guest && !justSent && <p className="inv-rsvp-meta">{t.sentBy(name, sentOn)}</p>}
+            {fresh.length > 0 && <p className="inv-rsvp-fresh">{t.fresh(fresh.map(e => e.name))}</p>}
+            <p>{!sends ? t.notSent : justSent ? t.thanks(draft.title) : t.canChange}</p>
+            <button className="cin-cta cin-cta-outline" onClick={replyAgain}>{!sends ? t.again.preview : guest ? t.again.personal : t.again.general}</button>
           </div> : <form onSubmit={send}>
-            <fieldset className="inv-attendance" ref={attendanceRef}><legend>Will you be joining us?</legend><div>{ATTENDANCE.map(option => <label key={option} className={attendance === option ? "is-selected" : ""}><input type="radio" name="attendance" value={option} checked={attendance === option} onChange={() => { setAttendance(option); setWhichError(""); setError(""); }}/><span>{option}</span></label>)}</div></fieldset>
+            <fieldset className="inv-attendance" ref={attendanceRef}><legend>{t.joining}</legend><div>{ATTENDANCE.map(option => <label key={option} className={attendance === option ? "is-selected" : ""}><input type="radio" name="attendance" value={option} checked={attendance === option} onChange={() => { setAttendance(option); setWhichError(false); setError(""); }}/><span>{t.attendance[option]}</span></label>)}</div></fieldset>
             {askWhich && <fieldset className="inv-which" ref={whichRef} aria-describedby={whichError ? "which-error" : undefined}>
-              <legend>{attendance === "Maybe" ? "Which might you make it to?" : "Which will you come to?"}</legend>
+              <legend>{t.which(attendance === "Maybe")}</legend>
               <ul>{schedule.map(item => {
                 const on = ticked.includes(item.id);
                 return <li key={item.id}><label className={on ? "is-ticked" : ""}>
                   <input type="checkbox" name="events" value={item.id} checked={on} onChange={() => toggle(item.id)}/>
                   <span className="inv-which-box" aria-hidden="true"/>
-                  <span className="inv-which-text"><span className="inv-which-name">{item.name}</span><span className="inv-which-day">{[formatEventDay(item.date), formatInvitationTime(item.time)].filter(Boolean).join(" · ")}</span></span>
+                  <span className="inv-which-text"><span className="inv-which-name">{item.name}</span><span className="inv-which-day">{[formatEventDay(item.date, lang), formatInvitationTime(item.time, lang)].filter(Boolean).join(" · ")}</span></span>
                   <span className="inv-which-mark" aria-hidden="true"><EventDoodle name={item.name}/></span>
                 </label></li>;
               })}</ul>
-              {whichError && <p className="inv-rsvp-error" id="which-error" role="alert">{whichError}</p>}
+              {whichError && <p className="inv-rsvp-error" id="which-error" role="alert">{t.tickOne}</p>}
             </fieldset>}
             {attendance !== "Not attending" && <div className="inv-party">
               {splitCounts ? <fieldset className="inv-counts">
-                <legend>{attendance === "Maybe" ? "How many of you might come to each?" : "How many of you, for each?"}</legend>
+                <legend>{t.perCelebration(attendance === "Maybe")}</legend>
                 {chosen.map(item => <div className="studio-field" key={item.id}>
                   <label htmlFor={`count-${item.id}`}>{item.name}</label>
                   <input id={`count-${item.id}`} type="number" inputMode="numeric" min={1} max={LIMITS.guests} value={counts[item.id] ?? count} onChange={e => setCounts(now => ({ ...now, [item.id]: e.target.value }))}/>
                 </div>)}
               </fieldset> : <div className="studio-field">
-                <label htmlFor="guest-count">{countLabel}</label>
-                {guest && <p className="inv-field-hint" id="guest-count-hint">Everyone from {guest.name}, including you.</p>}
+                <label htmlFor="guest-count">{t.countLabel(attendance, !!guest, schedule.length > 1)}</label>
+                {guest && <p className="inv-field-hint" id="guest-count-hint">{t.everyoneFrom(guest.name)}</p>}
                 <input id="guest-count" name="guest-count" type="number" inputMode="numeric" min={1} max={LIMITS.guests} value={count} onChange={e => setCount(e.target.value)} aria-describedby={guest ? "guest-count-hint" : undefined}/>
               </div>}
-              {askWhich && chosen.length > 1 && <button type="button" className="inv-text-button" aria-expanded={splitCounts} onClick={() => setPerEvent(!perEvent)}>{splitCounts ? "Same number for every celebration" : "Not everyone coming to everything?"}</button>}
+              {askWhich && chosen.length > 1 && <button type="button" className="inv-text-button" aria-expanded={splitCounts} onClick={() => setPerEvent(!perEvent)}>{t.splitToggle(splitCounts)}</button>}
             </div>}
-            <div className="studio-field"><label htmlFor="guest-name">Your name <span>Optional</span></label><input id="guest-name" name="guest-name" autoComplete="name" maxLength={LIMITS.guestName} placeholder={guest ? "Who’s replying?" : "As we know and love you"} value={name} onChange={e => setName(e.target.value)}/></div>
+            <div className="studio-field"><label htmlFor="guest-name">{t.yourName} <span>{t.optional}</span></label><input id="guest-name" name="guest-name" autoComplete="name" maxLength={LIMITS.guestName} placeholder={t.namePlaceholder(!!guest)} value={name} onChange={e => setName(e.target.value)}/></div>
             <div className="inv-honeypot" aria-hidden="true"><label htmlFor="website">Leave this empty</label><input id="website" name="website" tabIndex={-1} autoComplete="off"/></div>
             {error && <p className="inv-rsvp-error" role="alert">{error}</p>}
-            <button type="submit" className="cin-cta cin-cta-light" disabled={state === "sending"}>{sends ? (state === "sending" ? "Sending…" : replied ? "Update the reply" : "Send my reply") : "Preview my reply"}</button>
-            {!sends && <p className="inv-rsvp-preview-note">Preview · Responses won’t be sent.</p>}
+            <button type="submit" className="cin-cta cin-cta-light" disabled={state === "sending"}>{sends ? (state === "sending" ? t.sending : replied ? t.update : t.send) : t.previewSubmit}</button>
+            {!sends && <p className="inv-rsvp-preview-note">{t.previewNote}</p>}
           </form>}
         </div>
       </section>}
     </main>
-    <footer className="invitation-footer"><WowLinkBrand/><span>{live ? "Made with WowLink" : "Made with love, shared with one link."}</span><Link href="/templates">Create yours free <span aria-hidden="true">→</span></Link></footer>
+    <footer className="invitation-footer"><WowLinkBrand/><span>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link href="/templates">{t.createYours} <span aria-hidden="true">→</span></Link></footer>
   </div>;
 }

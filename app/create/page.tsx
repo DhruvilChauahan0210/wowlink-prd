@@ -9,6 +9,8 @@ import { InvitationScene } from "../ui/invitation-scene";
 import { CopyField, ShareTools } from "../ui/share-tools";
 import type { Experience, Rsvp } from "../lib/store";
 
+const LANGUAGE_CHOICES = [["en", "English"], ["gu", "ગુજરાતી"]] as const;
+
 /** A published invitation this browser can edit: its public slug and private manage key. */
 type Owned = { slug: string; key: string };
 
@@ -64,7 +66,7 @@ export default function CreatePage() {
       if (!response.ok) throw new Error();
       const { experience, rsvps } = (await response.json()) as { experience: Experience; rsvps: Rsvp[] };
       setTemplateId(experience.templateId);
-      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [] });
+      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en" });
       published.current = experience.events ?? [];
       usage.current = Object.fromEntries(published.current.map(e => [e.id, {
         replies: rsvps.filter(r => r.byEvent && Object.hasOwn(r.byEvent, e.id)).length,
@@ -246,6 +248,13 @@ export default function CreatePage() {
           {fieldError("events")}
           <datalist id="event-names">{EVENT_NAMES.map(name => <option key={name} value={name}/>)}</datalist>
         </fieldset>
+        <fieldset className="studio-fieldset">
+          <legend>Language <span className="studio-legend-note">for guests</span></legend>
+          <p className="studio-help">The language the invitation opens in. Guests can switch between Gujarati and English themselves.</p>
+          <div className="studio-language" role="radiogroup" aria-label="Language for guests">
+            {LANGUAGE_CHOICES.map(([value, label]) => <label key={value} className={(draft.language ?? "en") === value ? "is-selected" : ""} lang={value}><input type="radio" name="language" checked={(draft.language ?? "en") === value} onChange={() => update("language", value)}/><span>{label}</span></label>)}
+          </div>
+        </fieldset>
         <fieldset className="studio-fieldset studio-message-field"><legend>Message to guests</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">Your message to guests</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder="A few words for the people you’re inviting…" onChange={event => update("message", event.target.value)} {...described("message")}/><span className="studio-character-count">{draft.message.length} / 500</span>{fieldError("message")}</div></fieldset>
         <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status}</span></div>
         <p className="studio-storage-note">{owned ? <>Live at <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. Drafts are also kept on this device.</> : "Drafts are saved on this device. Publish to get a link you can share."}</p>
@@ -257,7 +266,7 @@ export default function CreatePage() {
       {owned && <div className="sketch-card publish-card">
         <span className="cin-note">it’s live!</span>
         <h2 id="publish-title">Your invitation is ready to share</h2>
-        <ShareTools url={`${origin}/e/${owned.slug}`} title={draft.title}/>
+        <ShareTools url={`${origin}/e/${owned.slug}`} title={draft.title} lang={draft.language}/>
         <div className="publish-private">
           <h3>Your private manage link</h3>
           <p>Open it to see replies and make changes from any device. Anyone with it can edit, so keep it to yourself.</p>

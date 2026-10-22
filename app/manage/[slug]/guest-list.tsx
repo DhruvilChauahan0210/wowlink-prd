@@ -4,6 +4,7 @@ import { useId, useState, type FormEvent } from "react";
 import { LIMITS, formatEventDay, sortSchedule, type ScheduleItem } from "../../lib/invitations";
 import { answerFor, invitedTo, missingEvents, repliesUsed, tallyByEvent, type EventFilter, type Guest } from "../../lib/guests";
 import { csvName, invitationsCsv } from "../../lib/export";
+import { MESSAGES } from "../../lib/i18n";
 import type { Experience, Rsvp } from "../../lib/store";
 
 /*
@@ -221,10 +222,11 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   const seesNothing = guest.events !== "all" && schedule.length > 0 && !schedule.some(e => invitedTo(guest.events, e.id));
   const unanswered = seesNothing ? [] : unansweredBy(reply, guest, schedule);
   const status = replyStatus(reply, unanswered);
-  const message = `For ${guest.name}\nYou’re invited: ${experience.title}\n${url}`;
+  const words = MESSAGES[experience.language ?? "en"];
+  const message = words.personal(guest.name, experience.title, url);
   // A nudge for households that haven't answered (or haven't answered for a celebration added since).
   const reminder = !seesNothing && (!reply || unanswered.length > 0)
-    ? `Hello ${guest.name}! A gentle reminder from ${experience.title}: we’d love to know if you can ${reply ? `come to the ${listOf(unanswered.map(e => e.name))}` : "make it"}. You can reply here:\n${url}`
+    ? words.reminder(guest.name, experience.title, reply ? unanswered.map(e => e.name) : null, url)
     : "";
 
   async function run(task: () => Promise<unknown>) {

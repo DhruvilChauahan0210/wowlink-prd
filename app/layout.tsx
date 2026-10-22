@@ -28,10 +28,12 @@ const serif = localFont({
 const sans = localFont({ src: "./fonts/figtree.woff2", weight: "400 700", variable: "--font-sans", display: "swap", fallback: ["system-ui", "sans-serif"] });
 const hand = localFont({ src: "./fonts/caveat.woff2", weight: "500 700", variable: "--font-hand", display: "swap", fallback: ["Segoe Script", "cursive"] });
 const gujarati = localFont({ src: "./fonts/noto-serif-gujarati.woff2", weight: "500", variable: "--font-gujarati", display: "swap", fallback: ["serif"] });
+// Gujarati with a handwritten feel, for the places Caveat is used (it has no Gujarati). Gujarati letters only.
+const handGujarati = localFont({ src: "./fonts/farsan-gujarati.woff2", weight: "400", variable: "--font-hand-gujarati", display: "swap", fallback: ["cursive"] });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${hand.variable} ${gujarati.variable}`}>
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${hand.variable} ${gujarati.variable} ${handGujarati.variable}`}>
       <body>
         <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
           <ArtFilters boil/>

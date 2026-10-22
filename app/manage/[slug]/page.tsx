@@ -115,7 +115,7 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="share-heading">
           <h2 id="share-heading">Share it</h2>
-          {live ? <ShareTools url={`${origin}/e/${slug}`} title={experience.title}/> : <p className="manage-muted">It’s unpublished, so guests opening the link see “not found”. Publish it again to share.</p>}
+          {live ? <ShareTools url={`${origin}/e/${slug}`} title={experience.title} lang={experience.language}/> : <p className="manage-muted">It’s unpublished, so guests opening the link see “not found”. Publish it again to share.</p>}
           {owner && schedule.length > 1 && <GeneralLinkAudience owner={owner} experience={experience} onSaved={reload}/>}
         </section>
 
