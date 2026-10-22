@@ -9,7 +9,8 @@ import type { Experience, Rsvp } from "../../lib/store";
 import { Art, type ArtName } from "../../ui/art";
 import { WowLinkBrand } from "../../ui/brand";
 import { CopyField, ShareTools } from "../../ui/share-tools";
-import { GeneralLinkAudience, GuestList, Headcount } from "./guest-list";
+import { csvName, headcountCsv, repliesCsv } from "../../lib/export";
+import { GeneralLinkAudience, GuestList, Headcount, saveCsv } from "./guest-list";
 
 type Loaded = { experience: Experience; rsvps: Rsvp[] };
 type Problem = "" | "no-key" | "invalid" | "offline";
@@ -150,6 +151,10 @@ export default function ManagePage() {
               </tr>;
             })}</tbody>
           </table></div> : <p className="manage-muted">No replies yet. Share the link and they’ll show up here.</p>}
+          {data.rsvps.length > 0 && <div className="manage-downloads"><span>Download</span>
+            <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "replies"), repliesCsv(data))}>Every reply (CSV)</button>
+            {schedule.length > 0 && <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "headcount"), headcountCsv(data))}>Headcount per celebration (CSV)</button>}
+          </div>}
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="private-heading">

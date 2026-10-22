@@ -3,6 +3,7 @@
 import { useId, useState, type FormEvent } from "react";
 import { LIMITS, formatEventDay, sortSchedule, type ScheduleItem } from "../../lib/invitations";
 import { answerFor, invitedTo, missingEvents, repliesUsed, tallyByEvent, type EventFilter, type Guest } from "../../lib/guests";
+import { csvName, invitationsCsv } from "../../lib/export";
 import type { Experience, Rsvp } from "../../lib/store";
 
 /*
@@ -31,6 +32,13 @@ export const showPhone = (phone: string) => (/^91\d{10}$/.test(phone) ? `+91 ${p
 /** A WhatsApp message link: straight to their chat when there's a number, otherwise WhatsApp asks who to send it to. */
 const whatsApp = (text: string, phone?: string) => `https://wa.me/${phone ?? ""}?text=${encodeURIComponent(text)}`;
 const listOf = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`);
+
+/** Hand a spreadsheet to the browser as a download. */
+export function saveCsv(fileName: string, csv: string) {
+  const link = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })), download: fileName });
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
 
 /** "Every celebration", or the chosen ones by name. */
 export function celebrationsLabel(filter: EventFilter, schedule: ScheduleItem[]) {
@@ -183,6 +191,7 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
     </form> : <p className="manage-warn">All {LIMITS.rsvpsPerEvent} replies on the free plan are in use, so there’s no room for another personal invitation.</p>}
     <p className="share-status" role="status">{status}</p>
     {experience.guests.length > 0 && <ul className="manage-guests">{[...experience.guests].reverse().map(guest => <GuestRow key={guest.id} owner={owner} origin={origin} guest={guest} experience={experience} reply={rsvps.find(r => r.guestId === guest.id)} onChanged={onChanged}/>)}</ul>}
+    {experience.guests.length > 0 && <div className="manage-downloads"><span>Download</span><button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "invitations"), invitationsCsv({ experience, rsvps }, origin))}>The list, with links (CSV)</button></div>}
     <p className="manage-limit">{used} of {LIMITS.rsvpsPerEvent} replies on the free plan{experience.guests.length ? ", counting one kept for each personal invitation" : ""}.</p>
   </>;
 }

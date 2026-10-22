@@ -179,6 +179,27 @@ test("the host pastes a list, then reminds the households who haven't replied", 
   await context.close();
 });
 
+test("the host downloads the replies and the caterer's headcount", async ({ browser }) => {
+  const context = await freshContext(browser);
+  const { slug, key } = await publish(context.request, "wedding", { title: "Isha & Kabir", events: SCHEDULE });
+  await context.request.post(`/api/experiences/${slug}/rsvps`, { headers: general(), data: { attendance: "Attending", name: "Riya", guestCount: 3, events: ["sangeet-night"] } });
+  const host = await context.newPage();
+  await host.goto(`/manage/${slug}#k=${key}`);
+  const read = async (name: string) => {
+    const [download] = await Promise.all([host.waitForEvent("download"), host.getByRole("button", { name }).click()]);
+    let text = "";
+    for await (const chunk of await download.createReadStream()) text += chunk;
+    return { file: download.suggestedFilename(), text };
+  };
+  const replies = await read("Every reply (CSV)");
+  expect(replies.file).toBe("isha-kabir-replies.csv");
+  expect(replies.text).toContain("Riya,,Attending,3,No,3,No");
+  const headcount = await read("Headcount per celebration (CSV)");
+  expect(headcount.file).toBe("isha-kabir-headcount.csv");
+  expect(headcount.text).toContain("Sangeet,\"Sat, 7 Nov\",7:30 PM,\"The Garden House, Surat\",3,1");
+  await context.close();
+});
+
 test("personal invitations keep their place under the free plan's limit", async ({ request }) => {
   const { slug, key } = await publish(request);
   const patel = await addGuest(request, slug, key, "the Patel family");

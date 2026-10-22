@@ -415,6 +415,9 @@
 .manage-audience-actions{display:flex;align-items:center;gap:16px;min-height:20px}
 .manage-guest-add{margin:18px 0 6px;padding:18px 18px 20px;border:1.5px dashed var(--line-strong);border-radius:12px}
 .manage-add-modes{margin-bottom:16px}
+.manage-downloads{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin-top:18px;padding-top:14px;border-top:1px dashed var(--line-strong)}
+.manage-downloads>span{font-size:14px;color:var(--muted)}
+.manage-downloads .share-chip{font-size:22px}
 .manage-guests{list-style:none;margin:8px 0 0;padding:0}
 .manage-guest{padding:16px 0;border-top:1px dashed var(--line-strong)}
 .manage-guest-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 16px}
