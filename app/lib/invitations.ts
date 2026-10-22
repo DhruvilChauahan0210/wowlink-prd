@@ -44,3 +44,40 @@ export function formatInvitationTime(value: string) {
   if (hours > 23 || minutes > 59) return "";
   return `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${hours >= 12 ? "PM" : "AM"}`;
 }
+
+// ---------- publishing: shared by the studio (to show errors) and the server (to enforce them) ----------
+
+export type TemplateId = InvitationTemplate["id"];
+export const isTemplateId = (value: unknown): value is TemplateId => invitationTemplates.some(item => item.id === value);
+
+export const ATTENDANCE = ["Attending", "Maybe", "Not attending"] as const;
+export type Attendance = (typeof ATTENDANCE)[number];
+
+export const LIMITS = { title: 80, venue: 140, message: 500, guestName: 100, guests: 20, rsvpsPerEvent: 100 } as const;
+
+export type DraftErrors = Partial<Record<keyof InvitationDraft, string>>;
+
+function isRealDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T12:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+/** Title, date and venue are required to publish; everything is trimmed and length-checked. */
+export function validateDraft(input: unknown): { ok: true; value: InvitationDraft } | { ok: false; errors: DraftErrors } {
+  const data = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const text = (key: keyof InvitationDraft) => (typeof data[key] === "string" ? (data[key] as string).trim() : "");
+  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message") };
+  const errors: DraftErrors = {};
+  if (!value.title) errors.title = "Add the names or a title for the occasion.";
+  else if (value.title.length > LIMITS.title) errors.title = `Keep the title under ${LIMITS.title} characters.`;
+  if (!isRealDate(value.date)) errors.date = "Pick the date of the occasion.";
+  if (value.time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value.time)) errors.time = "That time doesn’t look right.";
+  if (!value.venue) errors.venue = "Add where it’s happening.";
+  else if (value.venue.length > LIMITS.venue) errors.venue = `Keep the venue under ${LIMITS.venue} characters.`;
+  if (value.message.length > LIMITS.message) errors.message = `Keep the message under ${LIMITS.message} characters.`;
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value };
+}
+
+/** Where a creator's private manage key for an invitation is kept on their device. */
+export const ownerKey = (slug: string) => `wowlink:owner:${slug}`;

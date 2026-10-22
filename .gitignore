@@ -13,3 +13,6 @@ pnpm-debug.log*
 
 # local tool output
 .playwright-mcp/
+
+# local data for published invitations (file store)
+.data/

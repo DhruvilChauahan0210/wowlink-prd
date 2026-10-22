@@ -73,10 +73,15 @@ html.lenis,html.lenis body{height:auto}
 .doodle{display:block;width:34px;height:34px;color:var(--accent);flex:none}
 
 /* A shared recipe: a wobbly ink outline (::before) or fill that stretches to any box. */
-.cin-sketchbook::before,.cin-sketchbook::after,.inv-card::before,.inv-card::after,.cin-cta::before,.cin-cta::after,.cin-nav-cta::before,.cin-plan::before,.cin-plan::after,.studio-template::before,.inv-rsvp-card::before,.inv-rsvp-card::after,.inv-attendance label::before{
+.sketch-card::before,.sketch-card::after,.cin-sketchbook::before,.cin-sketchbook::after,.inv-card::before,.inv-card::after,.cin-cta::before,.cin-cta::after,.cin-nav-cta::before,.cin-plan::before,.cin-plan::after,.studio-template::before,.inv-rsvp-card::before,.inv-rsvp-card::after,.inv-attendance label::before{
   content:"";position:absolute;pointer-events:none;
   -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%;
 }
+
+/* A reusable hand-drawn card: paper fill with a wobbly ink outline. */
+.sketch-card{position:relative;isolation:isolate}
+.sketch-card::before{inset:-3px;z-index:-2;background:var(--surface);-webkit-mask-image:var(--rough-f2);mask-image:var(--rough-f2)}
+.sketch-card::after{inset:-3px;z-index:-1;background:var(--text);-webkit-mask-image:var(--rough-b);mask-image:var(--rough-b)}
 
 /* ---------- Buttons & links ---------- */
 .cin-cta{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 30px;border:0;background:none;font:600 15px/1 var(--sans);letter-spacing:.005em;cursor:pointer;transition:transform .2s}
