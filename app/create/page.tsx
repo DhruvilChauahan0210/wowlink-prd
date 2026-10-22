@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { draftKey, getInvitationTemplate, initialDraft, invitationTemplates, ownerKey, readDraft, validateDraft, type DraftErrors, type InvitationDraft } from "../lib/invitations";
+import { EVENT_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
 import { WowLinkBrand } from "../ui/brand";
 import { Art } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
@@ -21,6 +21,8 @@ export default function CreatePage() {
   const [mobilePanel, setMobilePanel] = useState<"edit" | "preview">("edit");
   const [owned, setOwned] = useState<Owned | null>(null);
   const [errors, setErrors] = useState<DraftErrors>({});
+  // After a failed publish, show what's wrong next to each schedule entry (and keep showing it until fixed).
+  const [checkEvents, setCheckEvents] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [origin, setOrigin] = useState("");
   const drafts = useRef<Record<string, InvitationDraft>>({});
@@ -56,7 +58,7 @@ export default function CreatePage() {
       if (!response.ok) throw new Error();
       const { experience } = await response.json();
       setTemplateId(experience.templateId);
-      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message });
+      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [] });
       setOwned({ slug, key });
       setStatus("Editing your live invitation. Changes reach guests when you press Update.");
     } catch {
@@ -75,6 +77,24 @@ export default function CreatePage() {
     });
     setDirty(true);
     setStatus(owned ? "Changes not live yet. Press Update." : "Unsaved changes");
+  }
+
+  function setEvents(next: (events: ScheduleItem[]) => ScheduleItem[]) {
+    setDraft(current => ({ ...current, events: next(current.events) }));
+    setErrors(current => {
+      if (!current.events) return current;
+      const rest = { ...current };
+      delete rest.events;
+      return rest;
+    });
+    setDirty(true);
+    setStatus(owned ? "Changes not live yet. Press Update." : "Unsaved changes");
+  }
+  const updateEvent = (id: string, patch: Partial<ScheduleItem>) => setEvents(events => events.map(e => (e.id === id ? { ...e, ...patch } : e)));
+  function addEvent(name: string) {
+    const item = name ? presetEvent(template, name, draft) : { id: newEventId(), name: "", date: draft.date, time: "", venue: "" };
+    setEvents(events => [...events, item]);
+    if (!name) requestAnimationFrame(() => document.getElementById(`event-${item.id}-name`)?.focus());
   }
 
   function changeTemplate(id: string) {
@@ -106,9 +126,12 @@ export default function CreatePage() {
     const checked = validateDraft(draft);
     if (!checked.ok) {
       setErrors(checked.errors);
+      setCheckEvents(true);
       setStatus("A few details are missing before this can go live.");
       setMobilePanel("edit");
-      requestAnimationFrame(() => document.getElementById(Object.keys(checked.errors)[0])?.focus());
+      const first = Object.keys(checked.errors)[0];
+      const badEvent = draft.events.find(item => scheduleItemError(item));
+      requestAnimationFrame(() => document.getElementById(first === "events" && badEvent ? `event-${badEvent.id}-name` : first)?.focus());
       return;
     }
     setErrors({});
@@ -168,6 +191,30 @@ export default function CreatePage() {
             <div className="studio-field"><label htmlFor="time">Time</label><input id="time" type="time" value={draft.time} onChange={event => update("time", event.target.value)} {...described("time")}/>{fieldError("time")}</div>
           </div>
           <div className="studio-field"><label htmlFor="venue">Venue</label><input id="venue" value={draft.venue} maxLength={140} placeholder="Venue name, city" onChange={event => update("venue", event.target.value)} {...described("venue")}/>{fieldError("venue")}</div>
+        </fieldset>
+        <fieldset className="studio-fieldset studio-schedule" id="events">
+          <legend>Schedule <span className="studio-legend-note">optional</span></legend>
+          <p className="studio-help">{template.id === "wedding" ? "Several events? Add each one, from the mehndi to the reception. Guests get a timeline and can save every date." : "More than one event? Add each one and guests get a timeline."}</p>
+          {draft.events.map((item, index) => {
+            const problem = checkEvents ? scheduleItemError(item) : "";
+            const label = item.name.trim() || `event ${index + 1}`;
+            return <div className="studio-event" key={item.id}>
+              <div className="studio-event-head"><span>{item.name.trim() || `Event ${index + 1}`}</span><button type="button" className="studio-event-remove" onClick={() => setEvents(events => events.filter(e => e.id !== item.id))} aria-label={`Remove ${label} from the schedule`}>remove</button></div>
+              <div className="studio-field"><label htmlFor={`event-${item.id}-name`}>What’s happening</label><input id={`event-${item.id}-name`} list="event-names" value={item.name} maxLength={LIMITS.eventName} placeholder="Mehndi" onChange={event => updateEvent(item.id, { name: event.target.value })} aria-invalid={problem ? true : undefined} aria-describedby={problem ? `event-${item.id}-error` : undefined}/></div>
+              <div className="studio-field-row">
+                <div className="studio-field"><label htmlFor={`event-${item.id}-date`}>Date</label><input id={`event-${item.id}-date`} type="date" value={item.date} onChange={event => updateEvent(item.id, { date: event.target.value })}/></div>
+                <div className="studio-field"><label htmlFor={`event-${item.id}-time`}>Time <span>Optional</span></label><input id={`event-${item.id}-time`} type="time" value={item.time} onChange={event => updateEvent(item.id, { time: event.target.value })}/></div>
+              </div>
+              <div className="studio-field"><label htmlFor={`event-${item.id}-venue`}>Venue <span>If different</span></label><input id={`event-${item.id}-venue`} value={item.venue} maxLength={LIMITS.venue} placeholder={draft.venue || "Venue name, city"} onChange={event => updateEvent(item.id, { venue: event.target.value })}/></div>
+              {problem && <p className="studio-error" id={`event-${item.id}-error`}>{problem}</p>}
+            </div>;
+          })}
+          {draft.events.length < LIMITS.events && <div className="studio-event-add">
+            {(SCHEDULE_PRESETS[template.id] ?? []).filter(preset => !draft.events.some(e => e.name.trim().toLowerCase() === preset.name.toLowerCase())).map(preset => <button type="button" className="share-chip" key={preset.name} onClick={() => addEvent(preset.name)}>+ {preset.name}</button>)}
+            <button type="button" className="share-chip" onClick={() => addEvent("")}>+ Add an event</button>
+          </div>}
+          {fieldError("events")}
+          <datalist id="event-names">{EVENT_NAMES.map(name => <option key={name} value={name}/>)}</datalist>
         </fieldset>
         <fieldset className="studio-fieldset studio-message-field"><legend>Message to guests</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">Your message to guests</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder="A few words for the people you’re inviting…" onChange={event => update("message", event.target.value)} {...described("message")}/><span className="studio-character-count">{draft.message.length} / 500</span>{fieldError("message")}</div></fieldset>
         <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status}</span></div>

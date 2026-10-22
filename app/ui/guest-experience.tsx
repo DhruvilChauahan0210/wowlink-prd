@@ -2,9 +2,10 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ATTENDANCE, LIMITS, formatInvitationDate, formatInvitationTime, type Attendance, type InvitationDraft, type InvitationTemplate } from "../lib/invitations";
-import { daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../lib/calendar";
+import { ATTENDANCE, LIMITS, formatEventDay, formatInvitationDate, formatInvitationTime, sortSchedule, type Attendance, type InvitationDraft, type InvitationTemplate } from "../lib/invitations";
+import { calendarEvents, daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../lib/calendar";
 import { MomentMark, WowLinkBrand } from "./brand";
+import { Bowl, Diya, Flower, Leaf, Note, Ring, Star } from "./doodles";
 import { InvitationScene } from "./invitation-scene";
 
 type Props = {
@@ -17,6 +18,21 @@ type Props = {
 
 const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth") as ScrollBehavior;
 const REPLY_TITLE: Record<Attendance, string> = { Attending: "Joyfully, yes.", Maybe: "A little maybe.", "Not attending": "With you in spirit." };
+const maps = (place: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+
+/** A little drawing that fits each kind of event. */
+function EventDoodle({ name }: { name: string }) {
+  const n = name.toLowerCase();
+  if (/mehndi|mehendi|henna/.test(n)) return <Leaf className="doodle"/>;
+  if (/haldi|pithi|turmeric/.test(n)) return <Bowl className="doodle"/>;
+  if (/sangeet|garba|dandiya|raas|music|dance/.test(n)) return <Note className="doodle"/>;
+  if (/engage|sagai|ring|roka/.test(n)) return <Ring className="doodle"/>;
+  if (/puja|pooja|ganesh|havan/.test(n)) return <Diya className="doodle"/>;
+  if (/wedding|lagna|lagan|vivah|phera|ceremony|shaadi/.test(n)) return <MomentMark className="doodle"/>;
+  if (/reception|dinner|party|cocktail/.test(n)) return <Star className="doodle"/>;
+  return <Flower className="doodle"/>;
+}
+
 const hasDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
 /** "17 days to go", worked out on India's calendar. Rendered only in the browser so it never disagrees with the server. */
@@ -54,8 +70,8 @@ export function GuestExperience({ template, draft, mode, slug }: Props) {
   useEffect(() => { if (live) setPageUrl(location.origin + location.pathname); }, [live]);
 
   // Previews have no server route for the calendar file, so build it here and hand it over as a download.
-  function downloadIcs() {
-    const blob = new Blob([toIcs(draft)], { type: "text/calendar;charset=utf-8" });
+  function downloadIcs(events: Parameters<typeof toIcs>[0] = draft) {
+    const blob = new Blob([toIcs(events)], { type: "text/calendar;charset=utf-8" });
     const link = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "invitation.ics" });
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
@@ -93,11 +109,38 @@ export function GuestExperience({ template, draft, mode, slug }: Props) {
         <div className="inv-details-heading"><h2>Save the <span className="scribble">date</span></h2><Countdown date={draft.date} time={draft.time}/><button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>Replay the invitation</button></div>
         <div className="inv-details-grid">
           <div><span className="inv-detail-label">When</span><h3>{formatInvitationDate(draft.date, true)}</h3><p>{formatInvitationTime(draft.time)}</p>
-            {hasDate(draft.date) && <div className="inv-calendar"><span>Add to calendar</span><a href={googleCalendarUrl({ ...draft, url: pageUrl })} target="_blank" rel="noreferrer">Google</a>{live && slug ? <a href={`/e/${slug}/invite.ics`}>Apple / Outlook</a> : <button type="button" onClick={downloadIcs}>Apple / Outlook</button>}</div>}
+            {hasDate(draft.date) && <div className="inv-calendar"><span>Add to calendar</span><a href={googleCalendarUrl({ ...draft, url: pageUrl })} target="_blank" rel="noreferrer">Google</a>{live && slug ? <a href={`/e/${slug}/invite.ics${draft.events.length ? "?event=main" : ""}`}>Apple / Outlook</a> : <button type="button" onClick={() => downloadIcs()}>Apple / Outlook</button>}</div>}
           </div>
-          <div><span className="inv-detail-label">Where</span><h3>{draft.venue || "A place to remember"}</h3>{draft.venue && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(draft.venue)}`} target="_blank" rel="noreferrer">Open in Maps <span aria-hidden="true">→</span></a>}</div>
+          <div><span className="inv-detail-label">Where</span><h3>{draft.venue || "A place to remember"}</h3>{draft.venue && <a href={maps(draft.venue)} target="_blank" rel="noreferrer">Open in Maps <span aria-hidden="true">→</span></a>}</div>
         </div>
       </section>
+      {draft.events.length > 0 && <section className="inv-schedule-section theme-paper" aria-labelledby="schedule-heading">
+        <div className="inv-schedule-head">
+          <h2 id="schedule-heading">The <span className="scribble">celebrations</span></h2>
+          {live && slug
+            ? <a className="cin-text-link" href={`/e/${slug}/invite.ics`}>Add every event to your calendar <span aria-hidden="true">→</span></a>
+            : <button type="button" className="cin-text-link" onClick={() => downloadIcs(calendarEvents(draft))}>Add every event to your calendar <span aria-hidden="true">→</span></button>}
+        </div>
+        <ol className="inv-timeline">
+          {sortSchedule(draft.events).map(item => {
+            const venue = item.venue || draft.venue;
+            const entry = { title: `${item.name} · ${draft.title}`, date: item.date, time: item.time, venue, message: draft.message, url: pageUrl };
+            return <li key={item.id} className="inv-timeline-item">
+              <span className="inv-timeline-mark" aria-hidden="true"><EventDoodle name={item.name}/></span>
+              <span className="inv-timeline-day">{formatEventDay(item.date)}</span>
+              <h3>{item.name}</h3>
+              <p>{[formatInvitationTime(item.time) || "All day", venue].filter(Boolean).join(" · ")}</p>
+              <div className="inv-calendar">
+                <a href={googleCalendarUrl(entry)} target="_blank" rel="noreferrer" aria-label={`Add the ${item.name} to Google Calendar`}>Google</a>
+                {live && slug
+                  ? <a href={`/e/${slug}/invite.ics?event=${item.id}`} aria-label={`Add the ${item.name} to Apple or Outlook calendar`}>Apple / Outlook</a>
+                  : <button type="button" onClick={() => downloadIcs([entry])} aria-label={`Add the ${item.name} to Apple or Outlook calendar`}>Apple / Outlook</button>}
+                {item.venue && item.venue !== draft.venue && <a href={maps(item.venue)} target="_blank" rel="noreferrer" aria-label={`Map for the ${item.name}`}>Map</a>}
+              </div>
+            </li>;
+          })}
+        </ol>
+      </section>}
       <section className="inv-message-section theme-dark"><MomentMark/><blockquote>{draft.message || "We would love to share this moment with you."}</blockquote><span className="inv-message-sign">With love, {draft.title}</span></section>
       <section className="inv-rsvp-section theme-paper" aria-labelledby="rsvp-heading">
         <div><h2 id="rsvp-heading">Will you be there?</h2><p>A quick reply means a lot. Let us know if you can be part of the day.</p></div>

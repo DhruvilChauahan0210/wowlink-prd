@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
-import { formatInvitationDate, formatInvitationTime, getInvitationTemplate } from "../../lib/invitations";
+import { formatInvitationDate, formatInvitationTime, getInvitationTemplate, sortSchedule } from "../../lib/invitations";
 import { getPublished } from "../../lib/store";
 import { renderSvg } from "../../lib/svg-string";
 import { StandaloneArt, type ArtName } from "../../ui/art";
@@ -80,6 +80,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           <div style={{ fontFamily: "Fraunces", fontSize: titleSize, lineHeight: 1.02, letterSpacing: "-0.02em", marginTop: 10 }}>{title}</div>
           {experience && <div style={{ fontSize: 30, color: "#5d5044", marginTop: 26 }}>{when}</div>}
           {experience && <div style={{ fontSize: 28, color: "#5d5044", marginTop: 6 }}>{experience.venue}</div>}
+          {experience && experience.events.length > 1 && <div style={{ fontSize: 24, color: "#7b6d5a", marginTop: 14 }}>{`${sortSchedule(experience.events).slice(0, 4).map(e => e.name).join(" · ")}${experience.events.length > 4 ? " · …" : ""}`}</div>}
           <div style={{ fontFamily: "Caveat", fontSize: 40, color: tone, marginTop: 34, transform: "rotate(-2deg)" }}>{experience ? "tap to open your invitation →" : "make your own at WowLink"}</div>
         </div>
 

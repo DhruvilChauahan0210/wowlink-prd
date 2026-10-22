@@ -72,29 +72,48 @@ function fold(line: string) {
   return out.join("\r\n ");
 }
 
-export function toIcs(e: Event, now = new Date()) {
-  const { allDay, start, end } = span(e.date, e.time);
+/** One or more events as an .ics file. Several events (a whole wedding schedule) go in one file. */
+export function toIcs(input: Event | Event[], now = new Date()) {
+  const events = Array.isArray(input) ? input : [input];
   const stamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  const when = allDay
-    ? [`DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`]
-    : [`DTSTART;TZID=${EVENT_TIMEZONE}:${start}`, `DTEND;TZID=${EVENT_TIMEZONE}:${end}`];
+  const spans = events.map((e) => span(e.date, e.time));
+  const anyTimed = spans.some((s) => !s.allDay);
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//WowLink//Invitations//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    ...(allDay ? [] : ["BEGIN:VTIMEZONE", `TZID:${EVENT_TIMEZONE}`, "BEGIN:STANDARD", "DTSTART:19700101T000000", "TZOFFSETFROM:+0530", "TZOFFSETTO:+0530", "TZNAME:IST", "END:STANDARD", "END:VTIMEZONE"]),
-    "BEGIN:VEVENT",
-    `UID:${e.uid ?? `${start}-${e.title.length}`}@wowlink`,
-    `DTSTAMP:${stamp}`,
-    ...when,
-    `SUMMARY:${text(e.title)}`,
-    ...(e.venue ? [`LOCATION:${text(e.venue)}`] : []),
-    ...(describe(e) ? [`DESCRIPTION:${text(describe(e))}`] : []),
-    ...(e.url ? [`URL:${e.url}`] : []),
-    "END:VEVENT",
+    ...(anyTimed ? ["BEGIN:VTIMEZONE", `TZID:${EVENT_TIMEZONE}`, "BEGIN:STANDARD", "DTSTART:19700101T000000", "TZOFFSETFROM:+0530", "TZOFFSETTO:+0530", "TZNAME:IST", "END:STANDARD", "END:VTIMEZONE"] : []),
+    ...events.flatMap((e, i) => {
+      const { allDay, start, end } = spans[i];
+      return [
+        "BEGIN:VEVENT",
+        `UID:${e.uid ?? `${start}-${e.title.length}`}@wowlink`,
+        `DTSTAMP:${stamp}`,
+        ...(allDay ? [`DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`] : [`DTSTART;TZID=${EVENT_TIMEZONE}:${start}`, `DTEND;TZID=${EVENT_TIMEZONE}:${end}`]),
+        `SUMMARY:${text(e.title)}`,
+        ...(e.venue ? [`LOCATION:${text(e.venue)}`] : []),
+        ...(describe(e) ? [`DESCRIPTION:${text(describe(e))}`] : []),
+        ...(e.url ? [`URL:${e.url}`] : []),
+        "END:VEVENT",
+      ];
+    }),
     "END:VCALENDAR",
   ];
   return lines.map(fold).join("\r\n") + "\r\n";
+}
+
+/** The occasion's events as calendar entries: each schedule item ("Mehndi · Aarav & Meera"), or just the main event. */
+export function calendarEvents(draft: InvitationDraft, url?: string, slug = "") {
+  if (!draft.events.length) return [{ ...draft, url, uid: slug || undefined }];
+  return draft.events.map((item) => ({
+    title: `${item.name} · ${draft.title}`,
+    date: item.date,
+    time: item.time,
+    venue: item.venue || draft.venue,
+    message: draft.message,
+    url,
+    uid: slug ? `${slug}-${item.id}` : undefined,
+  }));
 }

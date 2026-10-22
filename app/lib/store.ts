@@ -25,7 +25,7 @@ export type Experience = InvitationDraft & {
 };
 export type Rsvp = { id: string; experienceId: string; name: string; attendance: Attendance; guestCount: number; createdAt: string };
 /** What a guest is allowed to see. */
-export type PublicExperience = Pick<Experience, "slug" | "templateId" | "title" | "date" | "time" | "venue" | "message">;
+export type PublicExperience = Pick<Experience, "slug" | "templateId" | "title" | "date" | "time" | "venue" | "message" | "events">;
 
 type StoredExperience = Experience & { keyHash: string };
 type Db = { experiences: StoredExperience[]; rsvps: Rsvp[] };
@@ -87,8 +87,9 @@ function newSlug(taken: Set<string>) {
   }
 }
 
-const toPublic = ({ slug, templateId, title, date, time, venue, message }: Experience): PublicExperience => ({ slug, templateId, title, date, time, venue, message });
-const strip = ({ keyHash: _keyHash, ...experience }: StoredExperience): Experience => experience;
+// Invitations published before schedules existed have no `events` on disk.
+const toPublic = ({ slug, templateId, title, date, time, venue, message, events }: Experience): PublicExperience => ({ slug, templateId, title, date, time, venue, message, events: events ?? [] });
+const strip = ({ keyHash: _keyHash, ...experience }: StoredExperience): Experience => ({ ...experience, events: experience.events ?? [] });
 
 // ---------- experiences ----------
 

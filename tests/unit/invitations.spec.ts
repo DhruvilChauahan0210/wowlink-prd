@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { formatInvitationDate, formatInvitationTime, validateDraft } from "../../app/lib/invitations";
+import { formatEventDay, formatInvitationDate, formatInvitationTime, getInvitationTemplate, presetEvent, scheduleItemError, shiftDate, sortSchedule, validateDraft, type ScheduleItem } from "../../app/lib/invitations";
 
-const good = { title: "Aarav & Meera", date: "2026-11-08", time: "18:00", venue: "Surat", message: "" };
+const good = { title: "Aarav & Meera", date: "2026-11-08", time: "18:00", venue: "Surat", message: "", events: [] as ScheduleItem[] };
+const event = (overrides: Partial<ScheduleItem> = {}): ScheduleItem => ({ id: "mehndi", name: "Mehndi", date: "2026-11-06", time: "16:00", venue: "", ...overrides });
 
 test("a complete draft is valid, and its text is trimmed", () => {
   const result = validateDraft({ ...good, title: "  Aarav & Meera  ", venue: " Surat " });
@@ -37,4 +38,57 @@ test("dates and times read naturally", () => {
   expect(formatInvitationTime("18:00")).toBe("6:00 PM");
   expect(formatInvitationTime("00:05")).toBe("12:05 AM");
   expect(formatInvitationTime("")).toBe("");
+});
+
+// ---------- schedules ----------
+
+test("drafts without a schedule are still valid (older clients and saved drafts)", () => {
+  const { events: _events, ...withoutEvents } = good;
+  const result = validateDraft(withoutEvents);
+  expect(result.ok && result.value.events).toEqual([]);
+});
+
+test("schedule entries are trimmed, and unsafe ids are replaced", () => {
+  const result = validateDraft({ ...good, events: [event({ name: "  Sangeet ", venue: " Lakeview Lawns " }), event({ id: "<script>" })] });
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  expect(result.value.events[0]).toMatchObject({ id: "mehndi", name: "Sangeet", venue: "Lakeview Lawns" });
+  expect(result.value.events[1].id).toMatch(/^[a-z0-9]+$/);
+});
+
+test("each schedule entry needs a name and a real date; time and venue are optional", () => {
+  expect(scheduleItemError(event())).toBe("");
+  expect(scheduleItemError(event({ time: "", venue: "" }))).toBe("");
+  expect(scheduleItemError(event({ name: " " }))).toBe("Give this event a name.");
+  expect(scheduleItemError(event({ date: "2026-11-31" }))).toBe("Pick a date for this event.");
+  expect(scheduleItemError(event({ time: "7pm" }))).toBe("That time doesn’t look right.");
+  expect(validateDraft({ ...good, events: [event({ name: "" })] })).toMatchObject({ ok: false, errors: { events: "One of the events in the schedule needs a look." } });
+});
+
+test("a schedule has at most 8 events", () => {
+  const nine = Array.from({ length: 9 }, (_, i) => event({ id: `e${i}` }));
+  expect(validateDraft({ ...good, events: nine })).toMatchObject({ ok: false, errors: { events: "A schedule can have up to 8 events." } });
+  expect(validateDraft({ ...good, events: nine.slice(0, 8) }).ok).toBe(true);
+});
+
+test("wedding presets land on sensible days relative to the main day", () => {
+  const wedding = getInvitationTemplate("wedding");
+  const main = { date: "2026-11-08", time: "18:00" };
+  expect(presetEvent(wedding, "Mehndi", main)).toMatchObject({ name: "Mehndi", date: "2026-11-06", time: "16:00", venue: "" });
+  expect(presetEvent(wedding, "Haldi", main)).toMatchObject({ date: "2026-11-07", time: "10:00" });
+  expect(presetEvent(wedding, "Wedding", main)).toMatchObject({ date: "2026-11-08", time: "18:00" });
+  expect(shiftDate("2026-03-01", 2)).toBe("2026-02-27");
+  expect(shiftDate("2027-01-01", 1)).toBe("2026-12-31");
+  expect(shiftDate("not a date", 1)).toBe("not a date");
+});
+
+test("the schedule is shown in the order things happen", () => {
+  const order = sortSchedule([
+    event({ id: "reception", date: "2026-11-08", time: "21:00" }),
+    event({ id: "wedding", date: "2026-11-08", time: "18:00" }),
+    event({ id: "puja", date: "2026-11-08", time: "" }),
+    event({ id: "mehndi", date: "2026-11-06", time: "16:00" }),
+  ]).map((e) => e.id);
+  expect(order).toEqual(["mehndi", "puja", "wedding", "reception"]);
+  expect(formatEventDay("2026-11-06")).toBe("Fri, 6 Nov");
 });

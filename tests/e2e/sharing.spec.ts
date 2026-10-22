@@ -15,6 +15,14 @@ test("each invitation has its own share preview image (1200 × 630 PNG)", async 
   expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
 });
 
+test("the share image also renders for an invitation with a schedule", async ({ request }) => {
+  const events = ["Mehndi", "Haldi", "Sangeet", "Wedding", "Reception"].map((name, i) => ({ id: `e${i}`, name, date: `2026-11-0${4 + i}`, time: "", venue: "" }));
+  const { slug } = await publish(request, "wedding", { events });
+  const image = await request.get(`/e/${slug}/opengraph-image`);
+  expect(image.status()).toBe(200);
+  expect(image.headers()["content-type"]).toBe("image/png");
+});
+
 test("add to calendar: a Google link and a standards-compliant .ics, in India time", async ({ page, request }) => {
   const { slug } = await publish(request, "wedding", { title: "Isha & Kabir", date: "2026-11-08", time: "18:00", venue: "Lakeview Lawns, Udaipur" });
   await page.goto(`/e/${slug}`);

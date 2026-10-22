@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../../app/lib/calendar";
+import { calendarEvents, daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../../app/lib/calendar";
 
-const event = { title: "Isha & Kabir", date: "2026-11-08", time: "18:00", venue: "Lakeview Lawns, Udaipur", message: "" };
+const event = { title: "Isha & Kabir", date: "2026-11-08", time: "18:00", venue: "Lakeview Lawns, Udaipur", message: "", events: [] };
 const at = (iso: string) => new Date(iso).getTime();
 
 test("an evening event runs three hours, in IST", () => {
@@ -52,4 +52,24 @@ test("days are counted on India's calendar, not the device's", () => {
 test("the event starts at the right instant", () => {
   expect(new Date(eventStartMs("2026-11-08", "18:00")).toISOString()).toBe("2026-11-08T12:30:00.000Z");
   expect(new Date(eventStartMs("2026-11-08", "")).toISOString()).toBe("2026-11-07T18:30:00.000Z");
+});
+
+test("a schedule becomes one calendar entry per event, named for the occasion, with the main venue as fallback", () => {
+  const draft = { ...event, events: [
+    { id: "mehndi", name: "Mehndi", date: "2026-11-06", time: "16:00", venue: "" },
+    { id: "puja", name: "Puja", date: "2026-11-07", time: "", venue: "Home" },
+  ] };
+  const entries = calendarEvents(draft, "https://wowlink.example/e/abc", "abc");
+  expect(entries.map((e) => [e.title, e.venue, e.uid])).toEqual([
+    ["Mehndi · Isha & Kabir", "Lakeview Lawns, Udaipur", "abc-mehndi"],
+    ["Puja · Isha & Kabir", "Home", "abc-puja"],
+  ]);
+  const ics = toIcs(entries);
+  expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+  expect(ics.match(/BEGIN:VTIMEZONE/g)).toHaveLength(1);
+  expect(ics).toContain("DTSTART;TZID=Asia/Kolkata:20261106T160000");
+  expect(ics).toContain("DTSTART;VALUE=DATE:20261107");
+  expect(ics).toContain("UID:abc-puja@wowlink");
+  // Without a schedule, the occasion itself is the one entry.
+  expect(calendarEvents(event, undefined, "abc").map((e) => e.uid)).toEqual(["abc"]);
 });

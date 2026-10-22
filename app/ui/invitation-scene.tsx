@@ -1,6 +1,6 @@
 "use client";
 
-import { formatInvitationDate, formatInvitationTime, type InvitationDraft, type InvitationTemplate } from "../lib/invitations";
+import { formatEventDay, formatInvitationDate, formatInvitationTime, sortSchedule, type InvitationDraft, type InvitationTemplate } from "../lib/invitations";
 import { Art, type ArtName } from "./art";
 import { Flower, Star } from "./doodles";
 import { OPEN_HINT, Opener, ScrollRod } from "./openers";
@@ -44,6 +44,7 @@ export function InvitationScene({ template, draft, opened, onOpen, onReplay, onD
       <h2 className={`inv-title${long}`}>{draft.title || "Your occasion"}</h2>
       {draft.message && <p className="inv-revealed-message">{draft.message}</p>}
       <div className="inv-revealed-details"><span>{formatInvitationDate(draft.date, true)}{draft.time && ` · ${formatInvitationTime(draft.time)}`}</span><span>{draft.venue || "Your venue"}</span></div>
+      {draft.events.length > 1 && <span className="inv-card-schedule">{draft.events.length} celebrations · {formatEventDay(sortSchedule(draft.events)[0].date)} to {formatEventDay(sortSchedule(draft.events).at(-1)!.date)}</span>}
       <button className="cin-cta cin-cta-light inv-open-button" onClick={compact ? onReplay : onDetails}>{compact ? "Watch it again" : "See the details"}</button>
     </article>
   </section>;
