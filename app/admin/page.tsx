@@ -6,11 +6,16 @@ import { getInvitationTemplate, formatInvitationDate, formatShortDay, invitation
 import { SHARE_CHANNELS } from "../lib/insights";
 import { REASON_TEXT } from "../lib/reports";
 import type { AdminInvitation, AdminUpgrade, Moderation, appNumbers } from "../lib/store";
+import type { ServerError } from "../lib/errors";
 import { WowLinkBrand } from "../ui/brand";
+import { HOST_TEXT } from "../lib/host-i18n";
+import { SignIn } from "../ui/sign-in";
+import { signOut as signOutAccount, useAccount } from "../ui/account";
 
 /*
- * WowLink's own admin: reports to look at, taking an invitation down (or back up), and the app's numbers. Opened
- * with the admin key (WOWLINK_ADMIN_KEY on the server), kept for this browser tab only.
+ * WowLink's own admin: reports to look at, taking an invitation down (or back up), and the app's numbers. Opened by
+ * signing in with a Google account listed in WOWLINK_ADMINS, or with the admin key (WOWLINK_ADMIN_KEY: `npm run dev`
+ * and the tests), which is kept for this browser tab only.
  */
 
 const KEY = "wowlink:admin-key";
@@ -18,12 +23,16 @@ type Numbers = Awaited<ReturnType<typeof appNumbers>> & { days: number };
 
 /** An admin call: its data, or null with why (429 when too many wrong keys were tried from here). */
 async function request<T>(key: string, path: string, init: RequestInit = {}): Promise<{ data: T | null; status: number }> {
-  const response = await fetch(`/api/admin${path}`, { ...init, headers: { "content-type": "application/json", authorization: `Bearer ${key}` }, cache: "no-store" }).catch(() => null);
+  // Without a key, the signed-in account is what counts.
+  const response = await fetch(`/api/admin${path}`, { ...init, headers: { "content-type": "application/json", ...(key && { authorization: `Bearer ${key}` }) }, cache: "no-store" }).catch(() => null);
   return { data: response?.ok ? ((await response.json()) as T) : null, status: response?.status ?? 0 };
 }
 const call = async <T,>(key: string, path: string, init: RequestInit = {}) => (await request<T>(key, path, init)).data;
 
 export default function AdminPage() {
+  const account = useAccount();
+  // Open: by the signed-in account (key "") or by a key.
+  const [open, setOpen] = useState(false);
   const [key, setKey] = useState("");
   const [typed, setTyped] = useState("");
   const [wrong, setWrong] = useState<"" | "key" | "locked">("");
@@ -32,6 +41,7 @@ export default function AdminPage() {
   const [reported, setReported] = useState<AdminInvitation[] | null>(null);
   const [requests, setRequests] = useState<AdminUpgrade[]>([]);
   const [numbers, setNumbers] = useState<Numbers | null>(null);
+  const [errors, setErrors] = useState<ServerError[]>([]);
   const [days, setDays] = useState(30);
   const [lookup, setLookup] = useState("");
   const [found, setFound] = useState<AdminInvitation | null | "none">(null);
@@ -41,20 +51,29 @@ export default function AdminPage() {
     const reports = await request<{ invitations: AdminInvitation[] }>(k, "/reports");
     if (!reports.data) return reports.status;
     setReported(reports.data.invitations);
-    const [nums, upgrades] = await Promise.all([call<Numbers>(k, `/numbers?days=${d}`), call<{ requests: AdminUpgrade[] }>(k, "/upgrades")]);
+    const [nums, upgrades, failures] = await Promise.all([call<Numbers>(k, `/numbers?days=${d}`), call<{ requests: AdminUpgrade[] }>(k, "/upgrades"), call<{ errors: ServerError[] }>(k, "/errors")]);
     if (nums) setNumbers(nums);
     if (upgrades) setRequests(upgrades.requests);
+    if (failures) setErrors(failures.errors);
     return 200;
   }, []);
 
+  // A signed-in admin goes straight in; otherwise a key kept for this tab, if any.
   useEffect(() => {
+    if (!account.ready) return;
+    if (account.admin) {
+      void load("", 30).then(status => { if (status === 200) setOpen(true); });
+      return;
+    }
     let saved = "";
     try { saved = sessionStorage.getItem(KEY) ?? ""; } catch { /* this tab only */ }
     if (saved) void load(saved, 30).then(status => {
-      if (status === 200) setKey(saved);
-      else try { sessionStorage.removeItem(KEY); } catch { /* nothing saved */ }
+      if (status === 200) {
+        setKey(saved);
+        setOpen(true);
+      } else try { sessionStorage.removeItem(KEY); } catch { /* nothing saved */ }
     });
-  }, [load]);
+  }, [load, account.ready, account.admin]);
 
   async function signIn(event: FormEvent) {
     event.preventDefault();
@@ -62,13 +81,18 @@ export default function AdminPage() {
     const status = await load(k, days);
     if (status === 200) {
       setKey(k);
+      setOpen(true);
       setWrong("");
       try { sessionStorage.setItem(KEY, k); } catch { /* this visit only */ }
     } else setWrong(status === 429 ? "locked" : "key");
   }
-  function signOut() {
+  async function signOut() {
     try { sessionStorage.removeItem(KEY); } catch { /* nothing saved */ }
-    setKey(""); setTyped(""); setReported(null); setNumbers(null); setFound(null); setMessage("");
+    if (!key) {
+      await signOutAccount();
+      await account.refresh();
+    }
+    setOpen(false); setKey(""); setTyped(""); setReported(null); setNumbers(null); setFound(null); setMessage("");
   }
 
   async function act(slug: string, action: Moderation) {
@@ -104,19 +128,24 @@ export default function AdminPage() {
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
       <span className="studio-header-label">Admin</span>
-      <div className="studio-header-actions">{key && <button type="button" className="share-chip" onClick={signOut}>Sign out</button>}</div>
+      <div className="studio-header-actions">{open && <button type="button" className="share-chip" onClick={() => void signOut()}>Sign out</button>}</div>
     </header>
     <main className="manage theme-paper">
-      {!key ? <section className="sketch-card manage-card admin-sign-in">
+      {!open ? <section className="sketch-card manage-card admin-sign-in">
         <h1>WowLink admin</h1>
+        {account.email && !account.admin && <p className="manage-muted">Signed in as {account.email}, which isn’t an admin account.</p>}
+        {account.accounts && !account.email && <><p className="manage-muted">Sign in with an admin’s Google account.</p><SignIn h={HOST_TEXT.en} next="/admin"/></>}
+        {account.ready && !account.admin && <details className="admin-key-option" open={!account.accounts}>
+        <summary>Use the admin key</summary>
         <form onSubmit={signIn}>
           <div className="studio-field">
             <label htmlFor="admin-key">Admin key</label>
             <input id="admin-key" type="password" autoComplete="current-password" value={typed} onChange={e => { setTyped(e.target.value); setWrong(""); }} aria-invalid={wrong ? true : undefined} aria-describedby={wrong ? "admin-key-error" : undefined}/>
-            {wrong && <p className="studio-error" id="admin-key-error" role="alert">{wrong === "locked" ? "Too many wrong tries from here. Try again in an hour." : "That key didn’t open it. (The admin only exists when WOWLINK_ADMIN_KEY is set on the server; on a live site it needs at least 24 characters.)"}</p>}
+            {wrong && <p className="studio-error" id="admin-key-error" role="alert">{wrong === "locked" ? "Too many wrong tries from here. Try again in an hour." : "That key didn’t open it. (A key only works when WOWLINK_ADMIN_KEY is set on the server; on a live site it needs at least 24 characters.)"}</p>}
           </div>
           <button type="submit" className="cin-cta cin-cta-light" disabled={!typed.trim()}>Open</button>
         </form>
+        </details>}
       </section> : <>
         <h1 className="studio-sr-only">WowLink admin</h1>
         <section className="sketch-card manage-card" aria-labelledby="requests-heading">
@@ -152,6 +181,14 @@ export default function AdminPage() {
           </form>
           {found === "none" && <p className="manage-muted">There’s no invitation at that link.</p>}
           {found && found !== "none" && <ul className="admin-list"><AdminCard invitation={found} onAct={act}/></ul>}
+        </section>
+
+        <section className="sketch-card manage-card" aria-labelledby="errors-heading">
+          <h2 id="errors-heading">Server errors</h2>
+          {!errors.length ? <p className="manage-muted">None recorded.</p> : <ul className="admin-errors">{errors.map((e, i) => <li key={i}>
+            <span className="manage-muted">{new Date(e.at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span> <code>{e.method} {e.path}</code>
+            <p>{e.message}</p>
+          </li>)}</ul>}
         </section>
 
         {numbers && <section className="sketch-card manage-card" aria-labelledby="numbers-heading">

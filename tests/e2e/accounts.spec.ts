@@ -94,6 +94,21 @@ test("a sign-in link that comes back to the home page goes on to finish signing 
   expect((await request.get("/", { maxRedirects: 0 })).status()).toBe(200);
 });
 
+test("an admin is a Google account listed as one: no key needed, and nobody else gets in", async ({ browser, request }) => {
+  const admin = { "x-wowlink-test-user": "admin-tester" };
+  expect(await (await request.get("/api/account", { headers: admin })).json()).toMatchObject({ user: { email: "admin-tester@test.wowlink.local", admin: true } });
+  expect((await request.get("/api/admin/reports", { headers: admin })).status()).toBe(200);
+  // Another account, signed in, gets nothing (and that's not counted as a wrong key).
+  expect((await request.get("/api/admin/reports", { headers: as(freshUser()) })).status()).toBe(404);
+
+  const context = await browser.newContext({ extraHTTPHeaders: { ...admin, "x-forwarded-for": freshIp() } });
+  const page = await context.newPage();
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "Reports" })).toBeVisible();
+  await expect(page.locator("#admin-key")).toHaveCount(0);
+  await context.close();
+});
+
 test.describe("signed out", () => {
   test.use({ signedIn: false });
 

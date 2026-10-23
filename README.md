@@ -54,7 +54,8 @@ Copy `.env.example` to `.env.local` and fill it in.
 
 | Variable | Used for |
 |---|---|
-| `WOWLINK_ADMIN_KEY` | Opens the admin page (`/admin`). On a live site it needs at least 24 characters (`openssl rand -hex 24`), or the admin stays off and the server logs a warning; with `npm run dev` any key works. Without it the admin doesn't exist. Ten wrong keys from one address lock that address out for an hour (the page then says so). |
+| `WOWLINK_ADMINS` | The Google accounts (emails, comma-separated) that open the admin page (`/admin`) when signed in. |
+| `WOWLINK_ADMIN_KEY` | A key that also opens the admin page: for `npm run dev` (any key works there) and the tests. A live site needn't have one; if it does, it needs at least 24 characters (`openssl rand -hex 24`). Ten wrong keys from one address lock that address out for an hour. |
 | `DATABASE_URL` | Postgres on Supabase (see Database below). Without it the data stays in `.data/wowlink.json`. |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Accounts (Supabase Auth): the project's address and its publishable key (public by design). Without them there are no accounts. |
 | `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews, canonical links, `sitemap.xml` and `robots.txt` (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
@@ -79,7 +80,11 @@ The first sets up the tables (safe to run again). The second, optional, copies a
 
 ## Going live (Vercel)
 
-The site runs on Vercel, its functions in Mumbai (`vercel.json`) beside the Supabase database. On Vercel the app refuses to start without `DATABASE_URL`, since Vercel doesn't keep files. Set these in the Vercel project (Production): `DATABASE_URL`, `WOWLINK_ADMIN_KEY` (24+ characters), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`.
+The site runs on Vercel (https://wowlink-one.vercel.app), its functions in Mumbai (`vercel.json`) beside the Supabase database. On Vercel the app refuses to start without `DATABASE_URL`, since Vercel doesn't keep files. Set these in the Vercel project (Production): `DATABASE_URL`, `WOWLINK_ADMINS` (the Google accounts that open `/admin`), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. `NEXT_PUBLIC_SITE_URL` defaults to the production address. A live site needs no `WOWLINK_ADMIN_KEY`.
+
+Only what passes goes live. Vercel doesn't deploy pushes to `main` itself (`vercel.json`); GitHub Actions runs both test runs, then builds and deploys to production and checks the live site (`.github/workflows/test.yml`). That needs a Vercel token as the repository secret `VERCEL_TOKEN`. A new migration is applied before pushing it (`npm run db:migrate`, or `supabase db push --linked`), so the new code finds its tables.
+
+Every 30 minutes `.github/workflows/health.yml` checks the live site: its pages answer, `/api/health` says the database is up, and there were no server errors in the last hour. Server errors are recorded by `instrumentation.ts` and listed on the admin page. A failed check is emailed by GitHub.
 
 In Supabase (Authentication), kept in `supabase/config.toml` and sent with `supabase config push` (except Google's client secret, which goes in the dashboard):
 - URL configuration: the Site URL is the live address; Redirect URLs include `https://<live address>/**` and `http://localhost:3000/**`.
@@ -99,7 +104,6 @@ The tests never use `.env.local`'s database or Supabase project: `playwright.con
 - Subscriptions, analytics and the free plan's 60-day expiry aren't built yet.
 - The PRD puts custom colours in the paid plan. Until plans exist, every host has them.
 - Each counted visit rewrites the JSON file (or, on Supabase, the invitation's row). Fine at this size; very busy invitations would want their counts in rows of their own.
-- The admin is one shared key. Now that there are accounts, it should become a role.
 - The privacy page describes the app as it is today (Supabase and Vercel in Mumbai, accounts). Before launch it still needs a proper review: how long things are kept, what the hosting providers log, and consent.
 
 ## Performance on phones

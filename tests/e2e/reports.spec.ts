@@ -121,6 +121,8 @@ test("the admin page: sign in, see a report, take it down and put it back; the h
   const errors = collectErrors(page);
   await page.goto("/admin");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  // Not signed in as an admin: the key (as on `npm run dev`).
+  await page.getByText("Use the admin key").click();
   await page.locator("#admin-key").fill("not-the-admin-key-at-all-000");
   await page.getByRole("button", { name: "Open" }).click();
   await expect(page.locator("#admin-key-error")).toBeVisible();

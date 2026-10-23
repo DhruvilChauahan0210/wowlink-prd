@@ -1,0 +1,19 @@
+name: Live site check
+
+# Every 30 minutes: the live site's pages answer, its database is up, and there were no server errors in the last
+# hour. A failed run is emailed by GitHub (to whoever last changed this schedule), so a problem is noticed early.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: bash scripts/live-check.sh https://wowlink-one.vercel.app --errors

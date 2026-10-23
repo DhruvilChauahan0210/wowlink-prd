@@ -1,11 +1,16 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { currentUser } from "./auth";
 import { allow, clientId, under } from "./rate-limit";
 
 /*
- * WowLink's own admin (reports, taking invitations down, the app's numbers). It's one secret key (not yet a role on
- * an account), set as WOWLINK_ADMIN_KEY on the server and sent as a Bearer token. Without it set, the admin doesn't
- * exist: every admin route answers 404, the same as a wrong key.
+ * WowLink's own admin (reports, taking invitations down, the app's numbers). An admin is a Google account listed in
+ * WOWLINK_ADMINS (emails, comma-separated), signed in as usual; nothing to share or leak. A key (WOWLINK_ADMIN_KEY,
+ * sent as a Bearer token) also opens it, for `npm run dev` and the tests; a live site needn't have one. Anyone else
+ * gets 404 from every admin route, as if there were no admin.
  */
+
+/** Whether this email is one of WowLink's admins. */
+export const isAdminEmail = (email: string) => !!email && (process.env.WOWLINK_ADMINS ?? "").split(",").map((e) => e.trim().toLowerCase()).includes(email.toLowerCase());
 
 /**
  * On a live site anyone can try keys, so a short one (like "admin") would be guessed: it needs 24 characters or the
@@ -21,6 +26,8 @@ const digest = (value: string) => createHash("sha256").update(value).digest();
  * from one address within the hour.
  */
 export async function checkAdmin(request: Request): Promise<"ok" | "no" | "locked"> {
+  const user = await currentUser(request);
+  if (user && isAdminEmail(user.email)) return "ok";
   const expected = process.env.WOWLINK_ADMIN_KEY ?? "";
   if (expected.length < MIN_LENGTH) {
     if (expected && !warned) {
@@ -32,6 +39,8 @@ export async function checkAdmin(request: Request): Promise<"ok" | "no" | "locke
   const who = `admin-fail:${clientId(request)}`;
   if (!(await under(who, FAILURES.limit, FAILURES.windowMs))) return "locked";
   const given = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ?? "";
+  // No key at all (a signed-in host who isn't an admin, say) isn't a wrong try.
+  if (!given) return "no";
   if (timingSafeEqual(digest(given), digest(expected))) return "ok";
   await allow(who, FAILURES.limit, FAILURES.windowMs);
   return "no";

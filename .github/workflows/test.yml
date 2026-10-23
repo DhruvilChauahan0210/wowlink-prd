@@ -1,6 +1,7 @@
 name: Tests
 
-# Every push to main runs the whole Playwright suite (unit + end-to-end) against a production build.
+# Every push to main runs the whole Playwright suite (unit + end-to-end) against a production build, on the JSON file
+# and on Postgres; only then is it deployed to the live site (Vercel's own deploys of main are off, vercel.json).
 on:
   push:
     branches: [main]
@@ -50,3 +51,36 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+
+  deploy:
+    # Only what passed goes live. Needs the VERCEL_TOKEN secret (README, "Going live"); the ids aren't secret.
+    # A new database migration is applied before pushing it (npm run db:migrate), so the new code finds its tables.
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: team_MZ8qck5QQF2GT61SCmtdnIjx
+      VERCEL_PROJECT_ID: prj_lNOU6CneK8zx38vF5LivX3k22Vi5
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: The Vercel token is set
+        run: test -n "$VERCEL_TOKEN" || { echo "::error::Add the VERCEL_TOKEN secret to the repository (README, Going live)."; exit 1; }
+
+      - name: Build for production
+        run: |
+          npx -y vercel@65.2.0 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx -y vercel@65.2.0 build --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy
+        run: npx -y vercel@65.2.0 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      - name: The live site answers
+        run: bash scripts/live-check.sh https://wowlink-one.vercel.app

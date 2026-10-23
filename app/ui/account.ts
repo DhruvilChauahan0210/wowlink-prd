@@ -9,13 +9,13 @@ import { browserSupabase } from "../lib/supabase-browser";
  * this device's manage keys stay in localStorage as before, and signing in adds keys for the host's other invitations.
  */
 
-export type Account = { ready: boolean; accounts: boolean; email: string | null };
+export type Account = { ready: boolean; accounts: boolean; email: string | null; admin: boolean };
 
 export function useAccount() {
-  const [account, setAccount] = useState<Account>({ ready: false, accounts: false, email: null });
+  const [account, setAccount] = useState<Account>({ ready: false, accounts: false, email: null, admin: false });
   const refresh = useCallback(async () => {
     const body = await fetch("/api/account", { cache: "no-store" }).then((r) => r.json()).catch(() => null);
-    const next = { ready: true, accounts: !!body?.accounts, email: (body?.user?.email as string | undefined) ?? null };
+    const next = { ready: true, accounts: !!body?.accounts, email: (body?.user?.email as string | undefined) ?? null, admin: body?.user?.admin === true };
     setAccount(next);
     return next;
   }, []);
