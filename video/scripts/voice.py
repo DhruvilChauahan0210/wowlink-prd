@@ -1,10 +1,10 @@
 """
-The launch video's voiceover: Microsoft's Indian-English neural voice Neerja (edge-tts) reading Hinglish as people
-type it, one file per line, with the moment each word is said, so the captions land on the words. (The Devanagari
-lines are kept for a Hindi voice: SAY=hindi with hi-IN-SwaraNeural.)
+The launch video's voiceover: Microsoft's Hindi neural voice Swara (edge-tts) reading Hindi with its English words
+(as Hinglish is spoken), one file per line, with the moment each word is said, so the captions and the edit land on
+the words. (SAY=roman reads the Roman captions instead, for an Indian-English voice like en-IN-NeerjaNeural.)
 
-Reels energy: short punchy lines, read faster and a little higher, then each line is trimmed of its silences and
-compressed and brightened (numpy), so the voice sits up front and the lines run on with only a breath between them.
+Reels energy: short punchy lines, read a little faster in Swara's own pitch, then each line is trimmed of its silences
+and compressed and brightened (numpy), so the voice sits up front and the lines run on with only a breath between them.
 Writes public/voice/<id>.wav and public/voice/lines.json (the script the video reads, with each line's length).
 
 Run from video/: npm run voice
@@ -28,12 +28,12 @@ import edge_tts  # noqa: E402 (after the certificate fix)
 
 # The voice, and what it reads: "hindi" (Hindi words in Devanagari) or "roman" (the captions, as people type
 # Hinglish), which suits an Indian-English voice. VOICE, SAY, OUT and ONLY (some ids) can be set to try others.
-VOICE = os.environ.get("VOICE", "en-IN-NeerjaNeural")
-SAY = os.environ.get("SAY", "roman")
+VOICE = os.environ.get("VOICE", "hi-IN-SwaraNeural")
+SAY = os.environ.get("SAY", "hindi")
 OUT = os.environ.get("OUT", "public/voice")
 ONLY = [i for i in os.environ.get("ONLY", "").split(",") if i]
-RATE = "+22%"
-PITCH = "+8Hz"
+RATE = "+12%"
+PITCH = "+0Hz"
 VOLUME = "+15%"
 BREATH = 0.12  # seconds between lines
 
@@ -42,7 +42,7 @@ RATE_HZ = 44100
 # id, what the voice says, the caption on screen (Roman Hinglish, as people type it), the words to highlight.
 LINES = [
     ("hook", "शादी का invitation... अभी भी PDF में?!", "Shaadi ka invitation... abhi bhi PDF mein?!", ["PDF"]),
-    ("reveal", "तो मिलिए WowLink से! हाथ से बना, animated invitation, बस एक link में!", "Toh milo WowLink se! Haath se bana, animated invitation, bas ek link mein!", ["WowLink", "link"]),
+    ("reveal", "तो मिलिए WowLink से! हाथ से बना, animated invitation, बस एक link में!", "Toh miliye WowLink se! Haath se bana, animated invitation, bas ek link mein!", ["WowLink", "link"]),
     ("studio", "Occasion चुनो, नाम लिखो, और publish! बस!", "Occasion chuno, naam likho, aur publish! Bas!", ["publish"]),
     ("guest", "मेहमान link खोलते हैं, और invitation सच में खुलता है!", "Mehmaan link kholte hain, aur invitation sach mein khulta hai!", ["khulta"]),
     ("rsvp", "Countdown! Calendar! और एक tap में RSVP!", "Countdown! Calendar! Aur ek tap mein RSVP!", ["RSVP"]),
@@ -138,7 +138,13 @@ async def main():
             continue
         words = await speak(caption if SAY == "roman" else said, f"{OUT}/{line_id}.raw.mp3")
         seconds, trimmed = shape(line_id)
-        # Word times move with the silence trimmed from the start.
+        # Word times move with the silence trimmed from the start. The script reads word for word like its caption, so
+        # each word is named by the caption's word (what the scenes and captions look for), whatever script it's said in.
+        typed = [t.strip(",.!?…") for t in caption.split()]
+        if len(typed) == len(words):
+            words = [{**w, "w": t} for w, t in zip(words, typed)]
+        else:
+            print(f"{line_id}: {len(words)} words said, {len(typed)} in the caption; keeping the said words")
         words = [{"w": w["w"], "s": round(max(0, w["s"] - trimmed), 3), "e": round(max(0, w["e"] - trimmed), 3)} for w in words]
         lines.append({"id": line_id, "caption": caption, "highlight": highlight, "seconds": round(seconds + BREATH, 3), "words": words})
         print(f"{line_id}: {seconds:.2f}s")

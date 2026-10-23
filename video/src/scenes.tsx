@@ -43,7 +43,7 @@ export function Hook() {
   const pdf = useWord("PDF", 50);
   const card = useIn(0, { damping: 12, stiffness: 180 });
   const dead = interpolate(frame, [pdf, pdf + 6], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const s = shake(frame, [pdf], 30, 14);
+  const s = shake(frame, [pdf], 10, 8);
   const left = wide ? phoneX - 140 : 60;
   const boxW = wide ? phoneW + 240 : 960;
   const top = wide ? 140 : 640;
@@ -84,7 +84,7 @@ export function Reveal() {
   const away = interpolate(frame, [haath - 8, haath], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const phone = useWhipIn(haath - 4);
   const float = Math.sin(frame / 14) * 8;
-  const s = shake(frame, [1, link], 26, 12);
+  const s = shake(frame, [1, link], 8, 8);
   return <AbsoluteFill style={{ transform: `translate(${s.x}px, ${s.y}px)` }}>
     <Bunting delay={0}/>
     <Shockwave at={1} x={centerX} y={centerY}/>
@@ -123,7 +123,7 @@ export function Studio() {
   const tapPublish = onScreen(phoneW, 993, 95);
   // A zoom into the card that's picked, then back.
   const zoom = 1 + 0.22 * Math.sin(Math.PI * interpolate(frame, [12, naam], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
-  const s = shake(frame, [publish + 4], 22, 12);
+  const s = shake(frame, [publish + 4], 7, 8);
   return <AbsoluteFill style={{ transform: `translate(${s.x}px, ${s.y}px)` }}>
     <div style={{ position: "absolute", left: phoneX, top: phoneY, ...phone }}>
       <div style={{ transform: `scale(${zoom * punch(frame, [publish + 4], 0.07)})`, transformOrigin: `${tapCard.left}px ${tapCard.top}px` }}>
@@ -201,10 +201,10 @@ export function Rsvp() {
   const toDone = useRange(rsvp + 2, rsvp + 6);
   const tapSend = onScreen(phoneW, 585, 1988);
   const check = useIn(rsvp + 4, { damping: 8, stiffness: 200 });
-  const s = shake(frame, [countdown + 2, calendar + 2, rsvp + 4], 18, 10);
+  const s = shake(frame, [countdown + 2, calendar + 2, rsvp + 4], 6, 7);
   return <AbsoluteFill style={{ transform: `translate(${s.x}px, ${s.y}px)` }}>
     <div style={{ position: "absolute", left: phoneX, top: phoneY, ...phone }}>
-      <div style={{ transform: `scale(${punch(frame, [countdown + 2, calendar + 2, rsvp + 4], 0.05)}) rotate(${Math.sin(frame / 9) * 1.2}deg)` }}>
+      <div style={{ transform: `scale(${punch(frame, [countdown + 2, calendar + 2, rsvp + 4], 0.05)}) rotate(${Math.sin(frame / 9) * 0.5}deg)` }}>
         <Phone width={phoneW}>
           <Img src={staticFile("footage/guest-details.png")} style={{ position: "absolute", width: "100%", opacity: 1 - toForm }}/>
           <Img src={staticFile("footage/guest-rsvp.png")} style={{ position: "absolute", width: "100%", opacity: toForm * (1 - toDone) }}/>
@@ -238,7 +238,7 @@ export function Languages() {
   const phones = wide
     ? [{ screen: "gujarati-opened", label: "ગુજરાતી", font: F.guj, x: 1010, rot: -9, at: gujarati }, { screen: "hindi-opened", label: "हिन्दी", font: F.deva, x: 1560, rot: 9, at: hindi }, { screen: "guest-opened", label: "English", font: F.hand, x: 1285, rot: 0, at: english }]
     : [{ screen: "gujarati-opened", label: "ગુજરાતી", font: F.guj, x: 30, rot: -10, at: gujarati }, { screen: "hindi-opened", label: "हिन्दी", font: F.deva, x: 630, rot: 10, at: hindi }, { screen: "guest-opened", label: "English", font: F.hand, x: 330, rot: 0, at: english }];
-  const s = shake(frame, phones.map((p) => p.at + 2), 20, 10);
+  const s = shake(frame, phones.map((p) => p.at + 2), 6, 7);
   return <AbsoluteFill style={{ transform: `translate(${s.x}px, ${s.y}px)` }}>
     {phones.map((p) => <Slammed key={p.screen} {...p} w={w} y={y + (p.rot ? 70 : 0)}/>)}
     <Sticker at={marzi} emoji="😎" x={wide ? 1700 : 900} y={wide ? 150 : 600} size={140} rotate={12}/>
@@ -299,7 +299,7 @@ export function Cta() {
   const url = useIn(free + 14, { damping: 11, stiffness: 200 });
   const langs = useIn(free + 34, { damping: 14 });
   const glow = 0.85 + 0.15 * Math.sin(frame / 8);
-  const s = shake(frame, [0, apna, free], 26, 12);
+  const s = shake(frame, [apna, free], 8, 8);
   const cx = width / 2;
   return <AbsoluteFill style={{ transform: `translate(${s.x}px, ${s.y}px)` }}>
     <Bunting delay={apna}/>

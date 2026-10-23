@@ -2,7 +2,7 @@
 
 A Remotion project that renders the launch video in two shapes from one timeline: a vertical Reel (1080×1920, for
 Instagram Reels, YouTube Shorts and WhatsApp status) and a wide cut (1920×1080, for YouTube, LinkedIn and the site).
-About 31 seconds: a punchy Hinglish voiceover, an original track, and WowLink's real screens, cut like a Reel.
+About 35 seconds: a punchy Hinglish voiceover, an original track, and WowLink's real screens, cut like a Reel.
 
 ```bash
 cd video
@@ -15,13 +15,13 @@ npm run studio    # preview and tweak, at http://localhost:3210
 npm run render    # out/wowlink-launch-vertical.mp4 and out/wowlink-launch-wide.mp4
 ```
 
-- **The script** is in `scripts/voice.py`: each line as it's read and as it's captioned (Roman Hinglish, the way
-  people type it), and the words to highlight. Change it, then run `voice`, `music` and `render` again: the
-  scenes, captions and music follow the new timings.
-- **The voice** is Microsoft's Indian-English neural voice Neerja (`en-IN-NeerjaNeural`) through edge-tts, reading
-  the Roman Hinglish, faster, higher and louder for Reels energy (`RATE`, `PITCH`, `VOLUME`), then trimmed,
-  brightened and compressed so it sits up front, with just a breath (`BREATH`) between lines. `VOICE` swaps it (and
-  `SAY=hindi` reads the Devanagari lines, for a Hindi voice like `hi-IN-SwaraNeural`).
+- **The script** is in `scripts/voice.py`: each line as it's read (Hindi words in Devanagari, English in English)
+  and as it's captioned (Roman Hinglish, the way people type it, word for word), and the words to highlight. Change
+  it, then run `voice`, `music` and `render` again: the scenes, captions and music follow the new timings.
+- **The voice** is Microsoft's neural Hindi voice Swara (`hi-IN-SwaraNeural`) through edge-tts, in her own pitch and
+  a little faster for Reels energy (`RATE`, `PITCH`, `VOLUME`), then trimmed, brightened and compressed so it sits up
+  front, with just a breath (`BREATH`) between lines. `VOICE` swaps it (and `SAY=roman` reads the Roman captions, for
+  an Indian-English voice like `en-IN-NeerjaNeural`).
 - **The edit** lands on the words: voice.py keeps the moment each word is said, and every slam, stamp, sticker,
   shake and confetti burst in `src/scenes.tsx` is timed to a spoken word (`useWord`). Each scene has its own colour
   (`src/Launch.tsx`), slams in with a flash and a zoom, and pulses on the beat; the captions pop on a few words at
