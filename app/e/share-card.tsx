@@ -76,8 +76,6 @@ export async function shareCard(experience: PublicExperience | null, addressee?:
         <div style={{ position: "absolute", left: 84, top: 96, display: "flex", padding: 14, background: "#fbf6ec", transform: "rotate(-3deg)", boxShadow: "0 18px 36px rgba(42,29,20,.28)" }}>
           <div style={{ display: "flex", background: "#f1e6d2", position: "relative" }}>
             <img src={svgData(renderSvg(<StandaloneArt name={name} />))} width={330} height={403} />
-            {/* SVG text doesn't survive the image renderer, so the shop sign's word is laid on top (sign: x 118–242, y 66–104 of 360 × 440). */}
-            {name === "opening" && <div style={{ position: "absolute", left: 108, top: 60, width: 114, height: 35, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Caveat", fontSize: 27, color: INK }}>OPEN</div>}
           </div>
         </div>
         <div style={{ position: "absolute", left: 210, top: 80, width: 110, height: 34, background: "rgba(224,146,47,.75)", transform: "rotate(-4deg)" }} />

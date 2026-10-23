@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { Art } from "./ui/art";
+import { Art, ArtImage } from "./ui/art";
 import { ArrowCurl, Diya, Flower, Pen, Star } from "./ui/doodles";
 import { clamp, ease, onSceneFrame, progress, range, sceneNavigate, startSceneScroll } from "./lib/scene-scroll";
 
@@ -96,7 +96,7 @@ function OccasionReel({ reduced }: { reduced: boolean }) {
       const dim = clamp(Math.abs(delta) * 1.5);
       card.style.opacity = String(1 - dim * 0.55);
       card.style.transform = `scale(${1 - dim * 0.05})`;
-      const image = card.querySelector<SVGElement>(".cin-photo > svg");
+      const image = card.querySelector<HTMLElement>(".cin-photo > img");
       if (image) image.style.transform = `translate3d(${-delta * 35}px,0,0) scale(1.14)`;
       if (Math.abs(delta) < best) { best = Math.abs(delta); nearest = i; }
     });
@@ -106,7 +106,7 @@ function OccasionReel({ reduced }: { reduced: boolean }) {
   return <section className="cin-reel theme-paper" id="occasions" ref={root}><div className="cin-reel-sticky">
     <div className="cin-reel-intro"><h2>Every occasion gets its own drawing.</h2><p>Pick a sketch made for your day, then make it yours.</p><span className="cin-note cin-reel-note">tap a drawing to peek inside <ArrowCurl className="doodle-curl"/></span><div className="cin-reel-meter" aria-hidden="true"><span><b ref={count}>1</b> / {occasions.length}</span><span className="cin-meter"><span ref={bar}/></span></div><Link className="cin-text-link" href="/templates">Browse all templates <span aria-hidden="true">→</span></Link></div>
     <div className="cin-reel-track" ref={track}>{occasions.map((item, i) => <article key={item.id} className="cin-occasion-card" ref={(el) => { cards.current[i] = el; }}>
-      <Link className="cin-occasion-image" href={`/e/preview?template=${item.id}`} aria-label={`Preview the ${item.kind.toLowerCase()} invitation`}><span className="cin-photo"><Art name={item.id} fit="slice" decorative/></span><span className="cin-card-title"><span className="cin-card-kind">{item.kind}</span><h3>{item.title}</h3></span></Link>
+      <Link className="cin-occasion-image" href={`/e/preview?template=${item.id}`} aria-label={`Preview the ${item.kind.toLowerCase()} invitation`}><span className="cin-photo"><ArtImage name={item.id} fit="slice"/></span><span className="cin-card-title"><span className="cin-card-kind">{item.kind}</span><h3>{item.title}</h3></span></Link>
       <div className="cin-card-bottom"><p>{item.detail}</p><Link href={`/create?template=${item.id}`}>Make it yours <span aria-hidden="true">→</span></Link></div>
     </article>)}</div>
   </div></section>;
@@ -193,8 +193,8 @@ export default function CinematicHome() {
   }, []);
   useEffect(() => startSceneScroll(reduced), [reduced]);
   return <div className={`cinema${reduced ? " cin-reduced" : ""}`}><Chrome/><main><InvitationScene/><OccasionReel reduced={reduced}/><ShareJourney reduced={reduced}/><Plans/><section className="cin-finale theme-paper">
-    <div className="cin-print fin-print fin-p1"><span className="cin-photo"><Art name="birthday" fit="slice" decorative/></span></div>
-    <div className="cin-print fin-print fin-p2"><span className="cin-photo"><Art name="garba" fit="slice" decorative/></span></div>
+    <div className="cin-print fin-print fin-p1"><span className="cin-photo"><ArtImage name="birthday" fit="slice"/></span></div>
+    <div className="cin-print fin-print fin-p2"><span className="cin-photo"><ArtImage name="garba" fit="slice"/></span></div>
     <Flower className="doodle fin-a"/><Star className="doodle fin-b"/><Diya className="doodle fin-c"/><Flower className="doodle fin-d"/>
     <span className="cin-note cin-finale-note">come on in</span><h2>Your day.<br/><em>Their first wow.</em></h2><p>Free to start. Lovely to share.</p><Link href="/templates" className="cin-cta cin-cta-light">Create your invitation</Link>
   </section></main>

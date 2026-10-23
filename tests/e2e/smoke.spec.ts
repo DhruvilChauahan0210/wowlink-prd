@@ -39,3 +39,18 @@ test("the app icon is served", async ({ request }) => {
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("image/svg+xml");
 });
+
+test("each occasion's drawing is served as an image, for the places it doesn't animate", async ({ request, page }) => {
+  for (const name of ["wedding", "engagement", "anniversary"]) {
+    const response = await request.get(`/art/${name}.svg`);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("image/svg+xml");
+    const svg = await response.text();
+    // self-contained: its own filters, and no text that needs the page's fonts
+    expect(svg).toContain('id="wobble"');
+    expect(svg).not.toContain("<text");
+  }
+  expect((await request.get("/art/funeral.svg")).status()).toBe(404);
+  await page.goto("/templates");
+  await expect(page.locator(".cin-catalog-grid img.art-image")).toHaveCount(8);
+});

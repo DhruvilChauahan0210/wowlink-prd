@@ -148,8 +148,10 @@ html.lenis,html.lenis body{height:auto}
 /* ---------- Hand-drawn art (ui/art.tsx) ---------- */
 .art{display:block;overflow:visible}
 .art .ink{filter:url(#wobble)}
-@media(prefers-reduced-motion:no-preference){.art.boil .ink{filter:url(#boil)}}
-.art.is-drawing .ink :is(path,circle,ellipse,rect){stroke-dasharray:1100;stroke-dashoffset:1100;animation:ink-draw 1.7s cubic-bezier(.45,.05,.35,1) forwards;animation-delay:calc(var(--d,0s) + .25s)}
+/* The boil (ink redrawn a few times a second) is costly to paint, so only where there's a mouse and room for it; phones get still ink. */
+@media(prefers-reduced-motion:no-preference) and (hover:hover) and (pointer:fine){.art.boil .ink{filter:url(#boil)}}
+/* drawn "on twos", about 12 frames a second like hand animation: it reads as drawing, and costs a fraction to paint */
+.art.is-drawing .ink :is(path,circle,ellipse,rect){stroke-dasharray:1100;stroke-dashoffset:1100;animation:ink-draw 1.7s steps(20,end) forwards;animation-delay:calc(var(--d,0s) + .25s)}
 .art.is-drawing .ink text,.art.is-drawing .wash{opacity:0;animation:wash-in 1s ease forwards;animation-delay:calc(var(--d,0s) + .2s)}
 @keyframes ink-draw{to{stroke-dashoffset:0}}
 @keyframes wash-in{from{opacity:0}to{opacity:1}}
@@ -182,7 +184,9 @@ html.lenis,html.lenis body{height:auto}
 .cin-occasion-card:nth-child(even) .cin-occasion-image{rotate:1deg}
 .cin-occasion-card:hover .cin-occasion-image{rotate:0deg}
 .cin-photo{display:block;position:relative;flex:1;min-height:0;overflow:hidden;background:#f1e6d2}
-.cin-photo>svg{display:block;width:100%;height:100%;will-change:transform}
+.cin-photo>:is(svg,img){display:block;width:100%;height:100%;will-change:transform}
+/* the reel scales its cards as they pass; a layer of their own keeps that from repainting the drawing */
+.cin-reel .cin-occasion-card{will-change:transform,opacity}
 
 .cin-card-title{display:block;padding:12px 10px 14px}
 .cin-card-kind{display:block;font:700 24px/1.1 var(--hand);color:var(--accent)}

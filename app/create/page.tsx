@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { EVENT_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
 import { WowLinkBrand } from "../ui/brand";
-import { Art } from "../ui/art";
+import { ArtImage } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
 import { CopyField, ShareTools } from "../ui/share-tools";
 import type { Experience, Rsvp } from "../lib/store";
@@ -211,7 +211,7 @@ export default function CreatePage() {
       <section className="studio-edit-panel theme-paper" id="studio-edit" aria-label="Invitation settings">
         <Link className="studio-back" href={owned ? `/manage/${owned.slug}` : "/templates"}>{owned ? "← Back to your invitation" : "← All templates"}</Link>
         <div className="studio-intro"><h1>Make it <span className="scribble">yours</span></h1><p>Edit the details and see your invitation update live.</p></div>
-        <fieldset className="studio-fieldset"><legend>Occasion</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><Art name={item.id} fit="slice" decorative/><span>{item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : ""}</i></button>)}</div></fieldset>
+        <fieldset className="studio-fieldset"><legend>Occasion</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><ArtImage name={item.id} fit="slice"/><span>{item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : ""}</i></button>)}</div></fieldset>
         <fieldset className="studio-fieldset"><legend>Details</legend>
           <div className="studio-field"><label htmlFor="title">Names or occasion title</label><input id="title" value={draft.title} maxLength={80} placeholder="Aarav & Meera" onChange={event => update("title", event.target.value)} {...described("title")}/>{fieldError("title")}</div>
           <div className="studio-field-row">

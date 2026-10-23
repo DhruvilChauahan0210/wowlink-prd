@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { formatInvitationDate, formatInvitationTime, ownerKey, sortSchedule } from "../../lib/invitations";
 import { answerFor } from "../../lib/guests";
 import type { Experience, Rsvp } from "../../lib/store";
-import { Art, type ArtName } from "../../ui/art";
+import { ArtImage, type ArtName } from "../../ui/art";
 import { WowLinkBrand } from "../../ui/brand";
 import { CopyField, ShareTools } from "../../ui/share-tools";
 import { csvName, headcountCsv, repliesCsv } from "../../lib/export";
@@ -105,7 +105,7 @@ export default function ManagePage() {
 
       {experience && data && <>
         <section className="manage-hero">
-          <div className="cin-print manage-print"><span className="cin-photo"><Art name={experience.templateId as ArtName} fit="slice" decorative/></span></div>
+          <div className="cin-print manage-print"><span className="cin-photo"><ArtImage name={experience.templateId as ArtName} fit="slice"/></span></div>
           <div>
             <span className={`manage-status is-${experience.status}`}>{live ? "Live" : "Unpublished"}</span>
             <h1>{experience.title}</h1>

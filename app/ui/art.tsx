@@ -8,7 +8,9 @@ import type { CSSProperties, ReactNode } from "react";
  *    going over the page, and the washes bleed in afterwards.
  */
 
-export type ArtName = "wedding" | "birthday" | "garba" | "opening" | "engagement" | "babyshower" | "housewarming" | "anniversary";
+export const ART_NAMES = ["wedding", "birthday", "garba", "opening", "engagement", "babyshower", "housewarming", "anniversary"] as const;
+export type ArtName = (typeof ART_NAMES)[number];
+export const isArtName = (value: unknown): value is ArtName => ART_NAMES.includes(value as ArtName);
 
 const INK = "#2a1d14";
 const C = {
@@ -60,7 +62,17 @@ export function ArtFilters({ boil = false }: { boil?: boolean }) {
   </>;
 }
 
-/** The same drawing as a self-contained SVG: its own filters and no page CSS. For images rendered off the page (share previews). */
+/**
+ * A drawing that doesn't animate, as an image (/art/<name>.svg, prerendered). A browser paints an SVG image once and
+ * reuses the result, while inline SVG with paint filters is repainted whenever it moves or scales. On a phone that's
+ * the difference between a smooth and a stuttering scroll through the reel or the catalogue.
+ */
+export function ArtImage({ name, fit = "meet", className = "" }: { name: ArtName; fit?: "meet" | "slice"; className?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element -- a prerendered SVG drawing; next/image adds nothing here
+  return <img className={`art-image ${className}`} src={`/art/${name}.svg`} alt="" width={360} height={440} decoding="async" draggable={false} style={{ objectFit: fit === "slice" ? "cover" : "contain" }} />;
+}
+
+/** The same drawing as a self-contained SVG: its own filters and no page CSS. For images (ArtImage, share previews). */
 export function StandaloneArt({ name }: { name: ArtName }) {
   const Scene = SCENES[name];
   return (
@@ -326,7 +338,9 @@ function Opening() {
         <path d="M160 250H200V320H160Z" strokeWidth="1.4" />
         <circle cx="200" cy="330" r="3" />
         <path d="M118 66H242V104H118ZM140 66L150 30M220 66L210 30M150 30H210" />
-        <text x="180" y="96" textAnchor="middle" fill={INK} stroke="none" style={{ fontFamily: "var(--font-hand), cursive" }} fontWeight="700" fontSize="30">OPEN</text>
+        {/* "OPEN", lettered by hand (so it reads the same wherever the drawing goes, images included) */}
+        <ellipse cx="151" cy="86" rx="9" ry="12" />
+        <path d="M167 98V74H174C182 74 182 87 174 87H167M199 74H187V98H199M187 86H196M205 98V74L219 98V74" />
         <path d="M94 352H118L114 380H98ZM242 352H266L262 380H246Z" />
         <path d={leaves(106)} />
         <path d={leaves(254)} />

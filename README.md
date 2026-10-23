@@ -49,6 +49,16 @@ Playwright runs the unit and end-to-end tests against a production build on port
 - The free plan's 100 replies count every general-link reply plus one place kept for each personal invitation, so an invited household can always reply.
 - Subscriptions, analytics and the free plan's 60-day expiry aren't built yet.
 
+## Performance on phones
+
+The drawings get their hand-made look from SVG paint filters (the watercolour wash and the ink wobble), which are costly to repaint. Three rules keep phones smooth:
+
+- **Drawings that don't animate are images.** The reel, the catalogue, the studio tiles and the manage page use `/art/<name>.svg` (prerendered, `ArtImage`). A browser paints an image once; inline SVG with filters is repainted whenever it moves or scales.
+- **Ink draws itself "on twos"**, about 12 frames a second, like hand animation.
+- **The boiling ink on the home page sketch is only for devices with a mouse.** Phones get the same sketch with still ink.
+
+Measured headless at phone size with a 6× slower CPU, these cut paint work while an invitation opens by about 60%, on the home page at rest by about 70%, and while scrolling the occasion reel by about 90%.
+
 ## Fonts
 
 The fonts are self-hosted in `app/fonts/` (OFL-licensed) so builds never need to reach Google Fonts. `app/fonts/og/` holds static TTF copies for the share-preview image renderer, which can't read woff2.
