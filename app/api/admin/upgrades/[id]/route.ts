@@ -3,7 +3,7 @@ import { decideUpgrade } from "../../../../lib/store";
 
 /** { action: "approve" | "decline" }. Approving moves the invitation to the Creator studio. Admin only. */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const denied = adminDenied(request);
+  const denied = await adminDenied(request);
   if (denied) return denied;
   const body = await request.json().catch(() => null);
   if (body?.action !== "approve" && body?.action !== "decline") return Response.json({ error: "Approve or decline." }, { status: 400 });

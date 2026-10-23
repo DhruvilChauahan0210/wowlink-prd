@@ -14,6 +14,8 @@ import { OCCASION_TONES, PALETTES, PALETTE_IDS, type PaletteId } from "../lib/pa
 import { STARTER_OCCASIONS, freeDraft, planOf, type Plan } from "../lib/plans";
 import { EXTRA_LIMITS } from "../lib/extras";
 import { cleanBrand, type Brand } from "../lib/brand";
+import { SignIn } from "../ui/sign-in";
+import { syncAccount, useAccount } from "../ui/account";
 
 /** Where a planner's brand kit is kept on their device. */
 const BRAND_KIT_KEY = "wowlink:brand-kit";
@@ -50,6 +52,9 @@ export default function CreatePage() {
   const [origin, setOrigin] = useState("");
   const drafts = useRef<Record<string, InvitationDraft>>({});
   const dialog = useRef<HTMLDialogElement>(null);
+  // Publishing needs an account (when the site has them): asked for at Publish, so anyone can try the studio first.
+  const signInDialog = useRef<HTMLDialogElement>(null);
+  const account = useAccount();
   // For a live invitation: the celebrations guests can see now, and how many replies and personal invitations
   // depend on each. Re-adding one by name brings back the same celebration, so its answers still count.
   const published = useRef<ScheduleItem[]>([]);
@@ -96,10 +101,17 @@ export default function CreatePage() {
     setReady(true);
   }, []);
 
+  /** This device's manage key for an invitation; signed in, one from the account if the device has none yet. */
+  async function keyFor(slug: string) {
+    const saved = () => { try { return localStorage.getItem(ownerKey(slug)); } catch { return null; } };
+    if (saved()) return saved();
+    await syncAccount();
+    return saved();
+  }
+
   /** "Make another like this": a new invitation starting from one of yours (its drawing, colours, words and schedule; not its guests or replies). */
   async function copyPublished(slug: string) {
-    let key: string | null = null;
-    try { key = localStorage.getItem(ownerKey(slug)); } catch { /* storage blocked */ }
+    const key = await keyFor(slug);
     try {
       if (!key) throw new Error();
       const response = await fetch(`/api/experiences/${slug}`, { headers: { authorization: `Bearer ${key}` }, cache: "no-store" });
@@ -122,8 +134,7 @@ export default function CreatePage() {
   }
 
   async function openPublished(slug: string) {
-    let key: string | null = null;
-    try { key = localStorage.getItem(ownerKey(slug)); } catch { /* storage blocked */ }
+    const key = await keyFor(slug);
     if (!key) {
       setStatus(() => (t: HostText) => t.needManageLink);
       setReady(true);
@@ -279,6 +290,12 @@ export default function CreatePage() {
         body: JSON.stringify({ templateId, draft: pro ? checked.value : freeDraft(checked.value), ...(owned ? { status: "published" } : {}) }),
       });
       const body = await response.json().catch(() => ({}));
+      if (response.status === 401 && body.signIn) {
+        setStatus(() => (t: HostText) => t.signInToPublish);
+        signInDialog.current?.showModal();
+        setPublishing(false);
+        return;
+      }
       if (!response.ok) {
         if (body.fields) setErrors(body.fields);
         throw new Error(body.error);
@@ -473,6 +490,16 @@ export default function CreatePage() {
           <button type="button" className="cin-cta cin-cta-light" onClick={() => dialog.current?.close()}>{h.keepEditing}</button>
         </div>
       </div>}
+    </dialog>
+
+    <dialog ref={signInDialog} className="publish-dialog" aria-labelledby="sign-in-title">
+      <div className="sketch-card publish-card">
+        <h2 id="sign-in-title">{h.signInToPublish}</h2>
+        <p className="manage-muted">{h.signInToPublishBody}</p>
+        {/* Back from Google, the draft is where saveDraft left it; Publish again from there. */}
+        <SignIn h={h} next={`/create?template=${templateId}`} beforeLeaving={() => saveDraft()} onSignedIn={() => { signInDialog.current?.close(); void account.refresh(); void publish(); }}/>
+        <div className="publish-actions"><button type="button" className="share-chip" onClick={() => signInDialog.current?.close()}>{h.cancel}</button></div>
+      </div>
     </dialog>
   </div>;
 }

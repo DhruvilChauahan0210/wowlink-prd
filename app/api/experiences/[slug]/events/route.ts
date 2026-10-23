@@ -11,7 +11,7 @@ import { recordAttribution, recordPlayed, recordVisit } from "../../../../lib/st
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const body = await request.json().catch(() => null);
-  if (!body || !allow(`events:${clientId(request)}`, 60, 10 * 60 * 1000)) return new Response(null, { status: 204 });
+  if (!body || !await allow(`events:${clientId(request)}`, 60, 10 * 60 * 1000)) return new Response(null, { status: 204 });
   if (body.type === "view") await recordVisit(slug, { first: body.first === true, viaQr: body.via === "qr", guestId: typeof body.guest === "string" ? body.guest : undefined });
   else if (body.type === "played") await recordPlayed(slug);
   else if (body.type === "attribution") await recordAttribution(slug);

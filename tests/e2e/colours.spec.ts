@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { customPalette } from "../../app/lib/palette";
 import { freshIp, openInStudio, ownerHeaders, publish } from "../helpers";
 

@@ -1,11 +1,12 @@
-import { expect, test, type Browser } from "@playwright/test";
-import { addGuest, collectErrors, freshIp, ownerHeaders, publish } from "../helpers";
+import { expect, test, type Browser } from "../fixtures";
+import { addGuest, collectErrors, freshIp, freshUser, ownerHeaders, publish } from "../helpers";
 
 /*
  * Gujarati and English: the host picks the language guests see first, and each guest can switch for themselves.
  */
 
-const freshContext = (browser: Browser) => browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp() } });
+// A new browser, signed in as a host of its own (it may publish).
+const freshContext = (browser: Browser) => browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp(), "x-wowlink-test-user": freshUser() } });
 const SCHEDULE = [
   { id: "sangeet", name: "Sangeet", date: "2026-11-07", time: "19:30", venue: "" },
   { id: "reception", name: "Reception", date: "2026-11-08", time: "21:00", venue: "" },

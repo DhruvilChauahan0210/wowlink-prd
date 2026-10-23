@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   // A personal link is limited per household, not per network: one cousin often replies for several families from
   // one phone, and relatives at a gathering share an address. The general link is limited per address.
   const limitKey = guestId ? `rsvp:${slug}:guest:${guestId}` : `rsvp:${clientId(request)}:${slug}`;
-  if (!allow(limitKey, 5, 10 * 60 * 1000)) return Response.json({ error: "That’s a lot of replies in a row. Please wait a few minutes." }, { status: 429 });
+  if (!await allow(limitKey, 5, 10 * 60 * 1000)) return Response.json({ error: "That’s a lot of replies in a row. Please wait a few minutes." }, { status: 429 });
   if (!ATTENDANCE.includes(body.attendance)) return Response.json({ error: "Let us know if you’re coming." }, { status: 422 });
   const attendance = body.attendance as Attendance;
   const name = typeof body.name === "string" ? body.name.trim().slice(0, LIMITS.guestName) : "";

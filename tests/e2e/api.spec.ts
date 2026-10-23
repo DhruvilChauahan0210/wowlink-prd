@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { freshIp, publish, sampleDraft } from "../helpers";
 
 const headers = () => ({ "x-forwarded-for": freshIp() });

@@ -28,7 +28,8 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Gujarati and English.** In the studio the host picks the language guests see first; each guest can switch with the toggle in the header, and their choice is remembered on their phone. Dates and times are written the Gujarati way ("8 નવેમ્બર 2026", "સાંજે 6:00 વાગ્યે"), WhatsApp messages follow the invitation's language, and handwritten touches use Farsan for Gujarati. Hosts can use the studio, the manage page and My invitations in Gujarati too, with their own switch (remembered on their device, and separate from the language guests read).
 - **Your own colours.** In the studio the host can keep the occasion's colours, pick one of seven palettes (sindoor, marigold, rani pink, peacock, mehndi, indigo, kesar) or choose any colour of their own. The colours tint the handwriting, underlines, the countdown circle, the timeline and the little doodles; the illustrations keep their watercolours. Each colour is checked for contrast (`app/lib/palette.ts`), and one that's too pale or too dark is deepened or lightened until it can be read on paper and on the dark section. The link preview image uses it too.
 - **On the day, and after.** When a celebration is today, the invitation leads with it: what's still to come or happening now, with directions. Once everything is over, it becomes a thank-you: the host's note (written in the studio) in place of the reply form, with the blessings wall. Each link only counts its own celebrations.
-- **My invitations** (`/mine`): every invitation this device can manage, with replies at a glance, plus drafts. Since there are no accounts yet, it can save all your manage links to a small private file, and add invitations from a pasted link or that file on another device.
+- **My invitations** (`/mine`): every invitation this device can manage, with replies at a glance, plus drafts. Signed in, the account's invitations come to this device too. It can also save all your manage links to a small private file, and add invitations from a pasted link or that file.
+- **Accounts** (`/signin`): hosts sign in with an emailed code or Google (Supabase Auth) to publish. A host's free plan has one live invitation at a time. Signing in on another phone gives that phone its own manage key for each of the host's invitations, so manage pages work as before; invitations a device already had (from before accounts, or published by WowLink for a client) join the account.
 - **Personal invitations** (`/e/<slug>/<id>`): a link for one household ("the Patel family"). It opens addressed to them and shows only the celebrations the host picked. The household has one reply, which they can change later. The general link can also be limited, for example to the reception only. Celebrations a link doesn't show never reach that browser: not in the page, the calendar file or the share image.
 - **The manage page** (`/manage/<slug>#k=…`): a private link for reply totals, the headcount for each celebration, who hasn't replied, personal invitations, editing, and unpublishing. You can add invitations one at a time or paste a whole list (one household per line, optionally with a WhatsApp number), then preview, send, remind, replace a link or remove each one. With a number, WhatsApp opens that family's chat directly. Each household shows whether they've opened their link yet ("Opened 22 Oct · no reply yet"), counted from real visits only, not link previews. Numbers are only ever shown to the host. Everything can be downloaded as a spreadsheet: every reply, the headcount per celebration for the caterer, and the invitation list with links.
 - **Deleting.** On the manage page a host can delete a single reply (when a guest asks to be taken off), or the whole invitation with every reply, wish, household and number in it. Both ask first; deleting the invitation offers to download the replies, then takes it off My invitations on that device. Only a deleted invitation's slug is kept, so its old link can never open someone else's invitation.
@@ -55,6 +56,7 @@ Copy `.env.example` to `.env.local` and fill it in.
 |---|---|
 | `WOWLINK_ADMIN_KEY` | Opens the admin page (`/admin`). On a live site it needs at least 24 characters (`openssl rand -hex 24`), or the admin stays off and the server logs a warning; with `npm run dev` any key works. Without it the admin doesn't exist. Ten wrong keys from one address lock that address out for an hour (the page then says so). |
 | `DATABASE_URL` | Postgres on Supabase (see Database below). Without it the data stays in `.data/wowlink.json`. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Accounts (Supabase Auth): the project's address and its publishable key (public by design). Without them there are no accounts. |
 | `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews, canonical links, `sitemap.xml` and `robots.txt` (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
 
 ## Database
@@ -75,20 +77,32 @@ npm run db:import -- .data/wowlink.json
 
 The first sets up the tables (safe to run again). The second, optional, copies a JSON data file into an empty database; the file itself isn't changed. Both read `DATABASE_URL` from `.env.local`.
 
+## Going live (Vercel)
+
+The site runs on Vercel, its functions in Mumbai (`vercel.json`) beside the Supabase database. On Vercel the app refuses to start without `DATABASE_URL`, since Vercel doesn't keep files. Set these in the Vercel project (Production): `DATABASE_URL`, `WOWLINK_ADMIN_KEY` (24+ characters), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`.
+
+In Supabase (Authentication):
+- URL configuration: the Site URL is the live address; Redirect URLs include `https://<live address>/**` and `http://localhost:3000/**`.
+- Emails: the "Magic link" and "Confirm signup" templates show the code (`{{ .Token }}`), so hosts can type it on the phone they started on.
+- Providers: Google, with a client from Google Cloud (its redirect URI is `https://<project>.supabase.co/auth/v1/callback`).
+- Supabase's own email sender only reaches the project's team and a few emails an hour; for everyone else, set up an email provider (SMTP) with a domain of your own.
+
+The tests never use `.env.local`'s database or Supabase project: `playwright.config.ts` blanks them, and signs hosts in with a test header (`WOWLINK_TEST_AUTH`), which is refused on Vercel's production.
+
 ## Current limits
 
 - Without `DATABASE_URL`, data is in a local JSON file that won't persist on serverless hosting; set it (Supabase) before going live.
 - The admin's lists and numbers load every invitation; fine for now, worth turning into SQL counts as the app grows.
-- There are no accounts yet. Ownership is the private manage link, so a lost manage link can't be recovered. My invitations (`/mine`) keeps a list on each device and can back the links up to a file.
-- Rate limiting is in memory, for one server process.
+- Without Supabase's address and publishable key there are no accounts, and anyone can publish (fine on your own computer).
+- Without a database, rate limits are in memory, for one server process; with one, they're shared in Postgres.
 - Times are read as India Standard Time for the countdown and calendar files.
 - The reply limits count every general-link reply plus one place kept for each personal invitation, so an invited household can always reply.
-- "One live invitation" on the free plan, the Creator studio's 20 live invitations and 5,000 replies a month are per account in the PRD; without accounts they can't be counted yet, so limits are per invitation for now.
+- The free plan's one live invitation is counted per account. The Creator studio's 20 live invitations and 5,000 replies a month (PRD) aren't counted yet, and the Creator studio still belongs to each invitation until payments exist.
 - Subscriptions, analytics and the free plan's 60-day expiry aren't built yet.
 - The PRD puts custom colours in the paid plan. Until plans exist, every host has them.
 - Each counted visit rewrites the JSON file (or, on Supabase, the invitation's row). Fine at this size; very busy invitations would want their counts in rows of their own.
-- The admin is one shared key, not accounts. When accounts arrive it should become a role.
-- The privacy page describes the app as it is today. Before launch it needs a proper review: where the data is hosted, how long it's kept, what the hosting provider logs, and consent.
+- The admin is one shared key. Now that there are accounts, it should become a role.
+- The privacy page describes the app as it is today (Supabase and Vercel in Mumbai, accounts). Before launch it still needs a proper review: how long things are kept, what the hosting providers log, and consent.
 
 ## Performance on phones
 

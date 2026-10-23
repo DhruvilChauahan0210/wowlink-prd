@@ -19,9 +19,9 @@ const HELP: Record<Lang, Content> = {
       {
         heading: "Making your invitation",
         items: [
-          ["Is it free?", "Yes, to start. The free plan has the four starter occasions, one celebration and up to 50 replies, and stays up until 30 days after the day. Schedules, a link for each family, your own colours and more are in the Creator studio."],
+          ["Is it free?", "Yes, to start. The free plan has one live invitation at a time, the four starter occasions, one celebration and up to 50 replies, and stays up until 30 days after the day. Schedules, a link for each family, your own colours and more are in the Creator studio."],
           ["How do I get the Creator studio?", "Publish your invitation, then on its manage page choose “Ask for the Creator studio”. WowLink moves it for you. Paying online comes later."],
-          ["Do I need an account?", "No. An invitation is yours through its private manage link, which is saved on the phone or computer you publish from. My invitations can save all your manage links to a small file, so you can open them on another device."],
+          ["Do I need an account?", "To publish, yes: you sign in with a code sent to your email, or with Google. No password. Your invitations are then yours on every phone: sign in on My invitations. Guests never need an account."],
           ["Can I add the mehndi, sangeet and reception?", "With the Creator studio, yes. Add up to 10 celebrations, each with its own day, time and place. Guests tick the ones they’re coming to, and you get a headcount for each."],
           ["Can guests read it in Gujarati or Hindi?", "Yes. In the studio you choose the language guests see first, and each guest can switch with one tap. Dates and times are written the way an invitation says them."],
           ["Can I use my own colours?", "With the Creator studio, yes. Keep the occasion’s colours, pick one of seven palettes, or choose any colour. WowLink adjusts it so the words stay easy to read."],
@@ -41,7 +41,7 @@ const HELP: Record<Lang, Content> = {
       {
         heading: "When something’s not right",
         items: [
-          ["My manage page says the link isn’t valid.", "Use the whole manage link, including the part after #k=. If it’s lost and isn’t on My invitations on any of your devices, it can’t be recovered, because there are no accounts yet. Save a backup from My invitations."],
+          ["My manage page says the link isn’t valid.", "Use the whole manage link, including the part after #k=. If it’s lost, sign in on My invitations: your invitations come back on this device."],
           ["A guest says the link doesn’t open.", "Check the manage page says Live. A personal link stops working if you made a new link for that family or removed them; send them the current one."],
           ["How do I change something after sending it?", "Open the manage page, choose “Edit in studio”, make the change and press Update. The same link shows the new details."],
           ["How do I delete it?", "At the bottom of the manage page, “Delete this invitation” removes it for good, with every reply, wish and personal invitation. To hide it for now, unpublish it instead."],
@@ -61,9 +61,9 @@ const HELP: Record<Lang, Content> = {
       {
         heading: "આમંત્રણ બનાવવું",
         items: [
-          ["શું તે મફત છે?", "હા, શરૂઆત માટે. મફત પ્લાનમાં ચાર શરૂઆતના પ્રસંગો, એક પ્રસંગ અને 50 જવાબો સુધી છે, અને તે પ્રસંગ પછી 30 દિવસ સુધી ચાલુ રહે છે. કાર્યક્રમ, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ અને ઘણું વધારે ક્રિએટર સ્ટુડિયોમાં છે."],
+          ["શું તે મફત છે?", "હા, શરૂઆત માટે. મફત પ્લાનમાં એક સમયે એક લાઇવ આમંત્રણ, ચાર શરૂઆતના પ્રસંગો, એક પ્રસંગ અને 50 જવાબો સુધી છે, અને તે પ્રસંગ પછી 30 દિવસ સુધી ચાલુ રહે છે. કાર્યક્રમ, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ અને ઘણું વધારે ક્રિએટર સ્ટુડિયોમાં છે."],
           ["ક્રિએટર સ્ટુડિયો કેવી રીતે મળે?", "આમંત્રણ પ્રકાશિત કરો, પછી તેના મેનેજ પાના પર “ક્રિએટર સ્ટુડિયો માટે પૂછો” પસંદ કરો. WowLink તેને ખસેડી આપશે. ઑનલાઇન ચુકવણી પછી આવશે."],
-          ["શું મારે એકાઉન્ટ બનાવવું પડશે?", "ના. આમંત્રણ તેની ખાનગી મેનેજ લિંકથી આપનું છે, જે આપ જે ફોન કે કમ્પ્યુટર પરથી પ્રકાશિત કરો તેમાં સચવાય છે. મારાં આમંત્રણો આપની બધી મેનેજ લિંક એક નાની ફાઇલમાં સાચવી શકે છે, જેથી આપ તેને બીજા ઉપકરણ પર ખોલી શકો."],
+          ["શું મારે એકાઉન્ટ બનાવવું પડશે?", "પ્રકાશિત કરવા, હા: ઈમેલ પર આવેલા કોડથી કે Google થી સાઇન ઇન કરો. પાસવર્ડ નહીં. પછી આપનાં આમંત્રણો દરેક ફોન પર આપનાં: મારાં આમંત્રણોમાં સાઇન ઇન કરો. મહેમાનોને ક્યારેય એકાઉન્ટની જરૂર નથી."],
           ["શું હું મહેંદી, સંગીત અને રિસેપ્શન ઉમેરી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. 10 પ્રસંગો સુધી ઉમેરો, દરેકનો પોતાનો દિવસ, સમય અને સ્થળ. મહેમાનો જેમાં આવવાના હોય તે પસંદ કરે છે, અને આપને દરેકની ગણતરી મળે છે."],
           ["શું મહેમાનો તેને ગુજરાતી કે હિન્દીમાં વાંચી શકે?", "હા. સ્ટુડિયોમાં આપ પસંદ કરો કે મહેમાનો પહેલાં કઈ ભાષા જુએ, અને દરેક મહેમાન એક ટૅપથી બદલી શકે છે. તારીખ અને સમય આમંત્રણમાં લખાય છે એ રીતે જ લખાય છે."],
           ["શું હું મારા પોતાના રંગ વાપરી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. પ્રસંગના પોતાના રંગ રાખો, સાતમાંથી એક રંગસમૂહ પસંદ કરો, અથવા કોઈ પણ રંગ પસંદ કરો. WowLink તેને એવો ગોઠવે છે કે શબ્દો સહેલાઈથી વંચાય."],
@@ -83,7 +83,7 @@ const HELP: Record<Lang, Content> = {
       {
         heading: "કંઈક બરાબર ન હોય ત્યારે",
         items: [
-          ["મારું મેનેજ પાનું કહે છે કે લિંક માન્ય નથી.", "આખી મેનેજ લિંક વાપરો, #k= પછીના ભાગ સહિત. જો તે ખોવાઈ ગઈ હોય અને આપના કોઈ ઉપકરણ પર મારાં આમંત્રણોમાં ન હોય, તો તે પાછી મેળવી શકાતી નથી, કારણ કે હજી એકાઉન્ટ નથી. મારાં આમંત્રણોમાંથી બૅકઅપ સાચવો."],
+          ["મારું મેનેજ પાનું કહે છે કે લિંક માન્ય નથી.", "આખી મેનેજ લિંક વાપરો, #k= પછીના ભાગ સહિત. જો તે ખોવાઈ ગઈ હોય, તો મારાં આમંત્રણોમાં સાઇન ઇન કરો: આપનાં આમંત્રણો આ ઉપકરણ પર પાછાં આવી જશે."],
           ["મહેમાન કહે છે કે લિંક ખૂલતી નથી.", "મેનેજ પાના પર ચાલુ લખેલું છે તે તપાસો. જો આપે તે પરિવાર માટે નવી લિંક બનાવી હોય અથવા તેમને કાઢી નાખ્યા હોય, તો તેમની જૂની વ્યક્તિગત લિંક બંધ થઈ જાય છે; તેમને હાલની લિંક મોકલો."],
           ["મોકલ્યા પછી કંઈક કેવી રીતે બદલું?", "મેનેજ પાનું ખોલો, “સ્ટુડિયોમાં ફેરફાર કરો” પસંદ કરો, ફેરફાર કરો અને અપડેટ દબાવો. એ જ લિંક નવી વિગતો બતાવે છે."],
           ["તેને કેવી રીતે કાઢી નાખું?", "મેનેજ પાનાની નીચે “આ આમંત્રણ કાઢી નાખો” તેને દરેક જવાબ, શુભેચ્છા અને વ્યક્તિગત આમંત્રણ સાથે હંમેશ માટે કાઢી નાખે છે. હમણાં ફક્ત છુપાવવું હોય તો તેના બદલે તેને બંધ કરો."],
@@ -103,9 +103,9 @@ const HELP: Record<Lang, Content> = {
       {
         heading: "अपना निमंत्रण बनाना",
         items: [
-          ["क्या यह मुफ़्त है?", "हाँ, शुरुआत के लिए। फ़्री प्लान में चार शुरुआती अवसर, एक कार्यक्रम और 50 जवाब तक हैं, और यह अवसर के 30 दिन बाद तक चालू रहता है। कार्यक्रमों की सूची, हर परिवार के लिए लिंक, अपने रंग और बहुत कुछ क्रिएटर स्टूडियो में है।"],
+          ["क्या यह मुफ़्त है?", "हाँ, शुरुआत के लिए। फ़्री प्लान में एक समय में एक लाइव निमंत्रण, चार शुरुआती अवसर, एक कार्यक्रम और 50 जवाब तक हैं, और यह अवसर के 30 दिन बाद तक चालू रहता है। कार्यक्रमों की सूची, हर परिवार के लिए लिंक, अपने रंग और बहुत कुछ क्रिएटर स्टूडियो में है।"],
           ["क्रिएटर स्टूडियो कैसे मिलेगा?", "निमंत्रण प्रकाशित करें, फिर उसके मैनेज पेज पर “क्रिएटर स्टूडियो के लिए पूछें” चुनें। WowLink उसे बदल देगा। ऑनलाइन भुगतान बाद में आएगा।"],
-          ["क्या मुझे अकाउंट बनाना होगा?", "नहीं। निमंत्रण अपने निजी मैनेज लिंक से आपका है, जो उसी फ़ोन या कंप्यूटर पर सहेजा जाता है जिससे आप पब्लिश करते हैं। मेरे निमंत्रण से आप अपने सभी मैनेज लिंक एक छोटी फ़ाइल में सहेज सकते हैं, ताकि उन्हें दूसरे डिवाइस पर खोल सकें।"],
+          ["क्या मुझे अकाउंट बनाना होगा?", "पब्लिश करने के लिए, हाँ: ईमेल पर आए कोड से या Google से साइन इन करें। पासवर्ड नहीं। फिर आपके निमंत्रण हर फ़ोन पर आपके: मेरे निमंत्रण में साइन इन करें। मेहमानों को कभी अकाउंट की ज़रूरत नहीं।"],
           ["क्या मेहंदी, संगीत और रिसेप्शन भी जोड़े जा सकते हैं?", "क्रिएटर स्टूडियो में, हाँ। 10 कार्यक्रमों तक जोड़ें, हर एक का अपना दिन, समय और जगह। मेहमान उन पर टिक करते हैं जिनमें वे आ रहे हैं, और आपको हर एक की गिनती मिलती है।"],
           ["क्या मेहमान इसे गुजराती या हिंदी में पढ़ सकते हैं?", "हाँ। स्टूडियो में आप चुनते हैं कि मेहमान पहले कौन-सी भाषा देखें, और हर मेहमान एक टैप में भाषा बदल सकता है। तारीख़ और समय वैसे ही लिखे जाते हैं जैसे निमंत्रण में लिखे जाते हैं।"],
           ["क्या मैं अपने खुद के रंग चुन सकता हूँ?", "क्रिएटर स्टूडियो में, हाँ। अवसर के अपने रंग रखें, सात पैलेट में से एक चुनें, या कोई भी रंग चुनें। WowLink उसे ऐसे ढालता है कि शब्द आसानी से पढ़े जा सकें।"],
@@ -125,7 +125,7 @@ const HELP: Record<Lang, Content> = {
       {
         heading: "जब कुछ ठीक न हो",
         items: [
-          ["मेरा मैनेज पेज कहता है कि लिंक सही नहीं है।", "पूरा मैनेज लिंक इस्तेमाल करें, #k= के बाद वाले हिस्से समेत। अगर वह खो गया है और आपके किसी भी डिवाइस पर मेरे निमंत्रण में नहीं है, तो उसे वापस नहीं पाया जा सकता, क्योंकि अभी अकाउंट नहीं हैं। मेरे निमंत्रण से बैकअप सहेज लें।"],
+          ["मेरा मैनेज पेज कहता है कि लिंक सही नहीं है।", "पूरा मैनेज लिंक इस्तेमाल करें, #k= के बाद वाले हिस्से समेत। अगर वह खो गया है, तो मेरे निमंत्रण में साइन इन करें: आपके निमंत्रण इस डिवाइस पर वापस आ जाएँगे।"],
           ["मेहमान कहते हैं कि लिंक नहीं खुलता।", "देखें कि मैनेज पेज पर चालू लिखा है। अगर आपने उस परिवार के लिए नया लिंक बनाया है या उन्हें हटा दिया है, तो उनका व्यक्तिगत लिंक काम करना बंद कर देता है; उन्हें मौजूदा लिंक भेजें।"],
           ["भेजने के बाद कुछ कैसे बदलें?", "मैनेज पेज खोलें, “स्टूडियो में बदलाव करें” चुनें, बदलाव करें और अपडेट करें दबाएँ। उसी लिंक पर नई जानकारी दिखती है।"],
           ["इसे कैसे हटाएँ?", "मैनेज पेज के नीचे “इस निमंत्रण को हटाएँ” इसे हमेशा के लिए हटा देता है, हर जवाब, शुभकामना और व्यक्तिगत निमंत्रण के साथ। अभी के लिए सिर्फ़ छिपाना हो, तो इसकी जगह इसे बंद करें।"],

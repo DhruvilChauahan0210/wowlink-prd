@@ -1,7 +1,7 @@
 import { isTemplateId, validateDraft } from "../../../lib/invitations";
 import { keyFrom, notYours } from "../../../lib/owner";
 import { deleteOwned, getOwned, updateOwned } from "../../../lib/store";
-import { proMessage } from "../../../lib/plans";
+import { FREE_LIMIT_MESSAGE, proMessage } from "../../../lib/plans";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -40,6 +40,7 @@ export async function PATCH(request: Request, { params }: Params) {
   if (result.ok) return Response.json({ experience: result.experience });
   if (result.reason === "pro") return Response.json({ error: proMessage(result.features), pro: result.features }, { status: 403 });
   if (result.reason === "removed") return Response.json({ error: "WowLink took this invitation down after it was reported, so it can’t be published again." }, { status: 403 });
+  if (result.reason === "limit") return Response.json({ error: FREE_LIMIT_MESSAGE, limit: true }, { status: 403 });
   return result.reason === "invalid" ? Response.json({ error: "Pick at least one celebration for the general link." }, { status: 422 }) : notYours();
 }
 

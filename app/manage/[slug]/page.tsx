@@ -16,6 +16,7 @@ import { GeneralLinkAudience, GuestList, Headcount, WishesCard, saveCsv } from "
 import { Insights } from "./insights";
 import { FromGuests } from "./from-guests";
 import { AskPro } from "../../ui/ask-pro";
+import { syncAccount } from "../../ui/account";
 import { linkOf } from "../../lib/aliases";
 import { hostMessage } from "../../lib/host-i18n";
 import { endsOn, hasEnded, planOf } from "../../lib/plans";
@@ -63,10 +64,13 @@ export default function ManagePage() {
         setKey(fromLink);
         return;
       }
-      let saved: string | null = null;
-      try { saved = localStorage.getItem(ownerKey(slug)); } catch { /* storage blocked */ }
-      if (saved) setKey(saved);
-      else setProblem("no-key");
+      const saved = () => { try { return localStorage.getItem(ownerKey(slug)); } catch { return null; } };
+      if (saved()) return setKey(saved());
+      // Not on this phone yet: a signed-in host gets a key from their account.
+      void syncAccount().then(() => {
+        if (saved()) setKey(saved());
+        else setProblem("no-key");
+      });
     }
     readKey();
     addEventListener("hashchange", readKey);
@@ -182,7 +186,7 @@ export default function ManagePage() {
       <div className="studio-header-actions"><HostLangSwitch h={h} choose={choose}/><Link className="studio-fullscreen" href="/mine">{h.myInvitations}</Link>{experience && !removed && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>{h.editInStudio}</Link>}</div>
     </header>
     <main className="manage theme-paper">
-      {problem === "no-key" && <Notice h={h} title={h.noKeyTitle}>{h.noKeyBody[0]} <b>#</b> {h.noKeyBody[1]}</Notice>}
+      {problem === "no-key" && <Notice h={h} title={h.noKeyTitle}>{h.noKeyBody[0]} <b>#</b> {h.noKeyBody[1]} <Link href={`/signin?next=${encodeURIComponent(`/manage/${slug}`)}`}>{h.signInTitle}</Link></Notice>}
       {problem === "invalid" && <Notice h={h} title={h.invalidTitle}>{h.invalidBody}</Notice>}
       {problem === "offline" && <Notice h={h} title={h.offlineTitle} action={key ? <button className="cin-cta cin-cta-outline" onClick={() => void load(key)}>{h.tryAgain}</button> : null}>{h.offlineBody}</Notice>}
       {deleted !== null && <section className="sketch-card manage-card manage-notice" role="status">

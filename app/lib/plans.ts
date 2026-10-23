@@ -3,8 +3,9 @@ import type { InvitationDraft, TemplateId } from "./invitations";
 /*
  * Two plans (PRD section 7). Personal is free and deliberately small: four starter occasions, one celebration, the
  * occasion's own colours, 50 replies, and it stays up until 30 days after the day. The Creator studio has everything.
- * There are no accounts or payments yet, so the plan belongs to each invitation; WowLink's admin can move one to the
- * Creator studio. Invitations made before plans existed keep everything ("pro").
+ * Hosts sign in to publish, and a host's free plan has one live invitation at a time. There are no payments yet, so the
+ * plan still belongs to each invitation; WowLink's admin can move one to the Creator studio. Invitations made before
+ * plans existed keep everything ("pro").
  */
 
 export type Plan = "free" | "pro";
@@ -16,6 +17,9 @@ export const PLAN_LIMITS = {
   free: { replies: 50, daysAfter: 30 },
   pro: { replies: PRO_REPLIES, daysAfter: null },
 } as const satisfies Record<Plan, { replies: number; daysAfter: number | null }>;
+
+/** The server's words when a host's free plan already has its one live invitation. */
+export const FREE_LIMIT_MESSAGE = "The free plan has one live invitation at a time. Unpublish the other one first, or move it to the Creator studio.";
 
 /** What the Creator studio adds, by name. */
 export type ProFeature = "occasion" | "schedule" | "colours" | "attribution" | "song" | "poll" | "brand" | "personal" | "csv" | "copy" | "insights" | "alias" | "preview" | "wishes" | "remind";

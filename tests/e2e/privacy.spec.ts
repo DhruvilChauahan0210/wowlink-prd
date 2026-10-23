@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { addGuest, ownerHeaders, publish } from "../helpers";
 
 /* The privacy page, in both languages, and the ways guests and hosts reach it. */

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { collectErrors } from "../helpers";
 
 // Every page loads, renders its key content, and logs no errors (including React hydration warnings).

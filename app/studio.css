@@ -726,6 +726,15 @@
 .manage-poll li i{position:absolute;inset:0 auto 0 0;z-index:-1;background:var(--accent);opacity:.14}
 /* asking for the Creator studio, a custom link, reminding everyone */
 .ask-pro-form{display:flex;flex-direction:column;gap:14px;margin-top:14px;max-width:560px}
+/* Signing in (an emailed code, or Google) */
+.sign-in{display:flex;flex-direction:column;gap:14px;margin-top:14px;max-width:420px}
+.cinema .sign-in-form{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.sign-in-form .studio-field{align-self:stretch}
+.cinema .sign-in-or{display:flex;align-items:center;gap:12px;margin:2px 0;color:var(--muted);font-size:14px}
+.sign-in-or::before,.sign-in-or::after{content:"";flex:1;border-top:1px solid var(--line)}
+.sign-in-google{align-self:flex-start}
+.sign-in-card h1{font-size:clamp(30px,4vw,42px);line-height:1.08;margin:0 0 8px}
+.mine-account .manage-muted{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .manage-custom-link{margin-top:22px}
 .manage-custom-link>label{font:700 22px/1.2 var(--hand);color:var(--text)}
 .manage-custom-link-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}

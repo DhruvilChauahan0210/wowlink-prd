@@ -3,7 +3,7 @@ import { LANGS, formatInvitationDate, langHref, pageLang, type Lang } from "../l
 import { PublicPage } from "../ui/public-page";
 
 /*
- * What WowLink keeps, who sees it, and how it's deleted, in plain words, in English and Gujarati (?lang=gu). Guests
+ * What WowLink keeps, who sees it, and how it's deleted, in plain words, in English, Gujarati and Hindi (?lang=gu, hi). Guests
  * reach it from the reply form and the invitation's footer, hosts from the manage page. Everything it says is how the
  * app works today; it will be reviewed before public launch (see README, "Current limits").
  */
@@ -46,8 +46,8 @@ const PRIVACY: Record<Lang, Content> = {
       {
         heading: "What isn’t kept",
         items: [
-          "There are no tracking cookies, no ads and no outside analytics services on any page.",
-          "Your internet address (IP) is used to slow down spam. It’s held only in the server’s memory, and never saved with your reply or anywhere else.",
+          "There are no tracking cookies, no ads and no outside analytics services on any page. The only cookie keeps a signed-in host signed in.",
+          "Your internet address (IP) is used to slow down spam: it’s kept with a count of requests for at most two days, and never saved with your reply.",
           "Your choice of language, and a host’s manage links, are remembered in your own browser, not by WowLink.",
           "Your browser also remembers that it has opened an invitation (and played its opening), so you’re counted once however often you come back. A host’s visits aren’t counted from a browser where they’ve opened their manage page.",
           "Links to Google Maps, Google Calendar and WhatsApp open those services only when you tap them.",
@@ -89,6 +89,13 @@ const PRIVACY: Record<Lang, Content> = {
         ],
       },
       {
+        heading: "Hosts’ accounts, and where it’s all kept",
+        items: [
+          "Hosts sign in to publish, with a code sent by email or with Google. WowLink keeps the email address (and, with Google, the name Google shares) to know which invitations are whose. Guests never sign in.",
+          "Everything is kept in a database run by Supabase, and the site runs on Vercel’s servers, both in Mumbai, India. They keep it for WowLink and don’t use it for anything else.",
+        ],
+      },
+      {
         heading: "Nothing is passed on",
         items: ["Nothing here is shared with advertisers or other companies. There are no ads and no outside trackers on any page."],
       },
@@ -126,8 +133,8 @@ const PRIVACY: Record<Lang, Content> = {
       {
         heading: "શું સચવાતું નથી",
         items: [
-          "કોઈ પાના પર ટ્રેકિંગ કૂકી, જાહેરાતો કે બહારની એનાલિટિક્સ સેવા નથી.",
-          "આપનું ઇન્ટરનેટ સરનામું (IP) સ્પામ રોકવા માટે વપરાય છે. તે ફક્ત સર્વરની મેમરીમાં રહે છે, અને આપના જવાબ સાથે કે બીજે ક્યાંય સચવાતું નથી.",
+          "કોઈ પાના પર ટ્રેકિંગ કૂકી, જાહેરાતો કે બહારની એનાલિટિક્સ સેવા નથી. એકમાત્ર કૂકી સાઇન ઇન કરેલા યજમાનને સાઇન ઇન રાખે છે.",
+          "આપનું ઇન્ટરનેટ સરનામું (IP) સ્પામ રોકવા માટે વપરાય છે: તે વધુમાં વધુ બે દિવસ, વિનંતીઓની ગણતરી સાથે રહે છે, અને આપના જવાબ સાથે ક્યારેય સચવાતું નથી.",
           "આપની ભાષાની પસંદગી, અને યજમાનની મેનેજ લિંક, આપના પોતાના બ્રાઉઝરમાં યાદ રહે છે, WowLink પાસે નહીં.",
           "આપનું બ્રાઉઝર એ પણ યાદ રાખે છે કે તેણે આમંત્રણ ખોલ્યું છે (અને ખોલવાની વિધિ માણી છે), એટલે આપ ગમે તેટલી વાર આવો, એક જ વાર ગણાઓ છો. જે બ્રાઉઝરમાં યજમાને પોતાનું મેનેજ પાનું ખોલ્યું હોય, તેમાંથી તેમની મુલાકાતો ગણાતી નથી.",
           "Google Maps, Google Calendar અને WhatsAppની લિંક આપ દબાવો ત્યારે જ એ સેવાઓ ખોલે છે.",
@@ -169,6 +176,13 @@ const PRIVACY: Record<Lang, Content> = {
         ],
       },
       {
+        heading: "યજમાનનાં એકાઉન્ટ, અને બધું ક્યાં સચવાય છે",
+        items: [
+          "યજમાન પ્રકાશિત કરવા સાઇન ઇન કરે છે, ઈમેલ પર આવેલા કોડથી કે Google થી. કયાં આમંત્રણ કોનાં છે તે જાણવા WowLink ઈમેલ સરનામું (અને Google થી હોય તો, Google જે નામ આપે તે) સાચવે છે. મહેમાનોને ક્યારેય સાઇન ઇન કરવું પડતું નથી.",
+          "બધું Supabase ના ડેટાબેઝમાં સચવાય છે, અને સાઇટ Vercel ના સર્વર પર ચાલે છે, બંને મુંબઈ, ભારતમાં. તેઓ તે WowLink માટે રાખે છે અને બીજા કશા માટે વાપરતા નથી.",
+        ],
+      },
+      {
         heading: "કોઈને આપવામાં આવતું નથી",
         items: ["અહીંની કોઈ માહિતી જાહેરાતકારો કે બીજી કંપનીઓને અપાતી નથી. કોઈ પાના પર જાહેરાતો કે બહારના ટ્રેકર નથી."],
       },
@@ -206,8 +220,8 @@ const PRIVACY: Record<Lang, Content> = {
       {
         heading: "क्या नहीं सहेजा जाता",
         items: [
-          "किसी भी पेज पर कोई ट्रैकिंग कुकी, विज्ञापन या बाहरी एनालिटिक्स सेवा नहीं है।",
-          "आपका इंटरनेट पता (IP) स्पैम रोकने के लिए इस्तेमाल होता है। वह सिर्फ़ सर्वर की मेमोरी में रहता है, और आपके जवाब के साथ या कहीं और कभी सहेजा नहीं जाता।",
+          "किसी भी पेज पर कोई ट्रैकिंग कुकी, विज्ञापन या बाहरी एनालिटिक्स सेवा नहीं है। अकेली कुकी साइन इन किए मेज़बान को साइन इन रखती है।",
+          "आपका इंटरनेट पता (IP) स्पैम रोकने के लिए इस्तेमाल होता है: वह ज़्यादा से ज़्यादा दो दिन, अनुरोधों की गिनती के साथ रहता है, और आपके जवाब के साथ कभी सहेजा नहीं जाता।",
           "आपकी चुनी हुई भाषा, और मेज़बान के मैनेज लिंक, आपके अपने ब्राउज़र में याद रहते हैं, WowLink के पास नहीं।",
           "आपका ब्राउज़र यह भी याद रखता है कि उसने निमंत्रण खोला है (और उसके खुलने का दृश्य देखा है), इसलिए आप चाहे जितनी बार लौटें, आपको एक ही बार गिना जाता है। जिस ब्राउज़र में मेज़बान ने अपना मैनेज पेज खोला हो, वहाँ से उनकी विज़िट नहीं गिनी जातीं।",
           "Google Maps, Google Calendar और WhatsApp के लिंक ये सेवाएँ तभी खोलते हैं जब आप उन पर टैप करें।",
@@ -246,6 +260,13 @@ const PRIVACY: Record<Lang, Content> = {
           "मैनेज पेज से मेज़बान एक जवाब उसकी शुभकामना के साथ हटा सकते हैं, कोई व्यक्तिगत निमंत्रण हटा सकते हैं (उसका जवाब भी साथ में हट जाता है), या पूरा निमंत्रण उसके हर जवाब, शुभकामना, परिवार और नंबर के साथ हटा सकते हैं।",
           "हटाना तुरंत होता है और इसे वापस नहीं लाया जा सकता। सिर्फ़ लिंक का छोटा कोड रखा जाता है, ताकि वह कभी किसी दूसरे निमंत्रण को न मिले।",
           "बंद करने से निमंत्रण मेहमानों से छिप जाता है पर उसके जवाब सहेजे रहते हैं, ताकि उसे दोबारा पब्लिश किया जा सके।",
+        ],
+      },
+      {
+        heading: "मेज़बानों के अकाउंट, और सब कहाँ सहेजा जाता है",
+        items: [
+          "मेज़बान पब्लिश करने के लिए साइन इन करते हैं, ईमेल पर आए कोड से या Google से। कौन-सा निमंत्रण किसका है, यह जानने के लिए WowLink ईमेल पता (और Google से हो तो, Google जो नाम देता है) सहेजता है। मेहमानों को कभी साइन इन नहीं करना पड़ता।",
+          "सब कुछ Supabase के डेटाबेस में सहेजा जाता है, और साइट Vercel के सर्वरों पर चलती है, दोनों मुंबई, भारत में। वे इसे WowLink के लिए रखते हैं और किसी और काम में इस्तेमाल नहीं करते।",
         ],
       },
       {

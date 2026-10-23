@@ -45,6 +45,9 @@ function client() {
   return g.__wowlinkSql;
 }
 
+/** The database, when there is one: for other shared state (rate-limit.ts). */
+export const database = () => (process.env.DATABASE_URL ? client() : null);
+
 const KEY: Record<Part, "id" | "token"> = { rsvps: "id", reports: "id", upgrades: "id", previews: "token" };
 const keyOf = (part: Part, row: object) => (row as Record<string, string>)[KEY[part]];
 const linksOf = (e: StoredExperience) => new Set([e.slug, ...(e.aliases ?? [])].map((l) => l.toLowerCase()));
@@ -55,12 +58,29 @@ type Before = { experiences: Map<string, string>; links: Map<string, Set<string>
 
 async function load(sql: Sql, scope: Scope, lock: boolean) {
   const forUpdate = lock ? sql`for update` : sql``;
+  // A host's invitations are changed one call at a time (the free plan's one live invitation is counted across them).
+  const lockOwner = async (owner: string) => {
+    if (lock) await sql`select pg_advisory_xact_lock(hashtext(${`owner:${owner}`}))`;
+  };
+  const byOwner = async (owner: string) => {
+    await lockOwner(owner);
+    return docs(await sql<{ doc: StoredExperience }[]>`select doc from wowlink.experiences where owner_id = ${owner} order by id ${forUpdate}`);
+  };
   let experiences: StoredExperience[] = [];
   if ("link" in scope) {
     // The slug exactly, or the invitation a custom link belongs to: store.ts decides which wins.
     experiences = docs(await sql<{ doc: StoredExperience }[]>`select doc from wowlink.experiences where slug = ${scope.link} or id = (select experience_id from wowlink.links where link = ${scope.link.toLowerCase()}) order by id ${forUpdate}`);
   } else if ("slug" in scope) {
-    experiences = docs(await sql<{ doc: StoredExperience }[]>`select doc from wowlink.experiences where slug = ${scope.slug} ${forUpdate}`);
+    // With `owners`: the invitation and every other one its host has.
+    const owner = scope.owners ? (await sql<{ owner_id: string | null }[]>`select owner_id from wowlink.experiences where slug = ${scope.slug}`)[0]?.owner_id : null;
+    if (owner) await lockOwner(owner);
+    experiences = docs(owner
+      ? await sql<{ doc: StoredExperience }[]>`select doc from wowlink.experiences where slug = ${scope.slug} or owner_id = ${owner} order by id ${forUpdate}`
+      : await sql<{ doc: StoredExperience }[]>`select doc from wowlink.experiences where slug = ${scope.slug} ${forUpdate}`);
+  } else if ("create" in scope) {
+    if (scope.owner) experiences = await byOwner(scope.owner);
+  } else if ("owner" in scope) {
+    experiences = await byOwner(scope.owner);
   } else if ("token" in scope) {
     experiences = docs(await sql<{ doc: StoredExperience }[]>`select doc from wowlink.experiences where id = (select experience_id from wowlink.previews where token = ${scope.token}) ${forUpdate}`);
   } else if ("upgradeId" in scope) {

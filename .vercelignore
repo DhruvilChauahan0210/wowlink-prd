@@ -1,0 +1,14 @@
+# Never uploaded to Vercel: secrets and local settings, local data, builds, test output and tool state.
+.env
+.env.*
+!.env.example
+.data/
+.next/
+.next-test/
+node_modules/
+test-results/
+playwright-report/
+.playwright-mcp/
+.claude/
+supabase/.temp/
+*.tsbuildinfo

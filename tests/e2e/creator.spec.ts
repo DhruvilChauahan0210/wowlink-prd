@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { expect, test, type APIRequestContext } from "../fixtures";
 import { addGuest, adminHeaders, freshIp, openInStudio, ownerHeaders, publish, sampleDraft } from "../helpers";
 
 /*

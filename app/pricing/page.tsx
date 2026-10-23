@@ -23,7 +23,7 @@ const PRICING: Record<Lang, Content> = {
     heading: ["Start free,", "go further"],
     intro: "A simple invitation for your own day is free. For a wedding with many functions, a link for each family, your own colours or a planner’s work, there’s the Creator studio.",
     personal: { note: "for your own day", name: "Personal", tagline: "Your moment", price: "₹0", per: "free to create", cta: "Make your invitation",
-      items: ["The four starter occasions: wedding, birthday, Garba and grand opening", "One celebration, with a countdown and calendar", "Up to 50 replies", "Ask guests about food needs", "English, Gujarati or Hindi", "WhatsApp, link and printable QR code", "Stays up until 30 days after the day"] },
+      items: ["The four starter occasions: wedding, birthday, Garba and grand opening", "One live invitation at a time", "One celebration, with a countdown and calendar", "Up to 50 replies", "Ask guests about food needs", "English, Gujarati or Hindi", "WhatsApp, link and printable QR code", "Stays up until 30 days after the day"] },
     pro: { note: "for families and planners", name: "Creator studio", tagline: "Your signature", price: "₹1,999", per: "per month", soon: "coming soon",
       items: ["Every occasion, with Diwali, janoi, puja and naamkaran", "Schedules of up to 10 celebrations", "A personal link for each family, and one-tap reminders", "A custom link, like /e/isha-kabir", "Your own colours and your brand, without the WowLink link", "Client previews before you publish changes", "Song requests, a poll, and wishes shown on the invitation", "Spreadsheets for the caterer, and detailed insights"] },
     table: { caption: "Side by side", feature: "Feature", free: "Personal", pro: "Creator studio", rows: [
@@ -50,7 +50,7 @@ const PRICING: Record<Lang, Content> = {
     heading: ["મફતમાં શરૂ કરો,", "આગળ વધો"],
     intro: "આપના પોતાના દિવસ માટે સાદું આમંત્રણ મફત છે. ઘણા પ્રસંગોવાળાં લગ્ન, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ કે આયોજકના કામ માટે ક્રિએટર સ્ટુડિયો છે.",
     personal: { note: "આપના પોતાના દિવસ માટે", name: "પર્સનલ", tagline: "આપની ક્ષણ", price: "₹0", per: "બનાવવું મફત", cta: "આપનું આમંત્રણ બનાવો",
-      items: ["ચાર શરૂઆતના પ્રસંગો: લગ્ન, જન્મદિવસ, ગરબા અને ઉદ્ઘાટન", "એક પ્રસંગ, દિવસ સુધીની ગણતરી અને કેલેન્ડર સાથે", "50 જવાબો સુધી", "મહેમાનોને ભોજન વિશે પૂછો", "અંગ્રેજી, ગુજરાતી કે હિન્દી", "WhatsApp, લિંક અને છાપી શકાય એવો QR કોડ", "પ્રસંગ પછી 30 દિવસ સુધી ચાલુ રહે"] },
+      items: ["ચાર શરૂઆતના પ્રસંગો: લગ્ન, જન્મદિવસ, ગરબા અને ઉદ્ઘાટન", "એક સમયે એક લાઇવ આમંત્રણ", "એક પ્રસંગ, દિવસ સુધીની ગણતરી અને કેલેન્ડર સાથે", "50 જવાબો સુધી", "મહેમાનોને ભોજન વિશે પૂછો", "અંગ્રેજી, ગુજરાતી કે હિન્દી", "WhatsApp, લિંક અને છાપી શકાય એવો QR કોડ", "પ્રસંગ પછી 30 દિવસ સુધી ચાલુ રહે"] },
     pro: { note: "પરિવારો અને આયોજકો માટે", name: "ક્રિએટર સ્ટુડિયો", tagline: "આપની ઓળખ", price: "₹1,999", per: "દર મહિને", soon: "જલદી આવે છે",
       items: ["દરેક પ્રસંગ, દિવાળી, જનોઈ, પૂજા અને નામકરણ સાથે", "10 પ્રસંગો સુધીનો કાર્યક્રમ", "દરેક પરિવાર માટે વ્યક્તિગત લિંક, અને એક ટૅપમાં યાદ", "પોતાની લિંક, જેમ કે /e/isha-kabir", "આપના પોતાના રંગ અને બ્રાન્ડ, WowLink ની લિંક વગર", "ફેરફાર પ્રકાશિત કરતાં પહેલાં ક્લાયન્ટ પ્રીવ્યૂ", "ગીતની ફરમાઈશ, સવાલ, અને આમંત્રણ પર શુભેચ્છાઓ", "કેટરર માટે સ્પ્રેડશીટ, અને વિગતવાર આંકડા"] },
     table: { caption: "સામસામે સરખામણી", feature: "સુવિધા", free: "પર્સનલ", pro: "ક્રિએટર સ્ટુડિયો", rows: [
@@ -77,7 +77,7 @@ const PRICING: Record<Lang, Content> = {
     heading: ["मुफ़्त में शुरू करें,", "आगे बढ़ें"],
     intro: "अपने दिन के लिए एक सादा निमंत्रण मुफ़्त है। कई रस्मों वाली शादी, हर परिवार के लिए लिंक, अपने रंग या आयोजक के काम के लिए क्रिएटर स्टूडियो है।",
     personal: { note: "अपने दिन के लिए", name: "पर्सनल", tagline: "आपका पल", price: "₹0", per: "बनाना मुफ़्त", cta: "अपना निमंत्रण बनाएँ",
-      items: ["चार शुरुआती अवसर: शादी, जन्मदिन, गरबा और उद्घाटन", "एक कार्यक्रम, उलटी गिनती और कैलेंडर के साथ", "50 जवाब तक", "मेहमानों से खाने के बारे में पूछें", "अंग्रेज़ी, गुजराती या हिन्दी", "WhatsApp, लिंक और छापने लायक QR कोड", "अवसर के 30 दिन बाद तक चालू"] },
+      items: ["चार शुरुआती अवसर: शादी, जन्मदिन, गरबा और उद्घाटन", "एक समय में एक लाइव निमंत्रण", "एक कार्यक्रम, उलटी गिनती और कैलेंडर के साथ", "50 जवाब तक", "मेहमानों से खाने के बारे में पूछें", "अंग्रेज़ी, गुजराती या हिन्दी", "WhatsApp, लिंक और छापने लायक QR कोड", "अवसर के 30 दिन बाद तक चालू"] },
     pro: { note: "परिवारों और आयोजकों के लिए", name: "क्रिएटर स्टूडियो", tagline: "आपकी पहचान", price: "₹1,999", per: "हर महीने", soon: "जल्द आ रहा है",
       items: ["हर अवसर, दिवाली, जनेऊ, पूजा और नामकरण के साथ", "10 कार्यक्रमों तक की सूची", "हर परिवार के लिए व्यक्तिगत लिंक, और एक टैप में याद दिलाना", "अपनी लिंक, जैसे /e/isha-kabir", "अपने रंग और ब्रांड, WowLink की लिंक के बिना", "बदलाव प्रकाशित करने से पहले क्लाइंट प्रीव्यू", "गानों की फ़रमाइश, पोल, और निमंत्रण पर शुभकामनाएँ", "कैटरर के लिए स्प्रेडशीट, और विस्तार से आँकड़े"] },
     table: { caption: "आमने-सामने", feature: "सुविधा", free: "पर्सनल", pro: "क्रिएटर स्टूडियो", rows: [

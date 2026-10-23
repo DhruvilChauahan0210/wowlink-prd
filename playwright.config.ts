@@ -22,7 +22,11 @@ const app = {
   url: `http://localhost:${PORT}`,
   env: {
     NEXT_DIST_DIR: ".next-test", WOWLINK_DATA_FILE: DATA_FILE, NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`, WOWLINK_ADMIN_KEY: TEST_ADMIN_KEY, NEXT_PUBLIC_WOWLINK_PRO_REPLIES: "100",
-    ...(PG && { DATABASE_URL, WOWLINK_PG_MAX: "1" }),
+    // Hosts sign in as whoever x-wowlink-test-user names (tests/fixtures.ts); never on a real site.
+    WOWLINK_TEST_AUTH: "1",
+    // Never the developer's own database or Supabase project from .env.local: set here, even empty, these win.
+    DATABASE_URL: PG ? DATABASE_URL : "", NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "",
+    ...(PG && { WOWLINK_PG_MAX: "1" }),
   },
   reuseExistingServer: false,
   timeout: 240_000,

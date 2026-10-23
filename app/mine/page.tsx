@@ -9,30 +9,20 @@ import { WowLinkBrand } from "../ui/brand";
 import type { HostText } from "../lib/host-i18n";
 import { HostLangSwitch, useHostLang } from "../ui/host-lang";
 import { planOf } from "../lib/plans";
+import { savedKeys, signOut, syncAccount, useAccount } from "../ui/account";
+import { SignIn } from "../ui/sign-in";
 
 /*
  * Every invitation this device can manage: the ones whose private manage key is saved here (the studio saves it on
- * publishing, and opening a manage link saves it too), and unpublished drafts. There are no accounts yet, so the
- * page also offers a backup of the manage links, and a way to add invitations from a link or a backup.
+ * publishing, and opening a manage link saves it too), and unpublished drafts. Signed in, the account's invitations
+ * come to this device too (and this device's join the account). The page also offers a backup of the manage links,
+ * and a way to add invitations from a link or a backup.
  */
 
 type Owned = { slug: string; key: string; state: "loading" | "ok" | "gone" | "offline"; experience?: Experience; rsvps?: Rsvp[] };
 
-const OWNER_PREFIX = ownerKey("");
 /** Manage links in any text: a pasted link, several, or a whole backup file. */
 const MANAGE_LINK = /\/manage\/([2-9b-df-hjkmnp-tv-zB-DF-HJ-NP-TV-Z]{7})#k=([\w-]{20,})/g;
-
-function savedKeys() {
-  const found: { slug: string; key: string }[] = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const name = localStorage.key(i);
-      const key = name?.startsWith(OWNER_PREFIX) ? localStorage.getItem(name) : null;
-      if (name && key) found.push({ slug: name.slice(OWNER_PREFIX.length), key });
-    }
-  } catch { /* storage blocked: nothing saved here */ }
-  return found;
-}
 
 function savedDrafts() {
   return invitationTemplates.flatMap(template => {
@@ -59,8 +49,12 @@ export default function MyInvitations() {
   const [status, setStatus] = useState<(h: HostText) => string>(() => () => "");
   const pasteId = useId();
   const { lang, h, choose } = useHostLang();
+  const account = useAccount();
 
   const load = useCallback(async () => {
+    // Signed in: this device and the account share their invitations first.
+    const added = (await account.refresh()).email ? await syncAccount() : [];
+    if (added.length) setStatus(() => (t: HostText) => t.accountSynced(added.length));
     const keys = savedKeys();
     setOwned(keys.map(k => ({ ...k, state: "loading" })));
     setDrafts(savedDrafts());
@@ -76,6 +70,7 @@ export default function MyInvitations() {
       }
     }));
     setOwned(results.sort(byDate));
+    // account.refresh never changes.
   }, []);
 
   useEffect(() => {
@@ -143,6 +138,12 @@ export default function MyInvitations() {
         <h1>{h.mineHeading[0]} <span className="scribble">{h.mineHeading[1]}</span></h1>
         <p className="manage-muted">{h.mineIntro}</p>
       </section>
+
+      {account.accounts && <section className="sketch-card manage-card mine-account" aria-labelledby="account-heading">
+        <h2 id="account-heading">{h.accountHeading}</h2>
+        {account.email ? <p className="manage-muted">{h.signedInAs(account.email)} <button type="button" className="share-chip" onClick={() => void signOut().then(() => account.refresh())}>{h.signOut}</button></p>
+          : <><p className="manage-muted">{h.accountBody}</p><SignIn h={h} next="/mine" onSignedIn={() => void load()}/></>}
+      </section>}
 
       {!ready && <p className="manage-loading">{h.finding}</p>}
       {ready && !owned.length && !drafts.length && <section className="sketch-card manage-card mine-empty">

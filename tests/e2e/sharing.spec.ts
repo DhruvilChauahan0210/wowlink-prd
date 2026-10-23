@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { publish } from "../helpers";
 
 test("each invitation has its own share preview image (1200 × 630 PNG)", async ({ page, request }) => {

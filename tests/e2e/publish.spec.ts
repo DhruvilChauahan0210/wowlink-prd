@@ -1,5 +1,5 @@
-import { expect, test, type Browser } from "@playwright/test";
-import { collectErrors, freshIp } from "../helpers";
+import { expect, test, type Browser } from "../fixtures";
+import { collectErrors, freshIp, freshUser } from "../helpers";
 
 /*
  * The whole publishing journey, in order: the creator publishes from the studio, a guest RSVPs from their
@@ -11,7 +11,8 @@ let publicUrl = "";
 let manageUrl = "";
 let slug = "";
 
-const freshContext = (browser: Browser) => browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp() } });
+// A new browser, signed in as a host of its own (it may publish).
+const freshContext = (browser: Browser) => browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp(), "x-wowlink-test-user": freshUser() } });
 
 test("the studio won't publish without the required details", async ({ page }) => {
   await page.goto("/create?template=wedding");

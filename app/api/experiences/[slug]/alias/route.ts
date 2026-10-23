@@ -8,7 +8,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const body = await request.json().catch(() => null);
   if (typeof body?.alias !== "string") return Response.json({ error: "Write the link you’d like." }, { status: 400 });
   // Every link given up stays retired for good, so a host can't churn through names.
-  if (!allow(`alias:${slug}`, 10, 24 * 60 * 60 * 1000)) return Response.json({ error: "That’s a lot of new links for one day. Try again tomorrow." }, { status: 429 });
+  if (!await allow(`alias:${slug}`, 10, 24 * 60 * 60 * 1000)) return Response.json({ error: "That’s a lot of new links for one day. Try again tomorrow." }, { status: 429 });
   const result = await setAlias(slug, keyFrom(request), body.alias.slice(0, 200));
   if (result.ok) return Response.json({ aliases: result.aliases });
   if (result.reason === "pro") return Response.json({ error: "A custom link is part of the Creator studio." }, { status: 403 });

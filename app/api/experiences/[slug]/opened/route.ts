@@ -8,6 +8,6 @@ import { markOpened } from "../../../../lib/store";
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const body = await request.json().catch(() => null);
-  if (typeof body?.guest === "string" && allow(`opened:${clientId(request)}`, 30, 10 * 60 * 1000)) await markOpened(slug, body.guest);
+  if (typeof body?.guest === "string" && await allow(`opened:${clientId(request)}`, 30, 10 * 60 * 1000)) await markOpened(slug, body.guest);
   return new Response(null, { status: 204 });
 }

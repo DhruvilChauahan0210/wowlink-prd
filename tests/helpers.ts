@@ -7,6 +7,9 @@ export const adminHeaders = (key = TEST_ADMIN_KEY) => ({ authorization: `Bearer 
 let counter = 0;
 /** A different pretend client address each call, so per-client rate limits don't couple unrelated tests. */
 export const freshIp = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${(counter++ % 250) + 1}`;
+let users = 0;
+/** A new pretend host each call, for the test server's sign-in (x-wowlink-test-user). */
+export const freshUser = () => `u${process.pid}-${Date.now().toString(36)}-${users++}`;
 
 export type Draft = { title: string; date: string; time: string; venue: string; message: string; events?: { id: string; name: string; date: string; time: string; venue: string }[]; language?: "en" | "gu" | "hi"; thanks?: string; palette?: string; rsvp?: boolean; countdown?: boolean; mapUrl?: string; attribution?: boolean; askDiet?: boolean; askSong?: boolean; poll?: { question: string; options: string[] } | null };
 export const sampleDraft = (overrides: Partial<Draft> = {}): Draft => ({
@@ -23,7 +26,8 @@ export const sampleDraft = (overrides: Partial<Draft> = {}): Draft => ({
  * admin can publish one there directly), so a test can use every feature; pass "free" to test the free plan.
  */
 export async function publish(request: APIRequestContext, templateId = "wedding", draft: Partial<Draft> = {}, plan: "pro" | "free" = "pro") {
-  const headers = { "x-forwarded-for": freshIp(), ...(plan === "pro" && { authorization: `Bearer ${TEST_ADMIN_KEY}` }) };
+  // A free one is published by a host of its own (the free plan has one live invitation per host).
+  const headers = { "x-forwarded-for": freshIp(), ...(plan === "pro" ? { authorization: `Bearer ${TEST_ADMIN_KEY}` } : { "x-wowlink-test-user": freshUser() }) };
   const response = await request.post("/api/experiences", { data: { templateId, draft: sampleDraft(draft), ...(plan === "pro" && { plan: "pro" }) }, headers });
   if (response.status() !== 201) throw new Error(`publish failed: ${response.status()} ${await response.text()}`);
   return (await response.json()) as { slug: string; key: string };

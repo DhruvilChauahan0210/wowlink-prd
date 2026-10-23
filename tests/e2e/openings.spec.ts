@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 
 // Every occasion opens in its own way. Each must start closed, open on its trigger, and land on the card.
 const OPENINGS = [

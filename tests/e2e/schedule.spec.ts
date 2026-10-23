@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../fixtures";
 import { adminHeaders, freshIp, openInStudio, publish, sampleDraft } from "../helpers";
 
 const SAMPLE = [
