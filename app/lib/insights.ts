@@ -1,8 +1,9 @@
 /*
  * Counting, without tracking. Everything here is a plain number per day: how often an invitation was opened, by how
- * many browsers, how many played the opening, how many came from the QR code, and how the host shared it. No visitor
- * is identified and nothing is stored about one; a browser only remembers (in its own storage) that it has already
- * been counted, so each person counts once.
+ * many browsers, how many played the opening, how many came from the QR code, and how the host shared it; and for
+ * WowLink itself, visits and where they came from, hosts signing up, and feedback sent. No visitor is identified and
+ * nothing is stored about one; a browser only remembers (in its own storage) that it has already been counted, so
+ * each person counts once.
  *
  * Days are India's calendar days (IST), like everything else in WowLink.
  */
@@ -26,6 +27,41 @@ export type InvitationStats = {
 export const PAGE_METRICS = ["studio", "sample", "occasion"] as const;
 export type PageMetric = (typeof PAGE_METRICS)[number];
 export const isPageMetric = (value: unknown): value is PageMetric => PAGE_METRICS.includes(value as PageMetric);
+
+/**
+ * Where a visit to WowLink came from: the tag on the link it followed (?utm_source=instagram), else the site it came
+ * from (by name only, never the page), else "direct": typed, a bookmark, or an app that doesn't say, as WhatsApp often
+ * doesn't. "invitation" is someone who came from a WowLink invitation.
+ */
+export const SOURCES = ["instagram", "whatsapp", "youtube", "facebook", "google", "linkedin", "x", "invitation", "other", "direct"] as const;
+export type Source = (typeof SOURCES)[number];
+export const isSource = (value: unknown): value is Source => SOURCES.includes(value as Source);
+
+const SITES: [RegExp, Source][] = [
+  [/(^|\.)instagram\.com$/, "instagram"],
+  [/(^|\.)(whatsapp\.com|wa\.me)$/, "whatsapp"],
+  [/(^|\.)(youtube\.com|youtu\.be)$/, "youtube"],
+  [/(^|\.)(facebook\.com|fb\.com|fb\.me|messenger\.com)$/, "facebook"],
+  [/(^|\.)google\.[a-z.]+$/, "google"],
+  [/(^|\.)(linkedin\.com|lnkd\.in)$/, "linkedin"],
+  [/(^|\.)(x\.com|twitter\.com|t\.co)$/, "x"],
+];
+// Short tags people put on links.
+const TAGS: Record<string, Source> = { ig: "instagram", insta: "instagram", wa: "whatsapp", yt: "youtube", fb: "facebook", li: "linkedin", twitter: "x" };
+
+/** A guest's own page: an invitation or a client preview (not the samples at /e/preview, which are WowLink's own). */
+export const isGuestPage = (path: string) => /^\/(e\/(?!preview(\/|$))|p\/)/.test(path);
+
+/** The source of a visit, from its link's tag, the page it came from (`referrer`, often empty) and WowLink's own host. */
+export function sourceOf(tag: string | null, referrer: string, ownHost: string): Source {
+  const named = tag?.trim().toLowerCase();
+  if (named) return TAGS[named] ?? (isSource(named) && named !== "direct" ? named : "other");
+  let from: URL;
+  try { from = new URL(referrer); } catch { return "direct"; }
+  if (from.host === ownHost) return isGuestPage(from.pathname) ? "invitation" : "direct";
+  const host = from.hostname.toLowerCase();
+  return SITES.find(([site]) => site.test(host))?.[1] ?? "other";
+}
 
 /** App-wide counts per day: { "2026-10-23": { view: 12, "published:wedding": 1, … } }. */
 export type Metrics = Record<string, Record<string, number>>;

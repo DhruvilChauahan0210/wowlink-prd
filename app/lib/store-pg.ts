@@ -169,12 +169,14 @@ async function save(tx: postgres.TransactionSql, before: Before, ids: string[], 
       on conflict (link) do update set experience_id = null where wowlink.links.experience_id is null or wowlink.links.experience_id = any(${ids}::text[])`;
   }
 
-  const counts = Object.entries(db.metrics).flatMap(([key, days]) => Object.entries(days).filter(([, count]) => count > 0).map(([day, count]) => ({ key, day, count })));
+  // The table's columns are named the other way round from what they hold, and always have been: `key` is the day,
+  // `day` is the count's name (see the read above, which matches).
+  const counts = Object.entries(db.metrics).flatMap(([day, names]) => Object.entries(names).filter(([, count]) => count > 0).map(([name, count]) => ({ key: day, day: name, count })));
   if (counts.length) {
     await tx`insert into wowlink.metrics (key, day, count) select x.key, x.day, x.count from jsonb_to_recordset(${tx.json(counts)}::jsonb) as x(key text, day text, count integer)
       on conflict (key, day) do update set count = wowlink.metrics.count + excluded.count`;
-    // Now and then, days older than the numbers go back.
-    if (Math.random() < 0.01) await tx`delete from wowlink.metrics where day < ${dayKey(Date.now() - METRIC_DAYS * 86_400_000)}`;
+    // Now and then, days older than the numbers go.
+    if (Math.random() < 0.01) await tx`delete from wowlink.metrics where key < ${dayKey(Date.now() - METRIC_DAYS * 86_400_000)}`;
   }
 }
 

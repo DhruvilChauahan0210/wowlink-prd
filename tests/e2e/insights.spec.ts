@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Browser } from "../fixtures";
-import { adminHeaders, freshIp, ownerHeaders, publish } from "../helpers";
+import { adminHeaders, freshIp, ownerHeaders, publish, TEST_ADMIN_KEY } from "../helpers";
 
 /*
  * Insights: plain counts of real visits (never link previews, never the host's own), people counted once, openings
@@ -96,6 +96,56 @@ test("the manage page shows how it's doing", async ({ browser, request }) => {
   await page.getByRole("button", { name: "Refresh" }).click();
   await expect(card.locator(".manage-shared")).toHaveText("You shared it: link copied 1 · QR code shown 1");
   await context.close();
+});
+
+test("visits to WowLink count once a session, with where they came from; the team's own browsers don't count", async ({ browser, request }) => {
+  const totals = async () => (await (await request.get("/api/admin/numbers?days=7", { headers: adminHeaders() })).json()).totals as Record<string, number>;
+  // Only this test tags links for LinkedIn and YouTube, so those counts are its own.
+  const before = await totals();
+  const linkedin = () => totals().then((t) => (t["from:linkedin"] ?? 0) - (before["from:linkedin"] ?? 0));
+
+  const context = await freshContext(browser);
+  const page = await context.newPage();
+  await page.goto("/?utm_source=linkedin&utm_campaign=launch");
+  // The tags leave the address bar.
+  await expect(page).toHaveURL(/\/$/);
+  await expect.poll(linkedin).toBe(1);
+  await page.goto("/templates?utm_source=linkedin");
+  await page.reload();
+  await page.waitForTimeout(400);
+  expect(await linkedin()).toBe(1);
+  // A new tab opened from WowLink is the same visit: it sends no visit of its own.
+  const tab = await context.newPage();
+  const sent: string[] = [];
+  tab.on("request", (r) => { if (r.url().endsWith("/api/metrics")) sent.push(r.postData() ?? ""); });
+  await tab.goto("/help", { referer: new URL("/templates", page.url()).href });
+  await tab.waitForTimeout(600);
+  expect(sent.filter((body) => body.includes('"site"'))).toEqual([]);
+  // Opening the studio counts the person once too.
+  await page.goto("/create");
+  await expect.poll(async () => ((await totals())["studio-visitor"] ?? 0) - (before["studio-visitor"] ?? 0)).toBeGreaterThanOrEqual(1);
+  await context.close();
+
+  // A sample is one of WowLink's own pages: a launch post can link straight to one.
+  const sample = await freshContext(browser);
+  const viewer = await sample.newPage();
+  await viewer.goto("/e/preview?template=wedding&utm_source=facebook");
+  await expect.poll(async () => ((await totals())["from:facebook"] ?? 0) - (before["from:facebook"] ?? 0)).toBe(1);
+  await sample.close();
+
+  // A browser where the admin has been opened isn't counted.
+  const team = await freshContext(browser);
+  const admin = await team.newPage();
+  await admin.goto("/admin");
+  await admin.getByText("Use the admin key").click();
+  await admin.locator("#admin-key").fill(TEST_ADMIN_KEY);
+  await admin.getByRole("button", { name: "Open" }).click();
+  await expect(admin.getByRole("heading", { name: "Numbers" })).toBeVisible();
+  const second = await team.newPage();
+  await second.goto("/?utm_source=youtube");
+  await second.waitForTimeout(600);
+  expect(((await totals())["from:youtube"] ?? 0) - (before["from:youtube"] ?? 0)).toBe(0);
+  await team.close();
 });
 
 test("the admin sees the app's numbers", async ({ request }) => {

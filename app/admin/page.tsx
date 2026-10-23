@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import { getInvitationTemplate, formatInvitationDate, formatShortDay, invitationTemplates } from "../lib/invitations";
-import { SHARE_CHANNELS } from "../lib/insights";
+import { SHARE_CHANNELS, SOURCES, percent } from "../lib/insights";
+import { MOOD_EMOJI, type Feedback } from "../lib/feedback";
 import { REASON_TEXT } from "../lib/reports";
 import type { AdminInvitation, AdminUpgrade, Moderation, appNumbers } from "../lib/store";
 import type { ServerError } from "../lib/errors";
@@ -11,9 +12,11 @@ import { WowLinkBrand } from "../ui/brand";
 import { HOST_TEXT } from "../lib/host-i18n";
 import { SignIn } from "../ui/sign-in";
 import { signOut as signOutAccount, useAccount } from "../ui/account";
+import { markTeamBrowser } from "../ui/counting";
 
 /*
- * WowLink's own admin: reports to look at, taking an invitation down (or back up), and the app's numbers. Opened by
+ * WowLink's own admin: feedback, reports to look at, taking an invitation down (or back up), and the app's numbers
+ * (with the funnel from a first visit to a reply). The browser it's opened in stops being counted. Opened by
  * signing in with a Google account listed in WOWLINK_ADMINS, or with the admin key (WOWLINK_ADMIN_KEY: `npm run dev`
  * and the tests), which is kept for this browser tab only.
  */
@@ -42,6 +45,7 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<AdminUpgrade[]>([]);
   const [numbers, setNumbers] = useState<Numbers | null>(null);
   const [errors, setErrors] = useState<ServerError[]>([]);
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [days, setDays] = useState(30);
   const [lookup, setLookup] = useState("");
   const [found, setFound] = useState<AdminInvitation | null | "none">(null);
@@ -51,8 +55,10 @@ export default function AdminPage() {
     const reports = await request<{ invitations: AdminInvitation[] }>(k, "/reports");
     if (!reports.data) return reports.status;
     setReported(reports.data.invitations);
-    const [nums, upgrades, failures] = await Promise.all([call<Numbers>(k, `/numbers?days=${d}`), call<{ requests: AdminUpgrade[] }>(k, "/upgrades"), call<{ errors: ServerError[] }>(k, "/errors")]);
+    markTeamBrowser();
+    const [nums, upgrades, failures, notes] = await Promise.all([call<Numbers>(k, `/numbers?days=${d}`), call<{ requests: AdminUpgrade[] }>(k, "/upgrades"), call<{ errors: ServerError[] }>(k, "/errors"), call<{ feedback: Feedback[] }>(k, "/feedback")]);
     if (nums) setNumbers(nums);
+    if (notes) setFeedback(notes.feedback);
     if (upgrades) setRequests(upgrades.requests);
     if (failures) setErrors(failures.errors);
     return 200;
@@ -109,6 +115,12 @@ export default function AdminPage() {
     await load(key, days);
     setMessage(result ? `${action === "approve" ? "Moved to the Creator studio" : "Declined"}: ${title}` : "That didn’t work. Try again.");
   }
+  async function markNote(note: Feedback) {
+    const result = await call<{ ok: boolean }>(key, `/feedback/${note.id}`, { method: "POST", body: JSON.stringify({ action: note.doneAt ? "reopen" : "done" }) });
+    const notes = await call<{ feedback: Feedback[] }>(key, "/feedback");
+    if (notes) setFeedback(notes.feedback);
+    setMessage(result ? (note.doneAt ? "Opened again" : "Marked done") : "That didn’t work. Try again.");
+  }
   async function find(event: FormEvent) {
     event.preventDefault();
     // A whole link (the part after /e/, a personal link's household dropped), or just its code or custom link.
@@ -148,6 +160,15 @@ export default function AdminPage() {
         </details>}
       </section> : <>
         <h1 className="studio-sr-only">WowLink admin</h1>
+        <section className="sketch-card manage-card" aria-labelledby="feedback-heading">
+          <h2 id="feedback-heading">Feedback{feedback.some(n => !n.doneAt) && <span className="admin-count"> · {feedback.filter(n => !n.doneAt).length} new</span>}</h2>
+          {!feedback.length ? <p className="manage-muted">No feedback yet. It comes from the Feedback button on WowLink’s pages.</p> : <ul className="admin-feedback">{feedback.map(note => <li key={note.id} className={note.doneAt ? "is-done" : undefined}>
+            <p className="admin-feedback-message">{note.mood && <span className="admin-feedback-mood" title={note.mood}>{MOOD_EMOJI[note.mood]}</span>}{note.message}</p>
+            <p className="manage-muted">{new Date(note.at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · from <code>{note.page}</code>{note.contact && <> · <strong>{note.contact}</strong></>}</p>
+            <button type="button" className="share-chip" onClick={() => void markNote(note)}>{note.doneAt ? "Open again" : "Mark done"}</button>
+          </li>)}</ul>}
+        </section>
+
         <section className="sketch-card manage-card" aria-labelledby="requests-heading">
           <h2 id="requests-heading">Creator studio requests</h2>
           {!requests.length ? <p className="manage-muted">No requests yet.</p> : <ul className="admin-list">{requests.map(request => <li key={request.id} className="admin-card">
@@ -234,14 +255,24 @@ function AdminCard({ invitation, onAct }: { invitation: AdminInvitation; onAct: 
   </li>;
 }
 
+/** Step by step: hosts from a first visit to publishing, guests from opening an invitation to replying. */
+const FUNNELS: { title: string; steps: [string, string][] }[] = [
+  { title: "Hosts", steps: [["site-visitor", "Visited WowLink"], ["studio-visitor", "Opened the studio"], ["signup", "Made an account"], ["published", "Invitations published"]] },
+  { title: "Guests", steps: [["visitor", "Opened an invitation"], ["played", "Played the opening"], ["reply", "Replies"]] },
+];
+const SOURCE_NAMES: Record<(typeof SOURCES)[number], string> = { instagram: "Instagram", whatsapp: "WhatsApp", youtube: "YouTube", facebook: "Facebook", google: "Google", linkedin: "LinkedIn", x: "X", invitation: "A WowLink invitation", other: "Other sites", direct: "Direct (typed, a bookmark, or an app that doesn’t say)" };
+
 const GROUPS: { title: string; rows: [string, string][] }[] = [
-  { title: "Making", rows: [["occasion", "Occasion pages viewed"], ["sample", "Samples opened"], ["studio", "Studio opened"], ["published", "Published"]] },
+  { title: "Visitors", rows: [["site", "Visits"], ["site-visitor", "New visitors"]] },
+  { title: "Accounts", rows: [["signin", "Sign-ins"], ["signup", "New accounts"]] },
+  { title: "Making", rows: [["occasion", "Occasion pages viewed"], ["sample", "Samples opened"], ["studio", "Studio opened"], ["studio-visitor", "People who opened the studio"], ["published", "Published"]] },
   { title: "Guests", rows: [["view", "Invitation visits"], ["visitor", "People"], ["played", "Played the opening"], ["reply", "Replies"], ["via-qr", "Visits from QR codes"]] },
   { title: "Growth", rows: [["attribution", "“Create yours free” clicks"]] },
   { title: "Sharing", rows: SHARE_CHANNELS.map(channel => [`share:${channel}`, { whatsapp: "WhatsApp", copy: "Link copied", native: "Share sheet", qr: "QR code shown", personal: "Personal links sent" }[channel]]) },
   { title: "Published by occasion", rows: invitationTemplates.map(t => [`published:${t.id}`, t.category]) },
   { title: "Safety", rows: [["report", "Reports"], ["taken-down", "Taken down"]] },
   { title: "Creator studio", rows: [["upgrade-request", "Requests"]] },
+  { title: "Feedback", rows: [["feedback", "Notes sent"]] },
 ];
 
 function AdminNumbers({ numbers }: { numbers: Numbers }) {
@@ -252,6 +283,23 @@ function AdminNumbers({ numbers }: { numbers: Numbers }) {
       <div><dt>Replies kept</dt><dd>{now.replies}</dd></div>
       <div><dt>Open reports</dt><dd>{now.openReports}</dd></div>
     </dl>
+    <div className="admin-funnels">{FUNNELS.map(funnel => {
+      const top = Math.max(1, totals[funnel.steps[0][0]] ?? 0);
+      return <section key={funnel.title} className="admin-funnel" aria-label={`${funnel.title} funnel`}>
+        <h3>{funnel.title}</h3>
+        <ol>{funnel.steps.map(([name, label], i) => {
+          const n = totals[name] ?? 0;
+          const before = i ? totals[funnel.steps[i - 1][0]] ?? 0 : 0;
+          return <li key={name} style={{ "--bar": `${Math.min(100, Math.max(n ? 2 : 0, (n / top) * 100))}%` } as CSSProperties}>
+            <span className="admin-funnel-label">{label}</span>
+            <span className="admin-funnel-count">{n}</span>
+            {i > 0 && <span className="admin-funnel-rate">{before ? `${percent(n, before)}% of the step before` : "—"}</span>}
+          </li>;
+        })}</ol>
+      </section>;
+    })}</div>
+    <p className="manage-muted admin-funnel-note">Visitors, studio openers and guests count once per browser, their first time; the other steps count accounts, invitations and replies. Visits and studio openings from WowLink’s own browsers (where the admin has been opened) don’t count; invitations published from them do.</p>
+    <Sources totals={totals}/>
     {(["view", "published"] as const).map(name => {
       const counts = daily[name] ?? [];
       const top = Math.max(1, ...counts);
@@ -266,4 +314,17 @@ function AdminNumbers({ numbers }: { numbers: Numbers }) {
       <dl className="admin-numbers">{group.rows.map(([name, label]) => <div key={name}><dt>{label}</dt><dd>{totals[name] ?? 0}</dd></div>)}</dl>
     </section>)}</div>
   </>;
+}
+
+/** Where visits came from, most first. */
+function Sources({ totals }: { totals: Record<string, number> }) {
+  const rows = SOURCES.map(source => [source, totals[`from:${source}`] ?? 0] as const).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  const all = rows.reduce((sum, [, n]) => sum + n, 0);
+  return <section className="admin-sources" aria-labelledby="sources-heading">
+    <h3 id="sources-heading">Where visits come from</h3>
+    {!rows.length ? <p className="manage-muted">No visits counted yet.</p> : <ul>{rows.map(([source, n]) => <li key={source} style={{ "--bar": `${(n / rows[0][1]) * 100}%` } as CSSProperties}>
+      <span>{SOURCE_NAMES[source]}</span><span className="admin-funnel-count">{n}</span><span className="admin-funnel-rate">{percent(n, all)}%</span>
+    </li>)}</ul>}
+    <p className="manage-muted">To tell your own posts apart, add a tag to the link you share: <code>?utm_source=instagram</code>, <code>whatsapp</code>, <code>youtube</code>…</p>
+  </section>;
 }

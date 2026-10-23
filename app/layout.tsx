@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { siteUrl } from "./lib/site";
 import { ArtFilters } from "./ui/art";
+import { FeedbackButton } from "./ui/feedback";
+import { SiteVisit } from "./ui/site-visit";
 import "./globals.css";
 import "./cinematic.css";
 import "./studio.css";
@@ -41,6 +43,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <ArtFilters boil/>
         </svg>
         {children}
+        <SiteVisit/>
+        <FeedbackButton/>
       </body>
     </html>
   );

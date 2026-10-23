@@ -17,7 +17,7 @@ test("the privacy page, in English and in Gujarati", async ({ page }) => {
   await expect(page.locator(".privacy-page")).toHaveAttribute("lang", "gu");
   // What crawlers read: the page as the server sends it (after a client-side switch, Next.js streams the head in later).
   expect(await (await page.request.get("/privacy?lang=gu")).text()).toMatch(/<link rel="canonical" href="[^"]*\/privacy\?lang=gu"/);
-  await expect(page.locator(".privacy-updated")).toContainText("23 ઑક્ટોબર 2026");
+  await expect(page.locator(".privacy-updated")).toContainText("24 ઑક્ટોબર 2026");
   await page.locator(".page-langs").getByRole("link", { name: "English" }).click();
   await expect(page.locator("h1")).toHaveText("What we keep, and who sees it");
 });

@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import { answersFor, isGuestId, repliesUsed, validateGuest, validateGuestList, validatePublicEvents, viewFor, type AudienceView, type ByEvent, type EventFilter, type Guest, type GuestErrors } from "./guests";
-import { INVITATION_DAYS, METRIC_DAYS, bump, dayKey, emptyStats, summarise, trimDays, type InvitationStats, type Metrics, type PageMetric, type ShareChannel } from "./insights";
+import { INVITATION_DAYS, METRIC_DAYS, bump, dayKey, emptyStats, summarise, trimDays, type InvitationStats, type Metrics, type PageMetric, type ShareChannel, type Source } from "./insights";
 import { LIMITS, draftOf, type Attendance, type InvitationDraft, type Lang, type TemplateId } from "./invitations";
 import type { Removal, Report, ReportReason } from "./reports";
 import { cleanExtras, type Diet } from "./extras";
@@ -552,10 +552,31 @@ export function recordShare(slug: string, key: string, channel: ShareChannel) {
   });
 }
 
-/** A visit to one of WowLink's own pages (the studio, a sample, an occasion's page). */
-export function recordPageView(page: PageMetric) {
+/** A visit to one of WowLink's own pages (the studio, a sample, an occasion's page); `first` from this browser ever. */
+export function recordPageView(page: PageMetric, first = false) {
   return write({ metricsOnly: true }, (db) => {
     bump(db.metrics, page, Date.now());
+    if (first) bump(db.metrics, `${page}-visitor`, Date.now());
+    return { ok: true };
+  });
+}
+
+/** A visit to WowLink itself (its first page in a browser session), where it came from, and whether it's this browser's first. */
+export function recordSiteVisit(from: Source, first: boolean) {
+  return write({ metricsOnly: true }, (db) => {
+    const now = Date.now();
+    bump(db.metrics, "site", now);
+    bump(db.metrics, `from:${from}`, now);
+    if (first) bump(db.metrics, "site-visitor", now);
+    return { ok: true };
+  });
+}
+
+/** Counts about WowLink rather than an invitation or a page: hosts signing in (and new accounts), feedback sent. */
+export type AppCount = "signin" | "signup" | "feedback";
+export function recordCounts(...names: AppCount[]) {
+  return write({ metricsOnly: true }, (db) => {
+    for (const name of names) bump(db.metrics, name, Date.now());
     return { ok: true };
   });
 }

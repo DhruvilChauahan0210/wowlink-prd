@@ -8,7 +8,7 @@ import { PublicPage } from "../ui/public-page";
  * app works today; it will be reviewed before public launch (see README, "Current limits").
  */
 
-const UPDATED = "2026-10-23";
+const UPDATED = "2026-10-24";
 
 type Section = { heading: string; items: string[] };
 type Content = { title: string; description: string; heading: readonly [string, string]; intro: string; early: string; earlyLabel: string; updated: string; sections: Section[] };
@@ -50,7 +50,7 @@ const PRIVACY: Record<Lang, Content> = {
           "There are no tracking cookies, no ads and no outside analytics services on any page. The only cookie keeps a signed-in host signed in.",
           "Your internet address (IP) is used to slow down spam: it’s kept with a count of requests for at most two days, and never saved with your reply.",
           "Your choice of language, and a host’s manage links, are remembered in your own browser, not by WowLink.",
-          "Your browser also remembers that it has opened an invitation (and played its opening), so you’re counted once however often you come back. A host’s visits aren’t counted from a browser where they’ve opened their manage page.",
+          "Your browser also remembers that it has opened an invitation (and played its opening), or visited WowLink, so you’re counted once however often you come back. A host’s visits to their own invitation aren’t counted from a browser where they’ve opened its manage page.",
           "Links to Google Maps, Google Calendar and WhatsApp open those services only when you tap them.",
         ],
       },
@@ -61,8 +61,9 @@ const PRIVACY: Record<Lang, Content> = {
           "Guests see the invitation as their own link shows it. They never see the guest list, other people’s replies or anyone’s number.",
           "Wishes appear on the invitation only if the host turns that on, and only with the name the writer typed. The host can hide any one of them.",
           "Search engines are asked not to list invitations.",
-          "WowLink sees totals for the whole app: how many invitations are made, opened and replied to, visits to its own pages (like the studio and the samples), and clicks on “Create yours free”. Never who replied.",
+          "WowLink sees totals for the whole app: how many invitations are made, opened and replied to, visits to its own pages (like the studio and the samples) and where those visits came from (only a site’s name, like Instagram, never the page), how many hosts sign in or make an account, and clicks on “Create yours free”. Never who replied.",
           "If you ask for the Creator studio, what you write, and a phone number or email if you give one, is kept so WowLink can answer you.",
+          "If you send feedback from the Feedback button, what you write, the page you sent it from, and a phone number or email if you give one, are kept so WowLink can read it and reply.",
         ],
       },
       {
@@ -138,7 +139,7 @@ const PRIVACY: Record<Lang, Content> = {
           "કોઈ પાના પર ટ્રેકિંગ કૂકી, જાહેરાતો કે બહારની એનાલિટિક્સ સેવા નથી. એકમાત્ર કૂકી સાઇન ઇન કરેલા યજમાનને સાઇન ઇન રાખે છે.",
           "આપનું ઇન્ટરનેટ સરનામું (IP) સ્પામ રોકવા માટે વપરાય છે: તે વધુમાં વધુ બે દિવસ, વિનંતીઓની ગણતરી સાથે રહે છે, અને આપના જવાબ સાથે ક્યારેય સચવાતું નથી.",
           "આપની ભાષાની પસંદગી, અને યજમાનની મેનેજ લિંક, આપના પોતાના બ્રાઉઝરમાં યાદ રહે છે, WowLink પાસે નહીં.",
-          "આપનું બ્રાઉઝર એ પણ યાદ રાખે છે કે તેણે આમંત્રણ ખોલ્યું છે (અને ખોલવાની વિધિ માણી છે), એટલે આપ ગમે તેટલી વાર આવો, એક જ વાર ગણાઓ છો. જે બ્રાઉઝરમાં યજમાને પોતાનું મેનેજ પાનું ખોલ્યું હોય, તેમાંથી તેમની મુલાકાતો ગણાતી નથી.",
+          "આપનું બ્રાઉઝર એ પણ યાદ રાખે છે કે તેણે આમંત્રણ ખોલ્યું છે (અને ખોલવાની વિધિ માણી છે), અથવા WowLink ની મુલાકાત લીધી છે, એટલે આપ ગમે તેટલી વાર આવો, એક જ વાર ગણાઓ છો. જે બ્રાઉઝરમાં યજમાને પોતાનું મેનેજ પાનું ખોલ્યું હોય, તેમાંથી પોતાના આમંત્રણ પરની તેમની મુલાકાતો ગણાતી નથી.",
           "Google Maps, Google Calendar અને WhatsAppની લિંક આપ દબાવો ત્યારે જ એ સેવાઓ ખોલે છે.",
         ],
       },
@@ -149,8 +150,9 @@ const PRIVACY: Record<Lang, Content> = {
           "મહેમાનો આમંત્રણ તેમની પોતાની લિંક બતાવે તે રીતે જ જુએ છે. તેઓ મહેમાનોની યાદી, બીજાના જવાબો કે કોઈનો નંબર ક્યારેય જોતા નથી.",
           "શુભેચ્છાઓ આમંત્રણ પર ત્યારે જ દેખાય જ્યારે યજમાન તે ચાલુ કરે, અને ફક્ત લખનારે લખેલા નામ સાથે. યજમાન કોઈ પણ શુભેચ્છા છુપાવી શકે છે.",
           "સર્ચ એન્જિનને આમંત્રણો ન બતાવવા કહેવામાં આવે છે.",
-          "WowLink આખી એપની કુલ સંખ્યા જુએ છે: કેટલાં આમંત્રણો બન્યાં, ખોલાયાં અને તેના જવાબ આવ્યા, તેનાં પોતાનાં પાનાંની મુલાકાતો (જેમ કે સ્ટુડિયો અને નમૂના), અને “આપનું મફત બનાવો” પરના ક્લિક. કોણે જવાબ આપ્યો તે ક્યારેય નહીં.",
+          "WowLink આખી એપની કુલ સંખ્યા જુએ છે: કેટલાં આમંત્રણો બન્યાં, ખોલાયાં અને તેના જવાબ આવ્યા, તેનાં પોતાનાં પાનાંની મુલાકાતો (જેમ કે સ્ટુડિયો અને નમૂના) અને તે મુલાકાતો ક્યાંથી આવી (ફક્ત સાઇટનું નામ, જેમ કે Instagram, પાનું ક્યારેય નહીં), કેટલા યજમાનો સાઇન ઇન કરે છે કે એકાઉન્ટ બનાવે છે, અને “આપનું મફત બનાવો” પરના ક્લિક. કોણે જવાબ આપ્યો તે ક્યારેય નહીં.",
           "આપ ક્રિએટર સ્ટુડિયો માટે પૂછો, તો આપે લખેલું, અને આપ આપો તો ફોન નંબર કે ઇમેઇલ, WowLink આપને જવાબ આપી શકે તે માટે સચવાય છે.",
+          "આપ પ્રતિભાવ બટનથી પ્રતિભાવ મોકલો, તો આપે લખેલું, આપે જે પાના પરથી મોકલ્યું તે, અને આપ આપો તો ફોન નંબર કે ઇમેઇલ, WowLink તે વાંચી શકે અને જવાબ આપી શકે તે માટે સચવાય છે.",
         ],
       },
       {
@@ -226,7 +228,7 @@ const PRIVACY: Record<Lang, Content> = {
           "किसी भी पेज पर कोई ट्रैकिंग कुकी, विज्ञापन या बाहरी एनालिटिक्स सेवा नहीं है। अकेली कुकी साइन इन किए मेज़बान को साइन इन रखती है।",
           "आपका इंटरनेट पता (IP) स्पैम रोकने के लिए इस्तेमाल होता है: वह ज़्यादा से ज़्यादा दो दिन, अनुरोधों की गिनती के साथ रहता है, और आपके जवाब के साथ कभी सहेजा नहीं जाता।",
           "आपकी चुनी हुई भाषा, और मेज़बान के मैनेज लिंक, आपके अपने ब्राउज़र में याद रहते हैं, WowLink के पास नहीं।",
-          "आपका ब्राउज़र यह भी याद रखता है कि उसने निमंत्रण खोला है (और उसके खुलने का दृश्य देखा है), इसलिए आप चाहे जितनी बार लौटें, आपको एक ही बार गिना जाता है। जिस ब्राउज़र में मेज़बान ने अपना मैनेज पेज खोला हो, वहाँ से उनकी विज़िट नहीं गिनी जातीं।",
+          "आपका ब्राउज़र यह भी याद रखता है कि उसने निमंत्रण खोला है (और उसके खुलने का दृश्य देखा है), या WowLink पर आया है, इसलिए आप चाहे जितनी बार लौटें, आपको एक ही बार गिना जाता है। जिस ब्राउज़र में मेज़बान ने अपना मैनेज पेज खोला हो, वहाँ से अपने निमंत्रण पर उनकी विज़िट नहीं गिनी जातीं।",
           "Google Maps, Google Calendar और WhatsApp के लिंक ये सेवाएँ तभी खोलते हैं जब आप उन पर टैप करें।",
         ],
       },
@@ -237,8 +239,9 @@ const PRIVACY: Record<Lang, Content> = {
           "मेहमान निमंत्रण वैसा ही देखते हैं जैसा उनका अपना लिंक दिखाता है। वे मेहमानों की सूची, दूसरों के जवाब या किसी का नंबर कभी नहीं देखते।",
           "शुभकामनाएँ निमंत्रण पर तभी दिखती हैं जब मेज़बान इसे चालू करें, और सिर्फ़ उसी नाम के साथ जो लिखने वाले ने लिखा। मेज़बान इनमें से किसी को भी छिपा सकते हैं।",
           "सर्च इंजनों से कहा जाता है कि वे निमंत्रणों को अपनी सूची में न दिखाएँ।",
-          "WowLink पूरे ऐप के कुल आँकड़े देखता है: कितने निमंत्रण बने, खोले गए और उनके जवाब आए, उसके अपने पेजों पर विज़िट (जैसे स्टूडियो और नमूने), और “अपना मुफ़्त बनाएँ” पर क्लिक। किसने जवाब दिया, यह कभी नहीं।",
+          "WowLink पूरे ऐप के कुल आँकड़े देखता है: कितने निमंत्रण बने, खोले गए और उनके जवाब आए, उसके अपने पेजों पर विज़िट (जैसे स्टूडियो और नमूने) और वे विज़िट कहाँ से आईं (सिर्फ़ साइट का नाम, जैसे Instagram, पेज कभी नहीं), कितने मेज़बान साइन इन करते हैं या अकाउंट बनाते हैं, और “अपना मुफ़्त बनाएँ” पर क्लिक। किसने जवाब दिया, यह कभी नहीं।",
           "अगर आप क्रिएटर स्टूडियो के लिए पूछते हैं, तो आपका लिखा, और आप दें तो फ़ोन नंबर या ईमेल, WowLink आपको जवाब दे सके इसलिए रखा जाता है।",
+          "अगर आप फ़ीडबैक बटन से फ़ीडबैक भेजते हैं, तो आपका लिखा, जिस पेज से आपने भेजा, और आप दें तो फ़ोन नंबर या ईमेल, WowLink उसे पढ़ सके और जवाब दे सके इसलिए रखा जाता है।",
         ],
       },
       {

@@ -737,6 +737,53 @@
 .admin-errors li{border-top:1px solid var(--line);padding-top:10px}
 .admin-errors code{font-size:13px;word-break:break-all}
 .cinema .admin-errors p{margin:4px 0 0;font-size:14px;word-break:break-word}
+
+/* The admin's feedback, funnels and sources */
+.admin-count{font:700 22px/1 var(--hand);color:var(--accent)}
+.admin-feedback{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:14px}
+.admin-feedback li{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 16px;border-left:3px solid var(--accent);background:#e0922f12}
+.admin-feedback li.is-done{border-left-color:var(--line-strong);background:none;opacity:.7}
+.cinema .admin-feedback-message{font-size:16px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.admin-feedback-mood{margin-right:8px;font-size:20px}
+.admin-feedback code{font-size:13px;overflow-wrap:anywhere}
+.admin-funnels{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 32px;margin:4px 0 8px}
+.admin-funnel h3,.admin-sources h3{font:700 22px/1 var(--hand);color:var(--muted);margin:0 0 10px}
+.admin-funnel ol,.admin-sources ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.admin-funnel li,.admin-sources li{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 12px;padding:8px 12px;font-size:15px}
+.admin-funnel li::before,.admin-sources li::before{content:"";position:absolute;inset:0 auto 0 0;z-index:-1;width:var(--bar);background:#e0922f2e;border-radius:6px}
+.admin-funnel-count{font-variant-numeric:tabular-nums;font-weight:700}
+.admin-funnel-rate{grid-column:1/-1;font-size:13px;color:var(--muted)}
+.admin-sources li{grid-template-columns:1fr auto 3.5em}
+.admin-sources li .admin-funnel-rate{grid-column:auto;text-align:right}
+.cinema .admin-funnel-note{margin:0 0 26px;font-size:14px}
+.admin-sources{margin:0 0 26px}
+.cinema .admin-sources>p{margin-top:10px;font-size:14px}
+
+/* The Feedback button on WowLink's own pages, and its form */
+.feedback{display:contents}
+.feedback-button{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:40;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 13px;border:1.5px solid var(--text);border-radius:999px;color:var(--text);font:600 14px/1 var(--sans);cursor:pointer;box-shadow:0 4px 0 -1px var(--accent),0 10px 24px #241a1326;transition:transform .2s}
+.feedback-button:hover{transform:translateY(-2px)}
+.feedback-button:active{transform:translateY(1px)}
+.feedback-dialog{width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:4px;border:0;background:none;color:var(--text);overflow:auto;background-image:none}
+.feedback-dialog::backdrop{background:#241a1366}
+.feedback-card{padding:26px 26px 22px}
+.feedback-card h2{font-size:clamp(26px,4vw,32px);margin-bottom:8px}
+.feedback-card .feedback-intro{color:var(--muted);font-size:15px;line-height:1.55;margin-bottom:16px}
+.feedback-moods{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;padding:0;border:0}
+.feedback-moods legend{float:left;width:100%;margin-bottom:8px;font:700 25px/1.1 var(--hand);color:var(--muted)}
+.feedback-moods label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px dashed var(--line-strong);border-radius:999px;font:600 14px/1.2 var(--sans);cursor:pointer}
+.feedback-moods label:has(input:checked){border-style:solid;border-color:var(--text);background:var(--text);color:var(--bg)}
+.feedback-moods label:has(input:focus-visible){outline:2px dashed var(--accent);outline-offset:3px}
+.feedback-moods input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.feedback-card .studio-field textarea{min-height:110px;padding-bottom:12px}
+.feedback-card .feedback-privacy{margin:4px 0 16px;font-size:13px;color:var(--faint)}
+.feedback-card .feedback-from-account{margin:6px 2px 0;font-size:13px;color:var(--muted)}
+.feedback-sent h2:focus{outline:none}
+.feedback-actions{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.feedback-sent{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:8px 0}
+.feedback-card .feedback-sent p{color:var(--muted);margin-bottom:10px}
+@media (max-width:560px){.feedback-button{min-height:42px;padding:0 14px 0 11px}.feedback-card{padding:22px 18px 18px}}
+@media print{.feedback-button{display:none}}
 .admin-key-option{margin-top:16px}
 .admin-key-option summary{cursor:pointer;color:var(--muted);font-size:15px}
 .admin-key-option form{margin-top:12px}
