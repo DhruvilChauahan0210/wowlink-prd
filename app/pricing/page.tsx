@@ -10,7 +10,7 @@ import { PublicPage } from "../ui/public-page";
 
 type Content = {
   title: string; description: string; heading: readonly [string, string]; intro: string;
-  table: { caption: string; feature: string; free: string; pro: string; rows: [string, string, string][] };
+  table: { caption: string; feature: string; free: string; pro: string; soon: string; rows: [string, string, string][] };
   note: string;
 };
 
@@ -20,11 +20,12 @@ const PRICING: Record<Lang, Content> = {
     description: "Start free: a hand-drawn invitation for your own occasion, with one celebration and 50 replies, in English, Gujarati or Hindi. The Creator studio adds schedules, a link for each family, your own colours and more.",
     heading: ["Start free,", "go further"],
     intro: "A simple invitation for your own day is free. For a wedding with many functions, a link for each family, your own colours or a planner’s work, there’s the Creator studio.",
-    table: { caption: "Side by side", feature: "Feature", free: "Personal", pro: "Creator studio", rows: [
-      ["Price", "₹0", "₹1,999 a month"],
+    table: { caption: "Side by side", feature: "Feature", free: "Personal", pro: "Creator studio", soon: "coming soon", rows: [
+      ["Price", "₹0", "₹1,999\u00a0a\u00a0month"],
+      ["Live invitations at a time", "1", "Many"],
       ["Occasions", "4 starter occasions", "All of them"],
       ["Celebrations in one invitation", "1", "Up to 10"],
-      ["Replies", "Up to 50", "Up to 1,000"],
+      ["Replies", "Up\u00a0to\u00a050", "Up\u00a0to\u00a01,000"],
       ["Stays up", "Until 30 days after the day", "With no end date"],
       ["A personal link for each family", "—", "Included"],
       ["A custom link", "—", "Included"],
@@ -43,8 +44,9 @@ const PRICING: Record<Lang, Content> = {
     description: "મફતમાં શરૂ કરો: આપના પોતાના પ્રસંગ માટે હાથે દોરેલું આમંત્રણ, એક પ્રસંગ અને 50 જવાબો, અંગ્રેજી, ગુજરાતી કે હિન્દીમાં. ક્રિએટર સ્ટુડિયોમાં કાર્યક્રમ, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ અને ઘણું વધારે છે.",
     heading: ["મફતમાં શરૂ કરો,", "આગળ વધો"],
     intro: "આપના પોતાના દિવસ માટે સાદું આમંત્રણ મફત છે. ઘણા પ્રસંગોવાળાં લગ્ન, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ કે આયોજકના કામ માટે ક્રિએટર સ્ટુડિયો છે.",
-    table: { caption: "સામસામે સરખામણી", feature: "સુવિધા", free: "પર્સનલ", pro: "ક્રિએટર સ્ટુડિયો", rows: [
+    table: { caption: "સામસામે સરખામણી", feature: "સુવિધા", free: "પર્સનલ", pro: "ક્રિએટર સ્ટુડિયો", soon: "જલદી આવે છે", rows: [
       ["કિંમત", "₹0", "દર મહિને ₹1,999"],
+      ["એક સમયે લાઇવ આમંત્રણો", "1", "ઘણાં"],
       ["પ્રસંગો", "4 શરૂઆતના પ્રસંગો", "બધા"],
       ["એક આમંત્રણમાં પ્રસંગો", "1", "10 સુધી"],
       ["જવાબો", "50 સુધી", "1,000 સુધી"],
@@ -66,8 +68,9 @@ const PRICING: Record<Lang, Content> = {
     description: "मुफ़्त में शुरू करें: अपने अवसर के लिए हाथ से बना निमंत्रण, एक कार्यक्रम और 50 जवाब, अंग्रेज़ी, गुजराती या हिन्दी में। क्रिएटर स्टूडियो में कार्यक्रमों की सूची, हर परिवार के लिए लिंक, अपने रंग और बहुत कुछ है।",
     heading: ["मुफ़्त में शुरू करें,", "आगे बढ़ें"],
     intro: "अपने दिन के लिए एक सादा निमंत्रण मुफ़्त है। कई रस्मों वाली शादी, हर परिवार के लिए लिंक, अपने रंग या आयोजक के काम के लिए क्रिएटर स्टूडियो है।",
-    table: { caption: "आमने-सामने", feature: "सुविधा", free: "पर्सनल", pro: "क्रिएटर स्टूडियो", rows: [
+    table: { caption: "आमने-सामने", feature: "सुविधा", free: "पर्सनल", pro: "क्रिएटर स्टूडियो", soon: "जल्द आ रहा है", rows: [
       ["कीमत", "₹0", "हर महीने ₹1,999"],
+      ["एक समय में लाइव निमंत्रण", "1", "कई"],
       ["अवसर", "4 शुरुआती अवसर", "सभी"],
       ["एक निमंत्रण में कार्यक्रम", "1", "10 तक"],
       ["जवाब", "50 तक", "1,000 तक"],
@@ -104,7 +107,7 @@ export default async function PricingPage({ searchParams }: Props) {
       <PlanCards lang={lang} heading="h2"/>
       <div className="pricing-table-wrap"><table className="pricing-table">
         <caption>{c.table.caption}</caption>
-        <thead><tr><th scope="col"><span className="studio-sr-only">{c.table.feature}</span></th><th scope="col">{c.table.free}</th><th scope="col">{c.table.pro}</th></tr></thead>
+        <thead><tr><th scope="col"><span className="studio-sr-only">{c.table.feature}</span></th><th scope="col">{c.table.free}</th><th scope="col">{c.table.pro}<span className="pricing-th-soon">{c.table.soon}</span></th></tr></thead>
         <tbody>{c.table.rows.map(([feature, free, pro]) => <tr key={feature}><th scope="row">{feature}</th><td>{free}</td><td>{pro}</td></tr>)}</tbody>
       </table></div>
       <p className="pricing-note">{c.note}</p>

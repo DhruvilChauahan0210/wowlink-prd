@@ -155,7 +155,7 @@ const en = {
   occasionNames: {} as Partial<Record<TemplateId, string>>,
 
   // ---------- the studio ----------
-  studioLabel: (live: boolean) => (live ? "Editing a live invitation" : "Creator studio"),
+  studioLabel: (live: boolean) => (live ? "Editing a live invitation" : "Invitation studio"),
   repliesLink: "Replies",
   fullPreview: "Full preview",
   saveDraft: "Save draft",
@@ -251,6 +251,7 @@ const en = {
   yourInvitation: "Your invitation",
   editInStudio: "Edit in studio",
   noKeyTitle: "This page needs your private link",
+  noKeyOrSignIn: ["Published it with your Google account?", "Sign in to open it"] as readonly [string, string],
   noKeyBody: ["Open the manage link you saved when you published. The part after the", "is what proves the invitation is yours, so copy the whole link."] as readonly [string, string],
   invalidTitle: "That link doesn’t open this invitation",
   invalidBody: "The key in this link doesn’t match. Check that you copied the whole manage link.",
@@ -393,6 +394,7 @@ const en = {
 
   // ---------- My invitations ----------
   newInvitation: "New invitation",
+  newShort: "New",
   mineHeading: ["My", "invitations"] as readonly [string, string],
   mineIntro: "Everything you can manage. Signed in with Google, your invitations are here on every phone; this device also keeps the private manage links it has opened.",
   finding: "Finding your invitations…",
@@ -654,6 +656,7 @@ const gu: HostText = {
   yourInvitation: "આપનું આમંત્રણ",
   editInStudio: "સ્ટુડિયોમાં ફેરફાર કરો",
   noKeyTitle: "આ પાના માટે આપની ખાનગી લિંક જોઈએ",
+  noKeyOrSignIn: ["આપના Google એકાઉન્ટથી પ્રકાશિત કર્યું હતું?", "તે ખોલવા સાઇન ઇન કરો"],
   noKeyBody: ["પ્રકાશિત કરતી વખતે સાચવેલી મેનેજ લિંક ખોલો. લિંકમાં", "પછીનો ભાગ જ સાબિત કરે છે કે આમંત્રણ આપનું છે, એટલે આખી લિંક કૉપિ કરો."],
   invalidTitle: "એ લિંકથી આ આમંત્રણ ખૂલતું નથી",
   invalidBody: "આ લિંકની ચાવી મળતી નથી. આખી મેનેજ લિંક કૉપિ કરી છે કે નહીં તે તપાસો.",
@@ -789,6 +792,7 @@ const gu: HostText = {
   noWishes: "હજી કોઈ શુભેચ્છા નથી. મહેમાનો જવાબ આપતી વખતે લખી શકે છે.",
 
   newInvitation: "નવું આમંત્રણ",
+  newShort: "નવું",
   mineHeading: ["મારાં", "આમંત્રણો"],
   mineIntro: "આપ જે સંભાળી શકો છો તે બધું. Google થી સાઇન ઇન હો તો આપનાં આમંત્રણો દરેક ફોન પર અહીં દેખાય; આ ઉપકરણ તેણે ખોલેલી ખાનગી મેનેજ લિંક પણ સાચવે છે.",
   finding: "આપનાં આમંત્રણો શોધી રહ્યા છીએ…",
@@ -1051,6 +1055,7 @@ const hi: HostText = {
   yourInvitation: "आपका निमंत्रण",
   editInStudio: "स्टूडियो में बदलाव करें",
   noKeyTitle: "इस पेज के लिए आपका निजी लिंक चाहिए",
+  noKeyOrSignIn: ["अपने Google अकाउंट से पब्लिश किया था?", "इसे खोलने के लिए साइन इन करें"],
   noKeyBody: ["प्रकाशित करते समय सेव किया मैनेज लिंक खोलें। लिंक में", "के बाद वाला हिस्सा ही साबित करता है कि निमंत्रण आपका है, इसलिए पूरा लिंक कॉपी करें।"],
   invalidTitle: "उस लिंक से यह निमंत्रण नहीं खुलता",
   invalidBody: "इस लिंक की चाबी मेल नहीं खाती। जाँचें कि आपने पूरा मैनेज लिंक कॉपी किया है।",
@@ -1193,6 +1198,7 @@ const hi: HostText = {
 
   // ---------- My invitations ----------
   newInvitation: "नया निमंत्रण",
+  newShort: "नया",
   mineHeading: ["मेरे", "निमंत्रण"],
   mineIntro: "आप जो कुछ संभाल सकते हैं, सब यहाँ है। Google से साइन इन हों तो आपके निमंत्रण हर फ़ोन पर यहाँ दिखते हैं; यह डिवाइस अपनी खोली हुई निजी मैनेज लिंक भी सहेजता है।",
   finding: "आपके निमंत्रण ढूँढ रहे हैं…",

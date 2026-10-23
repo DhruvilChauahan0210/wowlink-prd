@@ -131,7 +131,7 @@ export default function MyInvitations() {
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
       <span className="studio-header-label">{h.myInvitations}</span>
-      <div className="studio-header-actions"><HostLangSwitch h={h} choose={choose}/><Link className="cin-cta cin-cta-light studio-save" href="/templates">{h.newInvitation}</Link></div>
+      <div className="studio-header-actions"><HostLangSwitch h={h} choose={choose}/><Link className="cin-cta cin-cta-light studio-save" href="/templates"><span className="label-long">{h.newInvitation}</span><span className="label-short">{h.newShort}</span></Link></div>
     </header>
     <main className="manage theme-paper">
       <section className="mine-intro">

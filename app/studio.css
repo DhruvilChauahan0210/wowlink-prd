@@ -726,6 +726,11 @@
 .manage-poll li i{position:absolute;inset:0 auto 0 0;z-index:-1;background:var(--accent);opacity:.14}
 /* asking for the Creator studio, a custom link, reminding everyone */
 .ask-pro-form{display:flex;flex-direction:column;gap:14px;margin-top:14px;max-width:560px}
+.label-short{display:none}
+.mine-add textarea{padding-inline:20px}
+@media(max-width:420px){.mine-page .label-long{display:none}.mine-page .label-short{display:inline}}
+.cinema .manage-notice-signin{margin:14px 0 0;font-size:16px}
+.manage-notice-signin a{color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .admin-errors{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
 .admin-errors li{border-top:1px solid var(--line);padding-top:10px}
 .admin-errors code{font-size:13px;word-break:break-all}
@@ -736,7 +741,8 @@
 
 /* Signing in, with Google */
 .sign-in{display:flex;flex-direction:column;gap:12px;margin-top:14px;max-width:420px}
-.sign-in-google{align-self:flex-start}
+.sign-in-google{align-self:flex-start;gap:10px}
+.sign-in-g{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fff;flex:none}
 .sign-in-card h1{font-size:clamp(30px,4vw,42px);line-height:1.08;margin:0 0 8px}
 .mine-account .manage-muted{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .manage-custom-link{margin-top:22px}
@@ -828,7 +834,7 @@
   .inv-timeline-mark{width:48px;height:48px}
   .inv-timeline-mark .doodle{width:28px;height:28px}
   .studio-header-actions .studio-fullscreen,.studio-save-draft{display:none}
-  .manage{padding:32px var(--gutter) 64px;gap:24px}
+  .manage{min-height:calc(100svh - 64px);padding:32px var(--gutter) 64px;gap:24px}
   .manage-hero{flex-direction:column;align-items:flex-start}
   .manage-totals{grid-template-columns:1fr 1fr}
   .manage-totals>div:first-child{grid-column:1 / -1}

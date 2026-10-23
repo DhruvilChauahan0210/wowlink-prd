@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { PlanCards } from "./ui/plan-cards";
+import { STARTER_OCCASIONS } from "./lib/plans";
+import type { TemplateId } from "./lib/invitations";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Art, ArtImage } from "./ui/art";
 import { ArrowCurl, Diya, Flower, Pen, Star } from "./ui/doodles";
@@ -55,7 +57,7 @@ function InvitationScene() {
           <div className="cin-sketch-text">
             <span className="cin-event-eyebrow">together with their families</span>
             <h2>Aarav <i>&amp;</i> Meera</h2>
-            <p>8 November 2026<span aria-hidden="true">·</span>Surat, Gujarat</p>
+            <p><span>8 November 2026</span><span className="cin-dot" aria-hidden="true">·</span><span>Surat, Gujarat</span></p>
             <Link className="cin-text-link" href="/e/preview?template=wedding">Open their invitation <span aria-hidden="true">→</span></Link>
           </div>
         </div>
@@ -112,7 +114,7 @@ function OccasionReel({ reduced }: { reduced: boolean }) {
   return <section className="cin-reel theme-paper" id="occasions" ref={root}><div className="cin-reel-sticky">
     <div className="cin-reel-intro"><h2>Every occasion gets its own drawing.</h2><p>Pick a sketch made for your day, then make it yours.</p><span className="cin-note cin-reel-note">tap a drawing to peek inside <ArrowCurl className="doodle-curl"/></span><div className="cin-reel-meter" aria-hidden="true"><span><b ref={count}>1</b> / {occasions.length}</span><span className="cin-meter"><span ref={bar}/></span></div><Link className="cin-text-link" href="/templates">Browse all templates <span aria-hidden="true">→</span></Link></div>
     <div className="cin-reel-track" ref={track}>{occasions.map((item, i) => <article key={item.id} className="cin-occasion-card" ref={(el) => { cards.current[i] = el; }}>
-      <Link className="cin-occasion-image" href={`/e/preview?template=${item.id}`} aria-label={`Preview the ${item.kind.toLowerCase()} invitation`}><span className="cin-photo"><ArtImage name={item.id} fit="slice"/></span><span className="cin-card-title"><span className="cin-card-kind">{item.kind}</span><h3>{item.title}</h3></span></Link>
+      <Link className="cin-occasion-image" href={`/e/preview?template=${item.id}`} aria-label={`Preview the ${item.kind.toLowerCase()} invitation`}><span className="cin-photo"><ArtImage name={item.id} fit="slice"/></span><span className="cin-card-title"><span className="cin-card-kind">{item.kind}{!STARTER_OCCASIONS.includes(item.id as TemplateId) && <span className="studio-pro-badge cin-card-pro">Creator studio</span>}</span><h3>{item.title}</h3></span></Link>
       <div className="cin-card-bottom"><p>{item.detail}</p><Link href={`/create?template=${item.id}`}>Make it yours <span aria-hidden="true">→</span></Link></div>
     </article>)}</div>
   </div></section>;
@@ -202,5 +204,5 @@ export default function CinematicHome() {
     <Flower className="doodle fin-a"/><Star className="doodle fin-b"/><Diya className="doodle fin-c"/><Flower className="doodle fin-d"/>
     <span className="cin-note cin-finale-note">come on in</span><h2>Your day.<br/><em>Their first wow.</em></h2><p>Free to start. Lovely to share.</p><Link href="/templates" className="cin-cta cin-cta-light">Create your invitation</Link>
   </section></main>
-      <footer className="cin-footer"><div className="cin-footer-brand"><span className="cin-logo"><Mark/>WowLink</span><p>Made with love, shared with one link.</p></div><nav aria-label="Footer"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><NavLink id="plans">Pricing</NavLink><Link href="/templates">Templates</Link><Link href="/mine">My invitations</Link><Link href="/help">Help</Link><Link href="/privacy">Privacy</Link></nav><span className="cin-footer-note">© 2026 WowLink</span></footer></div>;
+      <footer className="cin-footer"><div className="cin-footer-brand"><span className="cin-logo"><Mark/>WowLink</span><p>Made with love, shared with one link.</p></div><nav aria-label="Footer"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><Link href="/pricing">Pricing</Link><Link href="/templates">Templates</Link><Link href="/mine">My invitations</Link><Link href="/help">Help</Link><Link href="/privacy">Privacy</Link></nav><span className="cin-footer-note">© 2026 WowLink</span></footer></div>;
 }

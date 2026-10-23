@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CatalogFooter } from "../../ui/public-page";
 import { notFound } from "next/navigation";
 import { getInvitationTemplate, invitationTemplates, isTemplateId } from "../../lib/invitations";
 import { FAQ, GUEST_GETS, OCCASION_PAGES, STEPS } from "../../lib/occasion-pages";
@@ -82,10 +83,10 @@ export default async function OccasionPage({ params }: Props) {
       <section className="occasion-section" aria-labelledby="other-occasions">
         <h2 id="other-occasions">Other occasions</h2>
         <ul className="occasion-others">{invitationTemplates.filter((other) => other.id !== id).map((other) => <li key={other.id}>
-          <Link href={`/templates/${other.id}`}><span className="cin-photo"><ArtImage name={other.id} fit="slice"/></span><span>{other.category}</span></Link>
+          <Link href={`/templates/${other.id}`}><span className="cin-photo"><ArtImage name={other.id} fit="slice"/></span><span>{other.category}</span>{!STARTER_OCCASIONS.includes(other.id) && <span className="studio-pro-badge">Creator studio</span>}</Link>
         </li>)}</ul>
       </section>
     </main>
-    <footer className="cin-catalog-footer"><span>Made with love, shared with one link.</span><span className="cin-catalog-footer-links"><Link href="/help">Help</Link><Link href="/pricing">Pricing</Link><Link href="/privacy">Privacy</Link><Link href="/">© 2026 WowLink</Link></span></footer>
+    <CatalogFooter lang="en"/>
   </div>;
 }
