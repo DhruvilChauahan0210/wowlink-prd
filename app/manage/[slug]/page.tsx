@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { formatInvitationDate, formatInvitationTime, formatShortDay, langHref, ownerKey, sortSchedule } from "../../lib/invitations";
-import type { HostText } from "../../lib/host-i18n";
+import { hostMessage, type HostText } from "../../lib/host-i18n";
 import { HostLangSwitch, HostTextContext, useHostLang } from "../../ui/host-lang";
 import { answerFor } from "../../lib/guests";
 import type { Experience, Rsvp } from "../../lib/store";
@@ -16,10 +16,9 @@ import { GeneralLinkAudience, GuestList, Headcount, WishesCard, saveCsv } from "
 import { Insights } from "./insights";
 import { FromGuests } from "./from-guests";
 import { AskPro } from "../../ui/ask-pro";
-import { syncAccount } from "../../ui/account";
+import { signOut, syncAccount, useAccount } from "../../ui/account";
 import { linkOf } from "../../lib/aliases";
-import { hostMessage } from "../../lib/host-i18n";
-import { endsOn, hasEnded, planOf } from "../../lib/plans";
+import { endsOn, hasEnded, planOf, repliesLimit } from "../../lib/plans";
 import { REASON_TEXT } from "../../lib/reports";
 
 type Loaded = { experience: Experience; rsvps: Rsvp[]; upgrade?: { status: "open" | "approved" | "declined"; createdAt: string } };
@@ -42,6 +41,8 @@ export default function ManagePage() {
   const [confirmReply, setConfirmReply] = useState<string | null>(null);
   const [failed, setFailed] = useState<"" | "invitation" | "reply">("");
   const [deleted, setDeleted] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState("");
+  const account = useAccount();
   const deletedRef = useRef<HTMLHeadingElement>(null);
   // Focus follows the questions: into each one as it opens, and back to what opened it.
   const deleteToggleRef = useRef<HTMLButtonElement>(null);
@@ -103,7 +104,13 @@ export default function ManagePage() {
   async function setStatus(status: Experience["status"]) {
     if (!key) return;
     setBusy(true);
-    await fetch(`/api/experiences/${slug}`, { method: "PATCH", headers: { "content-type": "application/json", authorization: `Bearer ${key}` }, body: JSON.stringify({ status }) }).catch(() => undefined);
+    setStatusError("");
+    const response = await fetch(`/api/experiences/${slug}`, { method: "PATCH", headers: { "content-type": "application/json", authorization: `Bearer ${key}` }, body: JSON.stringify({ status }) }).catch(() => null);
+    // Refused (the free plan's one live invitation, say): say why, rather than nothing happening.
+    if (!response?.ok) {
+      const body = (await response?.json().catch(() => null)) as { error?: string } | null;
+      setStatusError(body?.error ?? h.offlineBody);
+    }
     await load(key);
     setBusy(false);
   }
@@ -167,7 +174,8 @@ export default function ManagePage() {
   // A free invitation comes down 30 days after the occasion.
   const ends = experience ? endsOn(experience) : null;
   const ended = !!experience && hasEnded(experience);
-  const live = experience?.status === "published" && !removed;
+  // Guests can open it: published, not taken down, and (free) not past its end.
+  const live = experience?.status === "published" && !removed && !ended;
   const schedule = sortSchedule(experience?.events ?? []);
   const owner = key ? { slug, ownerKey: key } : null;
   // Whether this page has the card for asking for the Creator studio (not for a taken-down invitation).
@@ -186,7 +194,10 @@ export default function ManagePage() {
       <div className="studio-header-actions"><HostLangSwitch h={h} choose={choose}/><Link className="studio-fullscreen" href="/mine">{h.myInvitations}</Link>{experience && !removed && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>{h.editInStudio}</Link>}</div>
     </header>
     <main className="manage theme-paper">
-      {problem === "no-key" && <Notice h={h} title={h.noKeyTitle} action={<p className="manage-notice-signin">{h.noKeyOrSignIn[0]} <Link href={`/signin?next=${encodeURIComponent(`/manage/${slug}`)}`}>{h.noKeyOrSignIn[1]}</Link></p>}>{h.noKeyBody[0]} <b>#</b> {h.noKeyBody[1]}</Notice>}
+      {problem === "no-key" && <Notice h={h} title={h.noKeyTitle} action={account.email
+            // Signed in, but not with the account that made it: say which one, and offer to switch.
+            ? <p className="manage-notice-signin">{h.noKeyOtherAccount(account.email)} <button type="button" className="share-chip" onClick={() => void signOut().then(() => account.refresh())}>{h.signOut}</button></p>
+            : <p className="manage-notice-signin">{h.noKeyOrSignIn[0]} <Link href={`/signin?next=${encodeURIComponent(`/manage/${slug}`)}`}>{h.noKeyOrSignIn[1]}</Link></p>}>{h.noKeyBody[0]} <b>#</b> {h.noKeyBody[1]}</Notice>}
       {problem === "invalid" && <Notice h={h} title={h.invalidTitle}>{h.invalidBody}</Notice>}
       {problem === "offline" && <Notice h={h} title={h.offlineTitle} action={key ? <button className="cin-cta cin-cta-outline" onClick={() => void load(key)}>{h.tryAgain}</button> : null}>{h.offlineBody}</Notice>}
       {deleted !== null && <section className="sketch-card manage-card manage-notice" role="status">
@@ -200,7 +211,7 @@ export default function ManagePage() {
         <section className="manage-hero">
           <div className="cin-print manage-print"><span className="cin-photo"><ArtImage name={experience.templateId as ArtName} fit="slice"/></span></div>
           <div>
-            <span className={`manage-status is-${removed ? "removed" : experience.status}`}>{removed ? h.takenDown : live ? h.live : h.unpublished}</span> <span className={`manage-plan${pro ? " is-pro" : ""}`}>{pro ? h.proBadge : h.freeBadge}</span>
+            <span className={`manage-status is-${removed ? "removed" : experience.status}`}>{removed ? h.takenDown : live ? h.live : ended && experience.status === "published" ? h.ended : h.unpublished}</span> <span className={`manage-plan${pro ? " is-pro" : ""}`}>{pro ? h.proBadge : h.freeBadge}</span>
             <h1>{experience.title}</h1>
             <p>{formatInvitationDate(experience.date, true, lang)}{experience.time && ` · ${formatInvitationTime(experience.time, lang)}`} · {experience.venue}</p>
             {ends && <p className={ended ? "manage-warn" : "manage-muted manage-ends"}>{ended ? h.endedFree(formatInvitationDate(ends, true, lang)) : h.upUntil(formatInvitationDate(ends, true, lang))} {!ended && <Link href="/pricing">{h.seePlans}</Link>}</p>}
@@ -214,7 +225,7 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="share-heading">
           <h2 id="share-heading">{h.shareIt}</h2>
-          {live ? <ShareTools url={`${origin}/e/${linkOf(experience)}`} title={experience.title} lang={experience.language} ui={lang} owner={owner ?? undefined}/> : <p className="manage-muted">{removed ? h.takenDownShare : h.unpublishedNote}</p>}
+          {live ? <ShareTools url={`${origin}/e/${linkOf(experience)}`} title={experience.title} lang={experience.language} ui={lang} owner={owner ?? undefined}/> : <p className="manage-muted">{removed ? h.takenDownShare : ended && ends ? h.endedFree(formatInvitationDate(ends, true, lang)) : h.unpublishedNote}</p>}
           {owner && schedule.length > 1 && <GeneralLinkAudience owner={owner} experience={experience} onSaved={reload}/>}
           {!removed && (pro ? owner && <CustomLink h={h} owner={owner} experience={experience} onSaved={reload}/> : <ProNote h={h} text={h.proAlias} ask={canAsk}/>)}
         </section>
@@ -237,6 +248,9 @@ export default function ManagePage() {
         <section className="sketch-card manage-card" aria-labelledby="replies-heading">
           <div className="manage-card-head"><h2 id="replies-heading" ref={repliesHeadingRef} tabIndex={-1}>{h.repliesHeading}</h2><button className="inv-replay-link" onClick={() => key && void load(key)}>{h.refresh}</button></div>
           {experience.rsvp === false && <p className="manage-warn">{h.repliesOff}</p>}
+          {/* The free plan's reply cap (the Creator studio's shows in its guest list), and when it's reached. */}
+          {!pro && data.rsvps.length >= repliesLimit("free") ? <p className="manage-warn">{h.repliesFull(repliesLimit("free"))}</p>
+            : !pro && <p className="manage-limit">{h.planLimit(data.rsvps.length, repliesLimit("free"), false)}</p>}
           <dl className="manage-totals">
             <div><dt>{h.coming}</dt><dd>{totals.Attending}</dd><span>{h.guestsInAll(totals.guests)}</span></div>
             <div><dt>{h.maybe}</dt><dd>{totals.Maybe}</dd>{totals.maybeGuests > 0 && <span>{h.people(totals.maybeGuests)}</span>}</div>
@@ -292,12 +306,14 @@ export default function ManagePage() {
           <h2 id="private-heading">{h.privateHeading}</h2>
           <p className="manage-muted">{h.privateBody}</p>
           {key && <CopyField value={`${origin}/manage/${slug}#k=${key}`} label={h.copyManageLink} ui={lang}/>}
-          {!removed && <div className="manage-actions">
+          {/* An ended free invitation has nothing to switch: it can't be published again as it is. */}
+          {!removed && !(ended && experience.status === "published") && <div className="manage-actions">
             {live
               ? <button className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void setStatus("unpublished")}>{h.unpublish}</button>
               : <button className="cin-cta cin-cta-light" disabled={busy} onClick={() => void setStatus("published")}>{h.publishAgain}</button>}
             <span className="manage-muted">{h.unpublishNote(live)}</span>
           </div>}
+          {statusError && <p className="studio-error" role="alert">{hostMessage(statusError, lang)}</p>}
           {pro && <Link className="cin-text-link manage-privacy-link" href={`/create?copy=${slug}`}>{h.makeAnother} <span aria-hidden="true">→</span></Link>}
           <Link className="cin-text-link manage-privacy-link" href={langHref("/privacy", lang)}>{h.privacyLink} <span aria-hidden="true">→</span></Link>
         </section>

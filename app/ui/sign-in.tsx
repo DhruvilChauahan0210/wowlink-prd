@@ -14,6 +14,10 @@ export function SignIn({ h, next, beforeLeaving }: { h: HostText; next: string; 
   // Whether Google is switched on in the Supabase project (its public settings say); null while that's being checked.
   const [ready, setReady] = useState<boolean | null>(null);
   const supabase = browserSupabase();
+  // Google won't sign anyone in inside Instagram's, Facebook's or LinkedIn's own browser: say so, and offer the link.
+  const [inApp, setInApp] = useState(false);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => setInApp(/FBAN|FBAV|Instagram|LinkedInApp|Line\/|; wv\)/.test(navigator.userAgent)), []);
 
   useEffect(() => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -38,6 +42,10 @@ export function SignIn({ h, next, beforeLeaving }: { h: HostText; next: string; 
   }
 
   if (!supabase) return null;
+  if (inApp) return <div className="sign-in">
+    <p className="manage-muted">{h.openInBrowser}</p>
+    <button type="button" className="cin-cta cin-cta-light" onClick={() => void navigator.clipboard?.writeText(location.href).then(() => setCopied(true), () => undefined)}>{copied ? h.copiedForBrowser : h.copyThisLink}</button>
+  </div>;
   return <div className="sign-in">
     <button type="button" className="cin-cta cin-cta-light sign-in-google" disabled={busy || ready === false} onClick={() => void withGoogle()}><GoogleMark/>{h.continueGoogle}</button>
     {ready === false && <p className="manage-muted">{h.googleNotReady}</p>}

@@ -380,6 +380,8 @@
 .inv-not-found{min-height:100svh}
 .inv-not-found>header{display:flex;justify-content:space-between;align-items:center;height:72px;padding:0 var(--gutter);border-bottom:1px solid var(--line-strong)}
 .inv-nf-code{font:700 26px/1 var(--hand);color:var(--faint)}
+.cinema .inv-nf-other{margin-top:14px;max-width:34em;font-size:15px;color:var(--muted)}
+.inv-nf-other strong{color:var(--text);font-weight:600}
 .inv-not-found>main{min-height:calc(100svh - 72px);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:48px 24px 72px}
 .inv-not-found>main>svg{height:36px;width:36px;color:var(--accent);margin-bottom:28px}
 .inv-not-found h1{font-size:clamp(52px,7vw,104px);line-height:1;margin:0 0 20px}
@@ -742,6 +744,8 @@
 /* Signing in, with Google */
 .sign-in{display:flex;flex-direction:column;gap:12px;margin-top:14px;max-width:420px}
 .sign-in-google{align-self:flex-start;gap:10px}
+.sign-in-card .sign-in-back{margin-top:18px}
+.cinema .studio-sample-note{color:var(--accent);font-weight:600}
 .sign-in-g{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fff;flex:none}
 .sign-in-card h1{font-size:clamp(30px,4vw,42px);line-height:1.08;margin:0 0 8px}
 .mine-account .manage-muted{display:flex;flex-wrap:wrap;align-items:center;gap:10px}

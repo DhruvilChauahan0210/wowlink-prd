@@ -32,8 +32,17 @@ test("the home page hero draws itself, and the reel shows all twelve occasions",
   await expect(page.locator(".cin-occasion-card h3")).toHaveText(["For your forever.", "Say yes, together.", "Make a wish.", "Feel the rhythm.", "Little blessings.", "Step inside.", "Still us.", "Here’s to new.", "Light it up.", "A sacred thread.", "With faith.", "Hello, little one."]);
 });
 
-test("an unknown invitation link shows the not-found page", async ({ page }) => {
+test("an invitation link that doesn't open says so plainly, in all three languages, without selling", async ({ page }) => {
   const response = await page.goto("/e/doesnotexist");
+  expect(response?.status()).toBe(404);
+  await expect(page.locator("h1")).toContainText("isn’t open right now");
+  await expect(page.locator('p[lang="gu"]')).toContainText("યજમાનને પૂછો");
+  await expect(page.locator('p[lang="hi"]')).toContainText("मेज़बानों से पूछें");
+  await expect(page.getByText("Error 404")).toHaveCount(0);
+});
+
+test("any other unknown page shows the site's not-found page", async ({ page }) => {
+  const response = await page.goto("/no-such-page");
   expect(response?.status()).toBe(404);
   await expect(page.locator("h1")).toContainText("slipped away");
 });

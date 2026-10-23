@@ -3,16 +3,20 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { HOST_LANG_KEY, HOST_TEXT, hostMessage, type HostText } from "../lib/host-i18n";
 import { LANGS, LANG_NAMES, isLang, type Lang } from "../lib/invitations";
+import { LANG_KEY } from "../lib/i18n";
 
 /**
- * The host's language: English until they choose, then remembered on this device. Starts in English on the server
- * and switches once the page is up, so the first render always matches.
+ * The host's language: the link's (?lang=), else the one chosen on this device, else the one they read invitations
+ * in as a guest, else English. Starts in English on the server and switches once the page is up, so the first render
+ * always matches.
  */
 export function useHostLang() {
   const [lang, setLang] = useState<Lang>("en");
   useEffect(() => {
+    const fromLink = new URLSearchParams(location.search).get("lang");
+    if (isLang(fromLink)) return setLang(fromLink);
     try {
-      const saved = localStorage.getItem(HOST_LANG_KEY);
+      const saved = localStorage.getItem(HOST_LANG_KEY) ?? localStorage.getItem(LANG_KEY);
       if (isLang(saved)) setLang(saved);
     } catch { /* storage blocked: English */ }
   }, []);

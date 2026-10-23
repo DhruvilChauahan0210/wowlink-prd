@@ -19,7 +19,7 @@ export const PLAN_LIMITS = {
 } as const satisfies Record<Plan, { replies: number; daysAfter: number | null }>;
 
 /** The server's words when a host's free plan already has its one live invitation. */
-export const FREE_LIMIT_MESSAGE = "The free plan has one live invitation at a time. Unpublish the other one first, or move it to the Creator studio.";
+export const FREE_LIMIT_MESSAGE = "The free plan has one live invitation at a time. Unpublish the other one first, or ask for the Creator studio from its manage page.";
 
 /** What the Creator studio adds, by name. */
 export type ProFeature = "occasion" | "schedule" | "colours" | "attribution" | "song" | "poll" | "brand" | "personal" | "csv" | "copy" | "insights" | "alias" | "preview" | "wishes" | "remind";

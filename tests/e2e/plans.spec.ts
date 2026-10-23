@@ -74,8 +74,15 @@ test("the studio keeps a new invitation to the free plan, and says what's in the
   await expect(page.getByRole("button", { name: /Two Rings/ }).locator(".studio-pro-badge")).toHaveText("Creator studio");
 
   await page.getByRole("button", { name: /Two Rings/ }).click();
+  // Said as soon as it's picked, and again, where the host is looking, if they publish anyway.
+  const proOccasion = "This occasion is part of the Creator studio. Pick one of the four starter occasions to publish it free.";
+  await expect(page.locator(".studio-occasion-note")).toContainText(proOccasion);
   await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await expect(page.locator(".studio-save-status")).toHaveText("This occasion is part of the Creator studio. Pick one of the four starter occasions to publish it free.");
+  const refusal = page.locator("dialog[open]");
+  await expect(refusal.getByRole("heading", { name: "Not published yet" })).toBeVisible();
+  await expect(refusal).toContainText(proOccasion);
+  await expect(page.locator(".studio-save-status")).toHaveText(proOccasion);
+  await refusal.getByRole("button", { name: "Close" }).click();
 
   await page.getByRole("button", { name: /The Wedding Edit/ }).click();
   await page.getByRole("button", { name: "Publish", exact: true }).click();
@@ -105,3 +112,16 @@ test("the home page and /pricing show the same plan cards, and only what's true 
   expect(home).toContain("Coming soon");
   expect(home).not.toMatch(/20 live invitations|Preview the creator studio/i);
 });
+
+test("a copy of a Creator studio invitation is in the Creator studio too, made only by whoever can manage it", async ({ request }) => {
+  const source = await publish(request, "puja", { title: "Satyanarayan katha" });
+  const draft = sampleDraft({ title: "Satyanarayan katha (again)", palette: "rani" });
+  const copy = await request.post("/api/experiences", { headers: general(), data: { templateId: "puja", draft, copyOf: { slug: source.slug, key: source.key } } });
+  expect(copy.status()).toBe(201);
+  const made = await copy.json();
+  expect((await (await request.get(`/api/experiences/${made.slug}`, { headers: ownerHeaders(made.key) })).json()).experience.plan).toBe("pro");
+  // Without the source's key it's an ordinary new invitation, and a puja isn't free.
+  const guessed = await request.post("/api/experiences", { headers: general(), data: { templateId: "puja", draft, copyOf: { slug: source.slug, key: "not-the-key-at-all-not-the-key" } } });
+  expect(guessed.status()).toBe(403);
+});
+

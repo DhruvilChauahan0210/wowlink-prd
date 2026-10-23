@@ -8,7 +8,7 @@ import { Flower } from "../ui/doodles";
 
 export const metadata = {
   title: "Hand-drawn invitation templates — WowLink",
-  description: "Interactive, hand-drawn invitations for weddings, engagements, birthdays, Garba, seemant and baby showers, housewarmings, anniversaries and grand openings. In Gujarati, Hindi or English, free to make.",
+  description: "Interactive, hand-drawn invitations for weddings, engagements, birthdays, Garba, seemant and baby showers, housewarmings, anniversaries and grand openings. In Gujarati, Hindi or English: free for weddings, birthdays, Garba and grand openings.",
   alternates: { canonical: "/templates" },
 };
 const collection: Record<TemplateId, { title: string; detail: string }> = {

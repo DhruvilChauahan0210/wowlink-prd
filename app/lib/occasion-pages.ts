@@ -52,13 +52,13 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
     intro: "Guests pull the bow on a hand-drawn gift and your invitation is inside. For a first birthday, a sweet sixteen or a fiftieth, with one link to share.",
     points: [
       { title: "A countdown to the day", body: "The invitation counts down the days. Guests add the party to Google or Apple Calendar in a tap, and get directions to the place." },
-      { title: "Wishes on the page", body: "Friends leave a birthday wish when they reply. Show them on the invitation as taped notes, or keep them for the one whose birthday it is." },
+      { title: "Wishes on the page", body: "Friends leave a birthday wish when they reply, for you to read. Show them on the invitation as taped notes, too.", pro: true },
       { title: "On the day, and after", body: "On the day, the invitation leads with what’s happening now. Afterwards, it becomes a thank-you note in your words." },
     ],
   },
   garba: {
     title: "Garba and Navratri invitation maker online",
-    description: "Make a Garba or Navratri invitation online: guests light a diya and the rangoli blooms. Add every night, in Gujarati, Hindi or English, with RSVPs. Free and hand-drawn.",
+    description: "Make a Garba or Navratri invitation online: guests light a diya and the rangoli blooms. In Gujarati, Hindi or English, with RSVPs. Free and hand-drawn; every night of Navratri with the Creator studio.",
     noun: "Garba night",
     heading: ["A Garba invitation that lights a", "diya"],
     intro: "Guests light the diya, the rangoli blooms, and your invitation to raas under the stars appears. Make it for one night or for all nine.",
@@ -178,7 +178,7 @@ export const GUEST_GETS = [
 
 export const STEPS = [
   { title: "Pick this drawing", body: "Start from the sample. Nothing to install, nothing to design." },
-  { title: "Add your details", body: "Names, date, place, a message and any functions. The preview changes as you type." },
+  { title: "Add your details", body: "Names, date, place and a message. The preview changes as you type." },
   { title: "Share one link", body: "Publish, then send it on WhatsApp, copy it anywhere, or print its QR code." },
 ] as const;
 

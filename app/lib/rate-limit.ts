@@ -36,8 +36,17 @@ export async function allow(key: string, limit: number, windowMs: number) {
   const [{ count }] = await sql<{ count: number }[]>`insert into wowlink.rate_limits (key, window_start, count) values (${key}, ${windowOf(windowMs)}, 1)
     on conflict (key, window_start) do update set count = wowlink.rate_limits.count + 1 returning count`;
   // Now and then, windows long over go.
-  if (Math.random() < 0.01) await sql`delete from wowlink.rate_limits where window_start < ${Date.now() - 2 * 86_400_000}`;
+  if (Math.random() < 0.01) await forgetOldCounts();
   return count <= limit;
+}
+
+/**
+ * Forget counts older than two days (they hold internet addresses, and the privacy page promises two days). Called
+ * by /api/health, which the live-site check calls every 30 minutes, and now and then by allow().
+ */
+export async function forgetOldCounts() {
+  const sql = database();
+  if (sql) await sql`delete from wowlink.rate_limits where window_start < ${Date.now() - 2 * 86_400_000}`;
 }
 
 /** Whether this key is still under `limit` in its current window, without counting this as a request. */

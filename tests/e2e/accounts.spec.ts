@@ -6,7 +6,7 @@ import { adminHeaders, freshIp, freshUser, ownerHeaders, publish, sampleDraft } 
  * a host's invitations to any phone. (The test server signs in whoever x-wowlink-test-user names; see fixtures.ts.)
  */
 
-const LIMIT = "The free plan has one live invitation at a time. Unpublish the other one first, or move it to the Creator studio.";
+const LIMIT = "The free plan has one live invitation at a time. Unpublish the other one first, or ask for the Creator studio from its manage page.";
 const as = (user: string) => ({ "x-wowlink-test-user": user, "x-forwarded-for": freshIp() });
 const create = (request: APIRequestContext, user: string, title = "Riya turns 7") =>
   request.post("/api/experiences", { headers: as(user), data: { templateId: "birthday", draft: sampleDraft({ title }) } });

@@ -408,6 +408,40 @@ const hi: GuestText = {
 
 export const GUEST_TEXT: Record<Lang, GuestText> = { en, gu, hi };
 
+/** The server's replies to a guest arrive in English: these are them in Gujarati and Hindi. */
+const GUEST_ERRORS: Record<"gu" | "hi", [RegExp, string][]> = {
+  gu: [
+    [/^Something went wrong\./, "કંઈક ખોટું થયું. ફરી પ્રયાસ કરો."],
+    [/^This invitation isn’t available any more\./, "આ આમંત્રણ હવે ઉપલબ્ધ નથી."],
+    [/^That’s a lot of replies in a row\./, "એકસાથે ઘણા જવાબ થઈ ગયા. થોડી મિનિટ રાહ જુઓ."],
+    [/^Let us know if you’re coming\./, "આપ આવો છો કે નહીં તે જણાવો."],
+    [/^The hosts aren’t asking for replies/, "યજમાન આ આમંત્રણ માટે જવાબ માગતા નથી."],
+    [/^This invitation isn’t taking more replies\./, "આ આમંત્રણ હવે વધુ જવાબ લેતું નથી. કૃપા કરીને યજમાનનો સીધો સંપર્ક કરો."],
+    [/^This personal link isn’t active any more\./, "આ વ્યક્તિગત લિંક હવે ચાલુ નથી. યજમાન પાસે નવી માગો."],
+    [/^The hosts are updating this invitation\./, "યજમાન આ આમંત્રણમાં ફેરફાર કરી રહ્યા છે. થોડી વાર પછી પ્રયાસ કરો."],
+    [/^The celebrations changed since you opened this page\./, "આપે પાનું ખોલ્યા પછી પ્રસંગો બદલાયા છે. નવું જોવા પાનું ફરી ખોલો."],
+    [/^Tick at least one celebration/, "ઓછામાં ઓછો એક પ્રસંગ પસંદ કરો, અથવા ‘નહીં આવી શકીએ’ પસંદ કરો."],
+  ],
+  hi: [
+    [/^Something went wrong\./, "कुछ गड़बड़ हो गई। फिर से कोशिश करें।"],
+    [/^This invitation isn’t available any more\./, "यह निमंत्रण अब उपलब्ध नहीं है।"],
+    [/^That’s a lot of replies in a row\./, "एक साथ बहुत सारे जवाब हो गए। कुछ मिनट रुकें।"],
+    [/^Let us know if you’re coming\./, "बताइए कि आप आ रहे हैं या नहीं।"],
+    [/^The hosts aren’t asking for replies/, "मेज़बान इस निमंत्रण के लिए जवाब नहीं माँग रहे।"],
+    [/^This invitation isn’t taking more replies\./, "यह निमंत्रण अब और जवाब नहीं ले रहा। कृपया मेज़बानों से सीधे संपर्क करें।"],
+    [/^This personal link isn’t active any more\./, "यह व्यक्तिगत लिंक अब चालू नहीं है। मेज़बानों से नई माँगें।"],
+    [/^The hosts are updating this invitation\./, "मेज़बान इस निमंत्रण में बदलाव कर रहे हैं। थोड़ी देर बाद कोशिश करें।"],
+    [/^The celebrations changed since you opened this page\./, "पेज खोलने के बाद कार्यक्रम बदल गए हैं। नया देखने के लिए पेज फिर से खोलें।"],
+    [/^Tick at least one celebration/, "कम से कम एक कार्यक्रम चुनें, या ‘नहीं आ पाएँगे’ चुनें।"],
+  ],
+};
+
+/** A message for a guest in their language (the server's own words are English). */
+export function guestMessage(message: string, lang: Lang) {
+  if (lang === "en") return message;
+  return GUEST_ERRORS[lang].find(([pattern]) => pattern.test(message))?.[1] ?? message;
+}
+
 /** What the host sends (WhatsApp, the share sheet): written for the guest, so in the invitation's language. */
 export const MESSAGES: Record<Lang, {
   invited: (title: string) => string;

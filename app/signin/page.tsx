@@ -20,10 +20,10 @@ export default function SignInPage() {
     if (/^\/(?!\/)[^\\]*$/.test(wanted)) setNext(wanted);
     setFailed(params.has("failed"));
   }, []);
-  // Already signed in: straight on.
+  // Already signed in: straight on (unless signing in just failed, which this page then says).
   useEffect(() => {
-    if (account.email) location.replace(next);
-  }, [account.email, next]);
+    if (account.email && !failed && !new URLSearchParams(location.search).has("failed")) location.replace(next);
+  }, [account.email, next, failed]);
 
   return <div className="cinema manage-page mine-page" lang={lang}>
     <header className="studio-header theme-paper">
@@ -37,6 +37,8 @@ export default function SignInPage() {
         <p className="manage-muted">{h.signInBody}</p>
         {failed && <p className="studio-error" role="alert">{h.signInFailed}</p>}
         {account.ready && !account.accounts ? <p className="manage-muted">{h.accountsOff}</p> : <SignIn h={h} next={next}/>}
+        {/* Back where they came from (the studio keeps the draft), without publishing on the way. */}
+        {next !== "/mine" && <Link className="cin-text-link sign-in-back" href={next.replace(/[?&]publish=1/, "")}>{h.goBackSignedOut}</Link>}
       </section>
     </main>
   </div>;

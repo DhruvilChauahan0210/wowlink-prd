@@ -6,7 +6,8 @@ import { ATTENDANCE, LANGS, LANG_NAMES, LIMITS, langHref, formatEventDay, format
 import { calendarEvents, dayPhase, daysUntil, eventStartMs, googleCalendarUrl, toIcs, type DayPhase } from "../lib/calendar";
 import { answerFor, type AudienceView, type ByEvent } from "../lib/guests";
 import { paletteFor, paletteStyle } from "../lib/palette";
-import { GUEST_TEXT, LANG_KEY, type GuestText } from "../lib/i18n";
+import { GUEST_TEXT, LANG_KEY, guestMessage, type GuestText } from "../lib/i18n";
+import { carryLangToStudio } from "../lib/lang-keys";
 import type { PublicWish } from "../lib/store";
 import { MomentMark, WowLinkBrand } from "./brand";
 import { Bowl, Diya, Flower, Leaf, Note, Ring, Star } from "./doodles";
@@ -252,7 +253,8 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
       setJustSent(true);
       setState("done");
     } catch (failure) {
-      setError((failure as Error).message || t.offline);
+      const text = (failure as Error).message;
+      setError(text ? guestMessage(text, lang) : t.offline);
       setState("idle");
     }
   }
@@ -293,7 +295,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
       {previewOnly && <span className="invitation-context" lang="en">{previewLabel}</span>}
       <div className="invitation-header-actions">
         <span className="inv-langs">{LANGS.filter(other => other !== lang).map(other => <button key={other} type="button" className="inv-lang" aria-label={t.readIn[other]} onClick={() => switchLanguage(other)}><span lang={other}>{LANG_NAMES[other]}</span></button>)}</span>
-        <Link className="cin-cta cin-cta-outline" href={`/create?template=${template.id}`}>{mode === "draft" ? "Back to editor" : live ? t.makeYourOwn : "Make it yours"}</Link>
+        <Link className="cin-cta cin-cta-outline" href={`/create?template=${template.id}`} onClick={() => carryLangToStudio(lang)}>{mode === "draft" ? "Back to editor" : live ? t.makeYourOwn : "Make it yours"}</Link>
       </div>
     </header>
     <main>
@@ -433,6 +435,6 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
       {draft.brand.logo ? <img src={draft.brand.logo} alt={draft.brand.name}/> : draft.brand.signoff && !draft.brand.signoff.toLowerCase().includes(draft.brand.name.toLowerCase()) && <strong>{draft.brand.name}</strong>}
       <span>{draft.brand.signoff || t.plannedBy(draft.brand.name)}</span>
     </div>}
-    <footer className="invitation-footer"><WowLinkBrand/>{draft.attribution !== false && <span lang={live ? undefined : "en"}>{live ? t.madeWith : "Made with love, shared with one link."}</span>}<Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}{draft.attribution !== false && <Link className="invitation-footer-create" href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link>}</footer>
+    <footer className="invitation-footer"><WowLinkBrand/>{draft.attribution !== false && <span lang={live ? undefined : "en"}>{live ? t.madeWith : "Made with love, shared with one link."}</span>}<Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}{draft.attribution !== false && <Link className="invitation-footer-create" href="/templates" onClick={() => { carryLangToStudio(lang); if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link>}</footer>
   </div>;
 }

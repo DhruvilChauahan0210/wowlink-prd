@@ -56,6 +56,9 @@ export default function CreatePage() {
   // Back from signing in (?publish=1), the draft is published straight away.
   const signInDialog = useRef<HTMLDialogElement>(null);
   const publishOnReady = useRef(false);
+  // Why Publish didn't work, said where the host is looking (a box over the page, on a phone's either tab).
+  const refusalDialog = useRef<HTMLDialogElement>(null);
+  const [refusal, setRefusal] = useState<{ say: (h: HostText) => string; limit: boolean } | null>(null);
   // For a live invitation: the celebrations guests can see now, and how many replies and personal invitations
   // depend on each. Re-adding one by name brings back the same celebration, so its answers still count.
   const published = useRef<ScheduleItem[]>([]);
@@ -63,7 +66,9 @@ export default function CreatePage() {
   const [removed, setRemoved] = useState<{ item: ScheduleItem; replies: number; invitations: number } | null>(null);
   const template = getInvitationTemplate(templateId);
   // New invitations are free; an invitation already in the Creator studio keeps everything.
-  const pro = owned ? planOf(owned) === "pro" : false;
+  // A copy of a Creator studio invitation ("Make another like this") is in the Creator studio too.
+  const [copySource, setCopySource] = useState<{ slug: string; key: string } | null>(null);
+  const pro = owned ? planOf(owned) === "pro" : !!copySource;
   // What guests will get: a free invitation without the Creator studio's parts.
   const shown = pro ? draft : freeDraft(draft);
 
@@ -133,6 +138,7 @@ export default function CreatePage() {
       setTemplateId(experience.templateId);
       const copied = draftOf(experience);
       setDraft({ ...copied, events: copied.events.map(e => ({ ...e, id: newEventId() })) });
+      setCopySource({ slug, key });
       setDirty(true);
       setStatus(() => (t: HostText) => t.copiedFrom(experience.title));
       history.replaceState(null, "", `/create?template=${experience.templateId}`);
@@ -227,6 +233,31 @@ export default function CreatePage() {
     if (!owned) history.replaceState(null, "", `/create?template=${id}`);
   }
 
+  /** Keep the draft on this device without a word (a new invitation's; a live one is saved by publishing). */
+  function storeDraft() {
+    try { localStorage.setItem(draftKey(templateId), JSON.stringify(draft)); } catch { /* storage blocked: this visit only */ }
+  }
+  // A new invitation's draft is kept as it's written (a phone has no Save draft button), and when the page is left.
+  const keep = useRef(storeDraft);
+  keep.current = storeDraft;
+  const changed = ready && !owned && dirty && JSON.stringify(draft) !== JSON.stringify(initialDraft(template));
+  useEffect(() => {
+    if (!changed) return;
+    const timer = setTimeout(() => keep.current(), 600);
+    const leave = () => keep.current();
+    addEventListener("pagehide", leave);
+    return () => {
+      clearTimeout(timer);
+      removeEventListener("pagehide", leave);
+    };
+  }, [changed, draft, templateId]);
+
+  function refuse(say: (h: HostText) => string, limit = false) {
+    setStatus(() => say);
+    setRefusal({ say, limit });
+    refusalDialog.current?.showModal();
+  }
+
   function saveDraft() {
     try {
       localStorage.setItem(draftKey(templateId), JSON.stringify(draft));
@@ -287,10 +318,7 @@ export default function CreatePage() {
       requestAnimationFrame(() => document.getElementById(first === "events" && badEvent ? `event-${badEvent.id}-name` : first)?.focus());
       return;
     }
-    if (!pro && !STARTER_OCCASIONS.includes(template.id)) {
-      setStatus(() => (t: HostText) => t.proOccasion);
-      return;
-    }
+    if (!pro && !STARTER_OCCASIONS.includes(template.id)) return refuse((t: HostText) => t.proOccasion);
     setErrors({});
     setPublishing(true);
     setStatus(() => (t: HostText) => (owned ? t.updatingStatus : t.publishing));
@@ -298,10 +326,11 @@ export default function CreatePage() {
       const response = await fetch(owned ? `/api/experiences/${owned.slug}` : "/api/experiences", {
         method: owned ? "PATCH" : "POST",
         headers: { "content-type": "application/json", ...(owned ? { authorization: `Bearer ${owned.key}` } : {}) },
-        body: JSON.stringify({ templateId, draft: pro ? checked.value : freeDraft(checked.value), ...(owned ? { status: "published" } : {}) }),
+        body: JSON.stringify({ templateId, draft: pro ? checked.value : freeDraft(checked.value), ...(owned ? { status: "published" } : copySource ? { copyOf: copySource } : {}) }),
       });
       const body = await response.json().catch(() => ({}));
       if (response.status === 401 && body.signIn) {
+        storeDraft();
         setStatus(() => (t: HostText) => t.signInToPublish);
         signInDialog.current?.showModal();
         setPublishing(false);
@@ -309,10 +338,15 @@ export default function CreatePage() {
       }
       if (!response.ok) {
         if (body.fields) setErrors(body.fields);
-        throw new Error(body.error);
+        refuse((t: HostText) => (body.error ? hostMessage(body.error, t.lang) : t.couldntPublish), !!body.limit);
+        setPublishing(false);
+        return;
       }
-      const mine: Owned = owned ?? { slug: body.slug as string, key: body.key as string, plan: "free" };
+      const mine: Owned = owned ?? { slug: body.slug as string, key: body.key as string, plan: copySource ? "pro" : "free" };
       if (!owned) {
+        // Published: its draft is done with (or My invitations would list it again as unpublished).
+        try { localStorage.removeItem(draftKey(templateId)); } catch { /* nothing saved */ }
+        delete drafts.current[templateId];
         try { localStorage.setItem(ownerKey(mine.slug), mine.key); } catch { /* the manage link in the dialog still works */ }
         setOwned(mine);
         history.replaceState(null, "", `/create?edit=${mine.slug}`);
@@ -322,9 +356,8 @@ export default function CreatePage() {
       setDirty(false);
       setStatus(() => (t: HostText) => t.publishedStatus(!!owned));
       dialog.current?.showModal();
-    } catch (failure) {
-      const text = (failure as Error).message;
-      setStatus(() => (t: HostText) => (text ? hostMessage(text, t.lang) : t.couldntPublish));
+    } catch {
+      refuse((t: HostText) => t.couldntPublish);
     }
     setPublishing(false);
   }
@@ -354,7 +387,9 @@ export default function CreatePage() {
         <Link className="studio-back" href={owned ? `/manage/${owned.slug}` : "/templates"}>{owned ? h.backToInvitation : h.allTemplates}</Link>
         <div className="studio-intro"><h1>{h.makeIt[0]} <span className="scribble">{h.makeIt[1]}</span></h1><p>{h.makeItBody}</p></div>
         <fieldset className="studio-fieldset"><legend>{h.occasion}</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><ArtImage name={item.id} fit="slice"/><span>{h.occasionNames[item.id] ?? item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : ""}</i>{!pro && !STARTER_OCCASIONS.includes(item.id) && <b className="studio-pro-badge studio-template-pro">{h.proBadge}</b>}</button>)}</div></fieldset>
+        {!pro && !STARTER_OCCASIONS.includes(template.id) && <p className="studio-pro-note studio-occasion-note" role="note"><span className="studio-pro-badge">{h.proBadge}</span> {h.proOccasion}</p>}
         <fieldset className="studio-fieldset"><legend>{h.details}</legend>
+          {!owned && (draft.date === template.date || draft.venue === template.venue) && <p className="studio-help studio-sample-note">{h.stillSample}</p>}
           <div className="studio-field"><label htmlFor="title">{h.titleLabel}</label><input id="title" value={draft.title} maxLength={80} placeholder="Aarav & Meera" onChange={event => update("title", event.target.value)} {...described("title")}/>{fieldError("title")}</div>
           <div className="studio-field-row">
             <div className="studio-field"><label htmlFor="date">{h.date}</label><input id="date" type="date" value={draft.date} onChange={event => update("date", event.target.value)} {...described("date")}/>{fieldError("date")}</div>
@@ -501,6 +536,17 @@ export default function CreatePage() {
           <button type="button" className="cin-cta cin-cta-light" onClick={() => dialog.current?.close()}>{h.keepEditing}</button>
         </div>
       </div>}
+    </dialog>
+
+    <dialog ref={refusalDialog} className="publish-dialog" aria-labelledby="refusal-title">
+      <div className="sketch-card publish-card">
+        <h2 id="refusal-title">{h.notPublished}</h2>
+        <p>{refusal?.say(h)}</p>
+        <div className="publish-actions">
+          {refusal?.limit && <Link className="cin-cta cin-cta-outline" href="/mine">{h.myInvitations}</Link>}
+          <button type="button" className="cin-cta cin-cta-light" onClick={() => refusalDialog.current?.close()}>{h.close}</button>
+        </div>
+      </div>
     </dialog>
 
     <dialog ref={signInDialog} className="publish-dialog" aria-labelledby="sign-in-title">

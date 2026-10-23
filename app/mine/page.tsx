@@ -8,7 +8,7 @@ import { ArtImage, type ArtName } from "../ui/art";
 import { WowLinkBrand } from "../ui/brand";
 import type { HostText } from "../lib/host-i18n";
 import { HostLangSwitch, useHostLang } from "../ui/host-lang";
-import { planOf } from "../lib/plans";
+import { hasEnded, planOf } from "../lib/plans";
 import { savedKeys, signOut, syncAccount, useAccount } from "../ui/account";
 import { SignIn } from "../ui/sign-in";
 
@@ -159,11 +159,11 @@ export default function MyInvitations() {
           {o.state === "ok" && o.experience && <>
             <span className="mine-kind">{kind(o.experience.templateId)}</span>
             <h2><Link href={`/manage/${o.slug}`}>{o.experience.title}</Link></h2>
-            <p className="manage-muted">{formatInvitationDate(o.experience.date, true, lang)} · <span className={`manage-status is-${o.experience.removed ? "removed" : o.experience.status}`}>{o.experience.removed ? h.takenDown : o.experience.status === "published" ? h.live : h.unpublished}</span></p>
+            <p className="manage-muted">{formatInvitationDate(o.experience.date, true, lang)} · <span className={`manage-status is-${o.experience.removed ? "removed" : o.experience.status}`}>{o.experience.removed ? h.takenDown : o.experience.status !== "published" ? h.unpublished : hasEnded(o.experience) ? h.ended : h.live}</span></p>
             <p className="mine-counts">{summary(o.rsvps ?? [], o.experience, h)}</p>
             <div className="mine-actions">
               <Link className="share-chip" href={`/manage/${o.slug}`}>{h.repliesAndGuests}</Link>
-              {o.experience.status === "published" && !o.experience.removed && <a className="share-chip" href={`/e/${o.slug}`} target="_blank" rel="noreferrer">{h.open}</a>}
+              {o.experience.status === "published" && !o.experience.removed && !hasEnded(o.experience) && <a className="share-chip" href={`/e/${o.slug}`} target="_blank" rel="noreferrer">{h.open}</a>}
               {!o.experience.removed && <Link className="share-chip" href={`/create?edit=${o.slug}`}>{h.edit}</Link>}
               {planOf(o.experience) === "pro" && <Link className="share-chip" href={`/create?copy=${o.slug}`} aria-label={h.copyFor(o.experience.title)}>{h.copyShort}</Link>}
             </div>

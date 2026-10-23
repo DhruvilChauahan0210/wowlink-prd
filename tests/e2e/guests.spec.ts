@@ -56,7 +56,7 @@ test("hidden celebrations and the guest list never reach the general link", asyn
   // Links that don't lead anywhere say so plainly.
   const unknown = await request.get(`/e/${slug}/bcdfghjk`);
   expect(unknown.status()).toBe(404);
-  expect(await unknown.text()).toContain("has changed");
+  expect(await unknown.text()).toContain("isn’t open right now");
   expect((await request.get(`/e/${slug}/not-a-guest-id`)).status()).toBe(404);
 
   // Unpublished: personal links go too.
