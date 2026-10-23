@@ -74,6 +74,18 @@ test("My invitations: who's signed in, and the account's invitations on a phone 
   await expect(page.locator(".manage-hero h1")).toHaveText("Aarav's mundan");
 });
 
+test("back from signing in at Publish, the studio publishes the saved draft", async ({ page }) => {
+  await page.goto("/create?template=birthday");
+  await page.locator("#title").fill("Riya turns 7");
+  await page.locator("#venue").fill("Our home, Surat");
+  await page.getByRole("button", { name: "Save draft" }).click();
+  // Where Google brings the host back to.
+  await page.goto("/create?template=birthday&publish=1");
+  const dialog = page.locator(".publish-dialog[open]");
+  await expect(dialog.getByRole("heading", { name: "Ready to share" })).toBeVisible();
+  await expect(page).toHaveURL(/\/create\?edit=[2-9b-zB-Z]{7}$/);
+});
+
 test("a sign-in link that comes back to the home page goes on to finish signing in", async ({ request }) => {
   const landed = await request.get("/?code=abc123", { maxRedirects: 0 });
   expect(landed.status()).toBe(303);

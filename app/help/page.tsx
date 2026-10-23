@@ -21,7 +21,7 @@ const HELP: Record<Lang, Content> = {
         items: [
           ["Is it free?", "Yes, to start. The free plan has one live invitation at a time, the four starter occasions, one celebration and up to 50 replies, and stays up until 30 days after the day. Schedules, a link for each family, your own colours and more are in the Creator studio."],
           ["How do I get the Creator studio?", "Publish your invitation, then on its manage page choose “Ask for the Creator studio”. WowLink moves it for you. Paying online comes later."],
-          ["Do I need an account?", "To publish, yes: you sign in with a code sent to your email, or with Google. No password. Your invitations are then yours on every phone: sign in on My invitations. Guests never need an account."],
+          ["Do I need an account?", "To publish, yes: you sign in with your Google account. No new password. Your invitations are then yours on every phone: sign in on My invitations. Guests never need an account."],
           ["Can I add the mehndi, sangeet and reception?", "With the Creator studio, yes. Add up to 10 celebrations, each with its own day, time and place. Guests tick the ones they’re coming to, and you get a headcount for each."],
           ["Can guests read it in Gujarati or Hindi?", "Yes. In the studio you choose the language guests see first, and each guest can switch with one tap. Dates and times are written the way an invitation says them."],
           ["Can I use my own colours?", "With the Creator studio, yes. Keep the occasion’s colours, pick one of seven palettes, or choose any colour. WowLink adjusts it so the words stay easy to read."],
@@ -63,7 +63,7 @@ const HELP: Record<Lang, Content> = {
         items: [
           ["શું તે મફત છે?", "હા, શરૂઆત માટે. મફત પ્લાનમાં એક સમયે એક લાઇવ આમંત્રણ, ચાર શરૂઆતના પ્રસંગો, એક પ્રસંગ અને 50 જવાબો સુધી છે, અને તે પ્રસંગ પછી 30 દિવસ સુધી ચાલુ રહે છે. કાર્યક્રમ, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ અને ઘણું વધારે ક્રિએટર સ્ટુડિયોમાં છે."],
           ["ક્રિએટર સ્ટુડિયો કેવી રીતે મળે?", "આમંત્રણ પ્રકાશિત કરો, પછી તેના મેનેજ પાના પર “ક્રિએટર સ્ટુડિયો માટે પૂછો” પસંદ કરો. WowLink તેને ખસેડી આપશે. ઑનલાઇન ચુકવણી પછી આવશે."],
-          ["શું મારે એકાઉન્ટ બનાવવું પડશે?", "પ્રકાશિત કરવા, હા: ઈમેલ પર આવેલા કોડથી કે Google થી સાઇન ઇન કરો. પાસવર્ડ નહીં. પછી આપનાં આમંત્રણો દરેક ફોન પર આપનાં: મારાં આમંત્રણોમાં સાઇન ઇન કરો. મહેમાનોને ક્યારેય એકાઉન્ટની જરૂર નથી."],
+          ["શું મારે એકાઉન્ટ બનાવવું પડશે?", "પ્રકાશિત કરવા, હા: આપના Google એકાઉન્ટથી સાઇન ઇન કરો. નવો પાસવર્ડ નહીં. પછી આપનાં આમંત્રણો દરેક ફોન પર આપનાં: મારાં આમંત્રણોમાં સાઇન ઇન કરો. મહેમાનોને ક્યારેય એકાઉન્ટની જરૂર નથી."],
           ["શું હું મહેંદી, સંગીત અને રિસેપ્શન ઉમેરી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. 10 પ્રસંગો સુધી ઉમેરો, દરેકનો પોતાનો દિવસ, સમય અને સ્થળ. મહેમાનો જેમાં આવવાના હોય તે પસંદ કરે છે, અને આપને દરેકની ગણતરી મળે છે."],
           ["શું મહેમાનો તેને ગુજરાતી કે હિન્દીમાં વાંચી શકે?", "હા. સ્ટુડિયોમાં આપ પસંદ કરો કે મહેમાનો પહેલાં કઈ ભાષા જુએ, અને દરેક મહેમાન એક ટૅપથી બદલી શકે છે. તારીખ અને સમય આમંત્રણમાં લખાય છે એ રીતે જ લખાય છે."],
           ["શું હું મારા પોતાના રંગ વાપરી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. પ્રસંગના પોતાના રંગ રાખો, સાતમાંથી એક રંગસમૂહ પસંદ કરો, અથવા કોઈ પણ રંગ પસંદ કરો. WowLink તેને એવો ગોઠવે છે કે શબ્દો સહેલાઈથી વંચાય."],
@@ -105,7 +105,7 @@ const HELP: Record<Lang, Content> = {
         items: [
           ["क्या यह मुफ़्त है?", "हाँ, शुरुआत के लिए। फ़्री प्लान में एक समय में एक लाइव निमंत्रण, चार शुरुआती अवसर, एक कार्यक्रम और 50 जवाब तक हैं, और यह अवसर के 30 दिन बाद तक चालू रहता है। कार्यक्रमों की सूची, हर परिवार के लिए लिंक, अपने रंग और बहुत कुछ क्रिएटर स्टूडियो में है।"],
           ["क्रिएटर स्टूडियो कैसे मिलेगा?", "निमंत्रण प्रकाशित करें, फिर उसके मैनेज पेज पर “क्रिएटर स्टूडियो के लिए पूछें” चुनें। WowLink उसे बदल देगा। ऑनलाइन भुगतान बाद में आएगा।"],
-          ["क्या मुझे अकाउंट बनाना होगा?", "पब्लिश करने के लिए, हाँ: ईमेल पर आए कोड से या Google से साइन इन करें। पासवर्ड नहीं। फिर आपके निमंत्रण हर फ़ोन पर आपके: मेरे निमंत्रण में साइन इन करें। मेहमानों को कभी अकाउंट की ज़रूरत नहीं।"],
+          ["क्या मुझे अकाउंट बनाना होगा?", "पब्लिश करने के लिए, हाँ: अपने Google अकाउंट से साइन इन करें। नया पासवर्ड नहीं। फिर आपके निमंत्रण हर फ़ोन पर आपके: मेरे निमंत्रण में साइन इन करें। मेहमानों को कभी अकाउंट की ज़रूरत नहीं।"],
           ["क्या मेहंदी, संगीत और रिसेप्शन भी जोड़े जा सकते हैं?", "क्रिएटर स्टूडियो में, हाँ। 10 कार्यक्रमों तक जोड़ें, हर एक का अपना दिन, समय और जगह। मेहमान उन पर टिक करते हैं जिनमें वे आ रहे हैं, और आपको हर एक की गिनती मिलती है।"],
           ["क्या मेहमान इसे गुजराती या हिंदी में पढ़ सकते हैं?", "हाँ। स्टूडियो में आप चुनते हैं कि मेहमान पहले कौन-सी भाषा देखें, और हर मेहमान एक टैप में भाषा बदल सकता है। तारीख़ और समय वैसे ही लिखे जाते हैं जैसे निमंत्रण में लिखे जाते हैं।"],
           ["क्या मैं अपने खुद के रंग चुन सकता हूँ?", "क्रिएटर स्टूडियो में, हाँ। अवसर के अपने रंग रखें, सात पैलेट में से एक चुनें, या कोई भी रंग चुनें। WowLink उसे ऐसे ढालता है कि शब्द आसानी से पढ़े जा सकें।"],

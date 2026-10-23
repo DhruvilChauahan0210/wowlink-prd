@@ -4,17 +4,11 @@
 project_id = "wowlink"
 
 [auth]
-# Where sign-in emails and Google send hosts back: the live site, and a local `npm run dev`.
+# Where Google sends hosts back after signing in: the live site, and a local `npm run dev`.
 site_url = "https://wowlink-one.vercel.app"
 additional_redirect_urls = ["https://wowlink-one.vercel.app/**", "http://localhost:3000/**"]
 
-# Sign-in emails carry a code to type (app/ui/sign-in.tsx), and a link as well. A first sign-in sends the
-# confirmation email, later ones the magic link email: both say the same. Supabase's free plan only allows changing
-# them with an email provider of our own (custom SMTP); until then these stay off and the emails have only a link.
-# [auth.email.template.confirmation]
-# subject = "Your WowLink code"
-# content_path = "./supabase/templates/sign-in-code.html"
-#
-# [auth.email.template.magic_link]
-# subject = "Your WowLink code"
-# content_path = "./supabase/templates/sign-in-code.html"
+# Hosts sign in with Google only (switched on in the dashboard, where its client secret is kept). No sign-in by email:
+# nobody can make the project send sign-in emails.
+[auth.email]
+enable_signup = false

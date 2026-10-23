@@ -91,7 +91,7 @@ const PRIVACY: Record<Lang, Content> = {
       {
         heading: "Hosts’ accounts, and where it’s all kept",
         items: [
-          "Hosts sign in to publish, with a code sent by email or with Google. WowLink keeps the email address (and, with Google, the name Google shares) to know which invitations are whose. Guests never sign in.",
+          "Hosts sign in with Google to publish. WowLink keeps the email address and the name Google shares, to know which invitations are whose. Guests never sign in.",
           "Everything is kept in a database run by Supabase, and the site runs on Vercel’s servers, both in Mumbai, India. They keep it for WowLink and don’t use it for anything else.",
         ],
       },
@@ -178,7 +178,7 @@ const PRIVACY: Record<Lang, Content> = {
       {
         heading: "યજમાનનાં એકાઉન્ટ, અને બધું ક્યાં સચવાય છે",
         items: [
-          "યજમાન પ્રકાશિત કરવા સાઇન ઇન કરે છે, ઈમેલ પર આવેલા કોડથી કે Google થી. કયાં આમંત્રણ કોનાં છે તે જાણવા WowLink ઈમેલ સરનામું (અને Google થી હોય તો, Google જે નામ આપે તે) સાચવે છે. મહેમાનોને ક્યારેય સાઇન ઇન કરવું પડતું નથી.",
+          "યજમાન પ્રકાશિત કરવા Google થી સાઇન ઇન કરે છે. કયાં આમંત્રણ કોનાં છે તે જાણવા WowLink ઈમેલ સરનામું અને Google જે નામ આપે તે સાચવે છે. મહેમાનોને ક્યારેય સાઇન ઇન કરવું પડતું નથી.",
           "બધું Supabase ના ડેટાબેઝમાં સચવાય છે, અને સાઇટ Vercel ના સર્વર પર ચાલે છે, બંને મુંબઈ, ભારતમાં. તેઓ તે WowLink માટે રાખે છે અને બીજા કશા માટે વાપરતા નથી.",
         ],
       },
@@ -265,7 +265,7 @@ const PRIVACY: Record<Lang, Content> = {
       {
         heading: "मेज़बानों के अकाउंट, और सब कहाँ सहेजा जाता है",
         items: [
-          "मेज़बान पब्लिश करने के लिए साइन इन करते हैं, ईमेल पर आए कोड से या Google से। कौन-सा निमंत्रण किसका है, यह जानने के लिए WowLink ईमेल पता (और Google से हो तो, Google जो नाम देता है) सहेजता है। मेहमानों को कभी साइन इन नहीं करना पड़ता।",
+          "मेज़बान पब्लिश करने के लिए Google से साइन इन करते हैं। कौन-सा निमंत्रण किसका है, यह जानने के लिए WowLink ईमेल पता और Google जो नाम देता है, वह सहेजता है। मेहमानों को कभी साइन इन नहीं करना पड़ता।",
           "सब कुछ Supabase के डेटाबेस में सहेजा जाता है, और साइट Vercel के सर्वरों पर चलती है, दोनों मुंबई, भारत में। वे इसे WowLink के लिए रखते हैं और किसी और काम में इस्तेमाल नहीं करते।",
         ],
       },

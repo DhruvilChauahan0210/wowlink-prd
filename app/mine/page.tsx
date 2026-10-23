@@ -142,7 +142,7 @@ export default function MyInvitations() {
       {account.accounts && <section className="sketch-card manage-card mine-account" aria-labelledby="account-heading">
         <h2 id="account-heading">{h.accountHeading}</h2>
         {account.email ? <p className="manage-muted">{h.signedInAs(account.email)} <button type="button" className="share-chip" onClick={() => void signOut().then(() => account.refresh())}>{h.signOut}</button></p>
-          : <><p className="manage-muted">{h.accountBody}</p><SignIn h={h} next="/mine" onSignedIn={() => void load()}/></>}
+          : <><p className="manage-muted">{h.accountBody}</p><SignIn h={h} next="/mine"/></>}
       </section>}
 
       {!ready && <p className="manage-loading">{h.finding}</p>}

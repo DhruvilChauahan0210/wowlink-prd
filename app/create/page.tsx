@@ -15,7 +15,7 @@ import { STARTER_OCCASIONS, freeDraft, planOf, type Plan } from "../lib/plans";
 import { EXTRA_LIMITS } from "../lib/extras";
 import { cleanBrand, type Brand } from "../lib/brand";
 import { SignIn } from "../ui/sign-in";
-import { syncAccount, useAccount } from "../ui/account";
+import { syncAccount } from "../ui/account";
 
 /** Where a planner's brand kit is kept on their device. */
 const BRAND_KIT_KEY = "wowlink:brand-kit";
@@ -53,8 +53,9 @@ export default function CreatePage() {
   const drafts = useRef<Record<string, InvitationDraft>>({});
   const dialog = useRef<HTMLDialogElement>(null);
   // Publishing needs an account (when the site has them): asked for at Publish, so anyone can try the studio first.
+  // Back from signing in (?publish=1), the draft is published straight away.
   const signInDialog = useRef<HTMLDialogElement>(null);
-  const account = useAccount();
+  const publishOnReady = useRef(false);
   // For a live invitation: the celebrations guests can see now, and how many replies and personal invitations
   // depend on each. Re-adding one by name brings back the same celebration, so its answers still count.
   const published = useRef<ScheduleItem[]>([]);
@@ -98,8 +99,18 @@ export default function CreatePage() {
     setTemplateId(selected.id);
     setDraft(saved ?? initialDraft(selected));
     setStatus(() => (t: HostText) => (saved ? t.draftRestored : t.canvasReady));
+    if (saved && params.get("publish") === "1") {
+      publishOnReady.current = true;
+      history.replaceState(null, "", `/create?template=${selected.id}`);
+    }
     setReady(true);
   }, []);
+  useEffect(() => {
+    if (!ready || !publishOnReady.current) return;
+    publishOnReady.current = false;
+    void publish();
+    // publish reads the draft just restored; it runs once.
+  }, [ready]);
 
   /** This device's manage key for an invitation; signed in, one from the account if the device has none yet. */
   async function keyFor(slug: string) {
@@ -496,8 +507,8 @@ export default function CreatePage() {
       <div className="sketch-card publish-card">
         <h2 id="sign-in-title">{h.signInToPublish}</h2>
         <p className="manage-muted">{h.signInToPublishBody}</p>
-        {/* Back from Google, the draft is where saveDraft left it; Publish again from there. */}
-        <SignIn h={h} next={`/create?template=${templateId}`} beforeLeaving={() => saveDraft()} onSignedIn={() => { signInDialog.current?.close(); void account.refresh(); void publish(); }}/>
+        {/* Back from Google, the studio opens the draft saveDraft kept, and publishes it. */}
+        <SignIn h={h} next={`/create?template=${templateId}&publish=1`} beforeLeaving={() => saveDraft()}/>
         <div className="publish-actions"><button type="button" className="share-chip" onClick={() => signInDialog.current?.close()}>{h.cancel}</button></div>
       </div>
     </dialog>
