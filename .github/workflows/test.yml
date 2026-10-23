@@ -1,7 +1,9 @@
 name: Tests
 
-# Every push to main runs the whole Playwright suite (unit + end-to-end) against a production build, on the JSON file
-# and on Postgres; only then is it deployed to the live site (Vercel's own deploys of main are off, vercel.json).
+# Every push to main is deployed to the live site from here (Vercel's own deploys of main are off, vercel.json).
+# The tests (the whole Playwright suite on the JSON file and on Postgres, about 6 minutes) run first and must pass
+# only when the repository variable TESTS_BEFORE_DEPLOY is "true". It's off while WowLink is being built quickly;
+# turn it on before many people use it.
 on:
   push:
     branches: [main]
@@ -17,6 +19,7 @@ permissions:
 
 jobs:
   test:
+    if: vars.TESTS_BEFORE_DEPLOY == 'true'
     # Pinned rather than ubuntu-latest, so a runner image change can't break Playwright's system dependencies.
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -53,10 +56,11 @@ jobs:
           retention-days: 14
 
   deploy:
-    # Only what passed goes live. Needs the VERCEL_TOKEN secret (README, "Going live"); the ids aren't secret.
-    # A new database migration is applied before pushing it (npm run db:migrate), so the new code finds its tables.
+    # With the tests on, only what passed goes live; with them off, every push does. Needs the VERCEL_TOKEN secret
+    # (README, "Going live"); the ids aren't secret. A new database migration is applied before pushing it
+    # (npm run db:migrate), so the new code finds its tables.
     needs: test
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !failure() && !cancelled() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
