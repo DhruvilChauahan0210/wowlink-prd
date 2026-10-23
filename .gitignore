@@ -24,3 +24,6 @@ next-env.d.ts
 /.next-test/
 /test-results/
 /playwright-report/
+
+# Supabase CLI state (login link, project ref)
+supabase/.temp/
