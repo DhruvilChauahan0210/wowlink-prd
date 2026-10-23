@@ -20,6 +20,7 @@ const HELP: Record<Lang, Content> = {
         heading: "Making your invitation",
         items: [
           ["Is it free?", "Yes, to start. The free plan has the four starter occasions, one celebration and up to 50 replies, and stays up until 30 days after the day. Schedules, a link for each family, your own colours and more are in the Creator studio."],
+          ["How do I get the Creator studio?", "Publish your invitation, then on its manage page choose “Ask for the Creator studio”. WowLink moves it for you. Paying online comes later."],
           ["Do I need an account?", "No. An invitation is yours through its private manage link, which is saved on the phone or computer you publish from. My invitations can save all your manage links to a small file, so you can open them on another device."],
           ["Can I add the mehndi, sangeet and reception?", "With the Creator studio, yes. Add up to 10 celebrations, each with its own day, time and place. Guests tick the ones they’re coming to, and you get a headcount for each."],
           ["Can guests read it in Gujarati or Hindi?", "Yes. In the studio you choose the language guests see first, and each guest can switch with one tap. Dates and times are written the way an invitation says them."],
@@ -61,6 +62,7 @@ const HELP: Record<Lang, Content> = {
         heading: "આમંત્રણ બનાવવું",
         items: [
           ["શું તે મફત છે?", "હા, શરૂઆત માટે. મફત પ્લાનમાં ચાર શરૂઆતના પ્રસંગો, એક પ્રસંગ અને 50 જવાબો સુધી છે, અને તે પ્રસંગ પછી 30 દિવસ સુધી ચાલુ રહે છે. કાર્યક્રમ, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ અને ઘણું વધારે ક્રિએટર સ્ટુડિયોમાં છે."],
+          ["ક્રિએટર સ્ટુડિયો કેવી રીતે મળે?", "આમંત્રણ પ્રકાશિત કરો, પછી તેના મેનેજ પાના પર “ક્રિએટર સ્ટુડિયો માટે પૂછો” પસંદ કરો. WowLink તેને ખસેડી આપશે. ઑનલાઇન ચુકવણી પછી આવશે."],
           ["શું મારે એકાઉન્ટ બનાવવું પડશે?", "ના. આમંત્રણ તેની ખાનગી મેનેજ લિંકથી આપનું છે, જે આપ જે ફોન કે કમ્પ્યુટર પરથી પ્રકાશિત કરો તેમાં સચવાય છે. મારાં આમંત્રણો આપની બધી મેનેજ લિંક એક નાની ફાઇલમાં સાચવી શકે છે, જેથી આપ તેને બીજા ઉપકરણ પર ખોલી શકો."],
           ["શું હું મહેંદી, સંગીત અને રિસેપ્શન ઉમેરી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. 10 પ્રસંગો સુધી ઉમેરો, દરેકનો પોતાનો દિવસ, સમય અને સ્થળ. મહેમાનો જેમાં આવવાના હોય તે પસંદ કરે છે, અને આપને દરેકની ગણતરી મળે છે."],
           ["શું મહેમાનો તેને ગુજરાતી કે હિન્દીમાં વાંચી શકે?", "હા. સ્ટુડિયોમાં આપ પસંદ કરો કે મહેમાનો પહેલાં કઈ ભાષા જુએ, અને દરેક મહેમાન એક ટૅપથી બદલી શકે છે. તારીખ અને સમય આમંત્રણમાં લખાય છે એ રીતે જ લખાય છે."],
@@ -102,6 +104,7 @@ const HELP: Record<Lang, Content> = {
         heading: "अपना निमंत्रण बनाना",
         items: [
           ["क्या यह मुफ़्त है?", "हाँ, शुरुआत के लिए। फ़्री प्लान में चार शुरुआती अवसर, एक कार्यक्रम और 50 जवाब तक हैं, और यह अवसर के 30 दिन बाद तक चालू रहता है। कार्यक्रमों की सूची, हर परिवार के लिए लिंक, अपने रंग और बहुत कुछ क्रिएटर स्टूडियो में है।"],
+          ["क्रिएटर स्टूडियो कैसे मिलेगा?", "निमंत्रण प्रकाशित करें, फिर उसके मैनेज पेज पर “क्रिएटर स्टूडियो के लिए पूछें” चुनें। WowLink उसे बदल देगा। ऑनलाइन भुगतान बाद में आएगा।"],
           ["क्या मुझे अकाउंट बनाना होगा?", "नहीं। निमंत्रण अपने निजी मैनेज लिंक से आपका है, जो उसी फ़ोन या कंप्यूटर पर सहेजा जाता है जिससे आप पब्लिश करते हैं। मेरे निमंत्रण से आप अपने सभी मैनेज लिंक एक छोटी फ़ाइल में सहेज सकते हैं, ताकि उन्हें दूसरे डिवाइस पर खोल सकें।"],
           ["क्या मेहंदी, संगीत और रिसेप्शन भी जोड़े जा सकते हैं?", "क्रिएटर स्टूडियो में, हाँ। 10 कार्यक्रमों तक जोड़ें, हर एक का अपना दिन, समय और जगह। मेहमान उन पर टिक करते हैं जिनमें वे आ रहे हैं, और आपको हर एक की गिनती मिलती है।"],
           ["क्या मेहमान इसे गुजराती या हिंदी में पढ़ सकते हैं?", "हाँ। स्टूडियो में आप चुनते हैं कि मेहमान पहले कौन-सी भाषा देखें, और हर मेहमान एक टैप में भाषा बदल सकता है। तारीख़ और समय वैसे ही लिखे जाते हैं जैसे निमंत्रण में लिखे जाते हैं।"],

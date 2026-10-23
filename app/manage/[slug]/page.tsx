@@ -15,10 +15,13 @@ import { csvName, headcountCsv, repliesCsv } from "../../lib/export";
 import { GeneralLinkAudience, GuestList, Headcount, WishesCard, saveCsv } from "./guest-list";
 import { Insights } from "./insights";
 import { FromGuests } from "./from-guests";
+import { AskPro } from "../../ui/ask-pro";
+import { linkOf } from "../../lib/aliases";
+import { hostMessage } from "../../lib/host-i18n";
 import { endsOn, hasEnded, planOf } from "../../lib/plans";
 import { REASON_TEXT } from "../../lib/reports";
 
-type Loaded = { experience: Experience; rsvps: Rsvp[] };
+type Loaded = { experience: Experience; rsvps: Rsvp[]; upgrade?: { status: "open" | "approved" | "declined"; createdAt: string } };
 type Problem = "" | "no-key" | "invalid" | "offline";
 
 /*
@@ -198,9 +201,15 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="share-heading">
           <h2 id="share-heading">{h.shareIt}</h2>
-          {live ? <ShareTools url={`${origin}/e/${slug}`} title={experience.title} lang={experience.language} ui={lang} owner={owner ?? undefined}/> : <p className="manage-muted">{removed ? h.takenDownShare : h.unpublishedNote}</p>}
+          {live ? <ShareTools url={`${origin}/e/${linkOf(experience)}`} title={experience.title} lang={experience.language} ui={lang} owner={owner ?? undefined}/> : <p className="manage-muted">{removed ? h.takenDownShare : h.unpublishedNote}</p>}
           {owner && schedule.length > 1 && <GeneralLinkAudience owner={owner} experience={experience} onSaved={reload}/>}
+          {!removed && (pro ? owner && <CustomLink h={h} owner={owner} experience={experience} onSaved={reload}/> : <ProNote h={h} text={h.proAlias}/>)}
         </section>
+
+        {!pro && !removed && owner && <section className="sketch-card manage-card" id="creator-studio" aria-labelledby="creator-studio-heading">
+          <h2 id="creator-studio-heading">{h.proBadge}</h2>
+          <AskPro h={h} owner={owner} upgrade={data.upgrade} onSent={reload}/>
+        </section>}
 
         <section className="sketch-card manage-card" aria-labelledby="insights-heading">
           <h2 id="insights-heading">{h.insightsHeading}</h2>
@@ -263,7 +272,7 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="wishes-heading">
           <h2 id="wishes-heading">{h.wishesHeading}</h2>
-          {owner && <WishesCard owner={owner} experience={experience} rsvps={data.rsvps} onChanged={reload}/>}
+          {owner && <WishesCard owner={owner} experience={experience} rsvps={data.rsvps} onChanged={reload} pro={pro}/>}
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="private-heading">
@@ -299,7 +308,32 @@ export default function ManagePage() {
 
 /** A feature this invitation's plan doesn't include, and where to read about the Creator studio. */
 function ProNote({ text, h }: { text: string; h: HostText }) {
-  return <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} <Link href="/pricing">{h.seePlans}</Link></p>;
+  return <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} <a href="#creator-studio">{h.askPro}</a></p>;
+}
+
+/** The invitation's custom link (Creator studio). Earlier ones keep working. */
+function CustomLink({ h, owner, experience, onSaved }: { h: HostText; owner: { slug: string; ownerKey: string }; experience: Experience; onSaved: () => Promise<void> }) {
+  const [value, setValue] = useState(experience.aliases?.[0] ?? "");
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+    setStatus("");
+    const response = await fetch(`/api/experiences/${owner.slug}/alias`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${owner.ownerKey}` }, body: JSON.stringify({ alias: value }) }).catch(() => null);
+    const body = (await response?.json().catch(() => null)) as { error?: string; aliases?: string[] } | null;
+    if (!response?.ok) return setError(body?.error ? hostMessage(body.error, h.lang) : h.offlineBody);
+    setValue(body?.aliases?.[0] ?? value);
+    setStatus(h.linkSaved);
+    await onSaved();
+  }
+  return <form className="manage-custom-link" onSubmit={save}>
+    <label htmlFor="custom-link">{h.customLinkLabel}</label>
+    <p className="studio-help" id="custom-link-hint">{h.customLinkHint}</p>
+    <div className="manage-custom-link-row"><span aria-hidden="true">/e/</span><input id="custom-link" value={value} maxLength={40} placeholder="isha-kabir" autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={e => setValue(e.target.value)} aria-describedby={error ? "custom-link-error" : "custom-link-hint"} aria-invalid={error ? true : undefined}/><button type="submit" className="cin-cta cin-cta-outline" disabled={!value.trim()}>{h.saveLink}</button></div>
+    {error && <p className="studio-error" id="custom-link-error" role="alert">{error}</p>}
+    <p className="share-status" role="status">{status}</p>
+  </form>;
 }
 
 function Notice({ h, title, action, children }: { h: HostText; title: string; action?: React.ReactNode; children: React.ReactNode }) {

@@ -2,6 +2,7 @@ import { answerFor, invitedTo, tallyByEvent } from "./guests";
 import { formatEventDay, formatInvitationTime, sortSchedule } from "./invitations";
 import type { Experience, Rsvp } from "./store";
 import type { Diet } from "./extras";
+import { linkOf } from "./aliases";
 
 const DIET_LABELS: Record<Diet, string> = { jain: "Jain", swaminarayan: "Swaminarayan", "no-onion-garlic": "No onion or garlic", vegan: "Vegan", other: "Something else" };
 
@@ -78,7 +79,7 @@ export function invitationsCsv({ experience, rsvps }: { experience: Experience; 
   for (const g of experience.guests) {
     const reply = rsvps.find(r => r.guestId === g.id);
     const celebrations = g.events === "all" ? "Every celebration" : schedule.filter(e => g.events.includes(e.id)).map(e => e.name).join(", ");
-    rows.push([g.name, `${origin}/e/${experience.slug}/${g.id}`, phoneCell(g.phone), schedule.length ? celebrations : "", g.lastOpenedAt ? when(g.lastOpenedAt) : "Not yet", reply?.attendance ?? "No reply yet", reply && reply.attendance !== "Not attending" ? reply.guestCount : "", reply ? when(reply.updatedAt ?? reply.createdAt) : ""]);
+    rows.push([g.name, `${origin}/e/${linkOf(experience)}/${g.id}`, phoneCell(g.phone), schedule.length ? celebrations : "", g.lastOpenedAt ? when(g.lastOpenedAt) : "Not yet", reply?.attendance ?? "No reply yet", reply && reply.attendance !== "Not attending" ? reply.guestCount : "", reply ? when(reply.updatedAt ?? reply.createdAt) : ""]);
   }
   return toCsv(rows);
 }

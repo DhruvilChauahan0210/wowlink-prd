@@ -582,7 +582,7 @@
 .admin-take-down.cin-cta-outline{color:#a8341f}
 .admin-take-down.cin-cta-outline::before{background:#a8341f}
 .admin-find{display:flex;gap:12px;flex-wrap:wrap}
-.admin-find input{flex:1;min-width:220px;min-height:46px;padding:10px 14px;border:1.5px solid var(--line-strong);border-radius:10px;background:#fbf6ec;font:inherit}
+.admin-find input{flex:1;min-width:220px;min-height:46px;padding:10px 14px;border:1.5px solid var(--line-strong);border-radius:10px;background:#fbf6ec;color:#241a13;color-scheme:light;font:inherit}
 .admin-days{display:flex;gap:8px}
 .admin-days .share-chip[aria-pressed=true]{color:var(--text);text-decoration-style:solid}
 .admin-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 32px;margin-top:22px}
@@ -724,6 +724,34 @@
 .manage-extras-notes li{padding:6px 0;border-top:1px dashed var(--line-strong);font-size:15px;line-height:1.45}
 .manage-poll li{position:relative;display:flex;justify-content:space-between;gap:12px;padding:9px 10px;margin-bottom:6px;border-radius:8px;overflow:hidden;font-size:15px;isolation:isolate}
 .manage-poll li i{position:absolute;inset:0 auto 0 0;z-index:-1;background:var(--accent);opacity:.14}
+/* asking for the Creator studio, a custom link, reminding everyone */
+.ask-pro-form{display:flex;flex-direction:column;gap:14px;margin-top:14px;max-width:560px}
+.manage-custom-link{margin-top:22px}
+.manage-custom-link>label{font:700 22px/1.2 var(--hand);color:var(--text)}
+.manage-custom-link-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.manage-custom-link-row>span{font:500 15px/1 var(--sans);color:var(--muted)}
+.manage-custom-link-row input{flex:1;min-width:180px;min-height:46px;padding:10px 14px;border:1.5px solid var(--line-strong);border-radius:10px;background:#fbf6ec;color:#241a13;color-scheme:light;font:inherit}
+.manage-remind{margin-top:12px;padding:12px 14px;border:1.5px dashed var(--line-strong);border-radius:12px}
+.manage-remind p{flex-basis:100%;font:700 21px/1.2 var(--hand)}
+/* the planner's brand: in the studio, and at the bottom of the invitation */
+.studio-brand{display:flex;flex-direction:column;gap:12px}
+.studio-brand-label{display:block;margin-bottom:6px;font:700 22px/1.2 var(--hand);color:var(--text)}
+.studio-brand-label span{font:500 13px/1 var(--sans);color:var(--muted)}
+.studio-brand-logo{display:flex;align-items:center;gap:14px}
+.studio-brand-logo img{max-width:140px;max-height:56px;object-fit:contain;background:#fff;border-radius:6px;padding:4px;box-shadow:0 0 0 1px var(--line-strong)}
+.studio-brand-upload{position:relative;cursor:pointer}
+.studio-brand-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.studio-client-preview{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.invitation-brand{display:flex;align-items:center;justify-content:center;gap:14px;padding:22px var(--gutter,20px);border-top:1px solid var(--line);text-align:center;font:600 15px/1.4 var(--sans);color:var(--muted)}
+.invitation-brand img{max-width:120px;max-height:44px;object-fit:contain}
+/* a client preview's bar: what it is, and the client's answer */
+.client-preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 20px;padding:12px 16px;border-bottom:1.5px dashed var(--line-strong);text-align:center}
+.client-preview-bar p{margin:0;font:700 20px/1.25 var(--hand);color:var(--text)}
+.client-preview-actions,.client-preview-form>div{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.client-preview-form{display:flex;flex-direction:column;gap:8px;width:min(100%,520px);text-align:left}
+.client-preview-form label{font:700 20px/1.2 var(--hand)}
+.client-preview-form textarea{min-height:80px;padding:10px 12px;border:1.5px solid var(--line-strong);border-radius:10px;background:#fbf6ec;color:#241a13;color-scheme:light;font:inherit}
+.client-preview-done{color:#4f7a3c!important}
 .inv-card:focus{outline:none}
 .inv-langs{display:inline-flex;align-items:center;gap:14px}
 .manage-wishes{list-style:none;margin:14px 0 0;padding:0}

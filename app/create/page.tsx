@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { EVENT_NAMES, LANGS, draftOf, LANG_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
+import { EVENT_NAMES, LANGS, draftOf, formatShortDay, LANG_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
 import { WowLinkBrand } from "../ui/brand";
 import { ArtImage } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
@@ -13,6 +13,11 @@ import { hostMessage, type HostText } from "../lib/host-i18n";
 import { OCCASION_TONES, PALETTES, PALETTE_IDS, type PaletteId } from "../lib/palette";
 import { STARTER_OCCASIONS, freeDraft, planOf, type Plan } from "../lib/plans";
 import { EXTRA_LIMITS } from "../lib/extras";
+import { cleanBrand, type Brand } from "../lib/brand";
+
+/** Where a planner's brand kit is kept on their device. */
+const BRAND_KIT_KEY = "wowlink:brand-kit";
+type OwnerPreview = { token: string; createdAt: string; expiresAt: string; feedback: { verdict: "approve" | "changes"; note: string; at: string }[] };
 import type { Experience, Rsvp } from "../lib/store";
 
 const LANGUAGE_CHOICES = LANGS.map(lang => [lang, LANG_NAMES[lang]] as const);
@@ -33,6 +38,11 @@ export default function CreatePage() {
   const [owned, setOwned] = useState<Owned | null>(null);
   // Taken down by WowLink after a report: it opens, but can't be updated.
   const [takenDown, setTakenDown] = useState(false);
+  // The planner's brand kit, saved on this device; and the client previews of an invitation in the Creator studio.
+  const [kit, setKit] = useState<Brand | null>(null);
+  const [kitStatus, setKitStatus] = useState("");
+  const [previews, setPreviews] = useState<OwnerPreview[]>([]);
+  const [previewBusy, setPreviewBusy] = useState(false);
   const [errors, setErrors] = useState<DraftErrors>({});
   // After a failed publish, show what's wrong next to each schedule entry (and keep showing it until fixed).
   const [checkEvents, setCheckEvents] = useState(false);
@@ -50,6 +60,19 @@ export default function CreatePage() {
   const pro = owned ? planOf(owned) === "pro" : false;
   // What guests will get: a free invitation without the Creator studio's parts.
   const shown = pro ? draft : freeDraft(draft);
+
+  useEffect(() => {
+    try { setKit(cleanBrand(JSON.parse(localStorage.getItem(BRAND_KIT_KEY) ?? "null"))); } catch { /* no kit */ }
+  }, []);
+  useEffect(() => {
+    if (!owned || !pro) return;
+    const load = () => fetch(`/api/experiences/${owned.slug}/previews`, { headers: { authorization: `Bearer ${owned.key}` }, cache: "no-store" })
+      .then(r => (r.ok ? r.json() : { previews: [] })).then((b: { previews: OwnerPreview[] }) => setPreviews(b.previews)).catch(() => undefined);
+    void load();
+    // The client may answer while the planner is elsewhere: check again on coming back.
+    addEventListener("focus", load);
+    return () => removeEventListener("focus", load);
+  }, [owned, pro]);
 
   useEffect(() => {
     setOrigin(location.origin);
@@ -194,6 +217,42 @@ export default function CreatePage() {
     }
   }
 
+  function readLogo(file: File | undefined) {
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return setErrors(now => ({ ...now, brand: "The logo must be a PNG, JPEG or WebP image." }));
+    if (file.size > 150_000) return setErrors(now => ({ ...now, brand: "The logo must be under 150 KB." }));
+    const reader = new FileReader();
+    reader.onload = () => update("brand", { ...(draft.brand ?? { name: "", signoff: "", logo: "" }), logo: String(reader.result) });
+    reader.readAsDataURL(file);
+  }
+  function saveKit() {
+    if (!draft.brand) return;
+    try {
+      localStorage.setItem(BRAND_KIT_KEY, JSON.stringify(draft.brand));
+      setKit(draft.brand);
+      setKitStatus(h.brandKitSaved);
+    } catch { setKitStatus(h.couldntSave); }
+  }
+  async function sharePreview() {
+    if (!owned) return;
+    const checked = validateDraft(draft);
+    if (!checked.ok) {
+      setErrors(checked.errors);
+      setStatus(() => (t: HostText) => t.missingDetails);
+      return;
+    }
+    setPreviewBusy(true);
+    const response = await fetch(`/api/experiences/${owned.slug}/previews`, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${owned.key}` }, body: JSON.stringify({ templateId, draft: checked.value }) }).catch(() => null);
+    if (response?.ok) {
+      const list = await fetch(`/api/experiences/${owned.slug}/previews`, { headers: { authorization: `Bearer ${owned.key}` }, cache: "no-store" }).then(r => r.json()).catch(() => ({ previews: [] }));
+      setPreviews(list.previews);
+    } else {
+      const body = await response?.json().catch(() => null);
+      setStatus(() => (t: HostText) => (body?.error ? hostMessage(body.error, t.lang) : t.couldntPublish));
+    }
+    setPreviewBusy(false);
+  }
+
   async function publish() {
     const checked = validateDraft(draft);
     if (!checked.ok) {
@@ -243,7 +302,8 @@ export default function CreatePage() {
   }
 
   const customColour = /^#[0-9a-f]{6}$/i.test(draft.palette ?? "") ? draft.palette! : "";
-  const proNote = (text: string) => <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} <Link href="/pricing">{h.seePlans}</Link></p>;
+  // A free invitation can ask for the Creator studio from its manage page; a new one is published free first.
+  const proNote = (text: string) => <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} {owned ? <Link href={`/manage/${owned.slug}#creator-studio`}>{h.askPro}</Link> : <>{h.askProPublishFirst} <Link href="/pricing">{h.seePlans}</Link></>}</p>;
   const fieldError = (key: keyof InvitationDraft) => errors[key] ? <p className="studio-error" id={`${key}-error`}>{message(errors[key]!)}</p> : null;
   const described = (key: keyof InvitationDraft) => errors[key] ? { "aria-invalid": true, "aria-describedby": `${key}-error` } : {};
 
@@ -346,6 +406,26 @@ export default function CreatePage() {
           </>}
         </fieldset>
         <fieldset className="studio-fieldset">
+          <legend>{h.brandHeading}</legend>
+          {!pro ? proNote(h.proBrand) : <>
+            <p className="studio-help">{h.brandHelp}</p>
+            {draft.brand ? <div className="studio-brand">
+              <div className="studio-field"><label htmlFor="brand-name">{h.brandName}</label><input id="brand-name" value={draft.brand.name} maxLength={60} onChange={event => update("brand", { ...draft.brand!, name: event.target.value })} {...described("brand")}/></div>
+              <div className="studio-field"><label htmlFor="brand-signoff">{h.brandSignoff} <span>{h.optional}</span></label><input id="brand-signoff" value={draft.brand.signoff} maxLength={120} placeholder={h.brandSignoffPlaceholder} onChange={event => update("brand", { ...draft.brand!, signoff: event.target.value })}/></div>
+              <div className="studio-field">
+                <span className="studio-brand-label">{h.brandLogo} <span>{h.optional}</span></span>
+                {draft.brand.logo
+                  ? <div className="studio-brand-logo">{/* eslint-disable-next-line @next/next/no-img-element -- the planner's own logo, as a data URL */}<img src={draft.brand.logo} alt=""/><button type="button" className="share-chip" onClick={() => update("brand", { ...draft.brand!, logo: "" })}>{h.brandRemoveLogo}</button></div>
+                  : <label className="share-chip studio-brand-upload">{h.brandLogo}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={event => { readLogo(event.target.files?.[0]); event.target.value = ""; }}/></label>}
+                <p className="studio-help">{h.brandLogoHint}</p>
+              </div>
+              {fieldError("brand")}
+              <div className="manage-guest-buttons"><button type="button" className="share-chip" onClick={saveKit}>{h.brandSaveKit}</button><button type="button" className="share-chip" onClick={() => update("brand", null)}>{h.brandRemove}</button></div>
+              <p className="share-status" role="status">{kitStatus}</p>
+            </div> : <div className="manage-guest-buttons"><button type="button" className="share-chip" onClick={() => update("brand", kit ?? { name: "", signoff: "", logo: "" })}>{kit ? h.brandUseKit : h.brandAdd}</button></div>}
+          </>}
+        </fieldset>
+        <fieldset className="studio-fieldset">
           <legend>{h.language} <span className="studio-legend-note">{h.forGuests}</span></legend>
           <p className="studio-help">{h.languageHelp}</p>
           <div className="studio-language" role="radiogroup" aria-label={h.languageGroup}>
@@ -355,6 +435,23 @@ export default function CreatePage() {
         <fieldset className="studio-fieldset studio-message-field"><legend>{h.messageLegend}</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">{h.messageLabel}</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder={h.messagePlaceholder} onChange={event => update("message", event.target.value)} {...described("message")}/><span className="studio-character-count">{draft.message.length} / 500</span>{fieldError("message")}</div>
           <div className="studio-field studio-thanks-field"><label htmlFor="thanks">{h.thanksLabel} <span>{h.optional}</span></label><p className="studio-help">{h.thanksHelp}</p><textarea id="thanks" rows={3} value={draft.thanks ?? ""} maxLength={500} placeholder={h.thanksPlaceholder} onChange={event => update("thanks", event.target.value)} {...described("thanks")}/><span className="studio-character-count">{(draft.thanks ?? "").length} / 500</span>{fieldError("thanks")}</div>
         </fieldset>
+        {owned && !takenDown && <fieldset className="studio-fieldset">
+          <legend>{h.previewHeading}</legend>
+          {!pro ? proNote(h.proPreview) : <>
+            <p className="studio-help">{h.previewHelp}</p>
+            <button type="button" className="share-chip" disabled={previewBusy} onClick={() => void sharePreview()}>{h.previewCreate}</button>
+            {previews[0] && (() => {
+              const latest = previews[0];
+              const url = `${origin}/p/${latest.token}`;
+              const answer = latest.feedback.at(-1);
+              return <div className="studio-client-preview">
+                <CopyField value={url} label={h.copyLink} ui={lang}/>
+                <a className="share-chip" href={`https://wa.me/?text=${encodeURIComponent(h.previewMessage(draft.title, url))}`} target="_blank" rel="noreferrer">{h.previewOnWhatsApp}</a>
+                <p className="manage-muted">{h.previewExpires(formatShortDay(latest.expiresAt, lang))} {!answer ? h.previewWaiting : answer.verdict === "approve" ? h.previewApproved(formatShortDay(answer.at, lang)) : h.previewChanges(formatShortDay(answer.at, lang), answer.note)}</p>
+              </div>;
+            })()}
+          </>}
+        </fieldset>}
         <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status(h)}</span></div>
         <p className="studio-storage-note">{owned && !takenDown ? <>{h.liveAt} <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. {h.draftsAlsoKept}</> : h.draftsSaved}</p>
       </section>

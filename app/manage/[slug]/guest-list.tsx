@@ -9,6 +9,7 @@ import { hostMessage, type HostText } from "../../lib/host-i18n";
 import { useHostText } from "../../ui/host-lang";
 import { countShare } from "../../ui/counting";
 import { planOf, repliesLimit } from "../../lib/plans";
+import { linkOf } from "../../lib/aliases";
 import type { Experience, Rsvp } from "../../lib/store";
 
 /*
@@ -206,6 +207,7 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
       <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{h.addInvitation(lines, many)}</button>
     </form> : <p className="manage-warn">{h.noRoom(cap)}</p>)}
     <p className="share-status" role="status">{status}</p>
+    {!closed && <RemindAll experience={experience} rsvps={rsvps} origin={origin} owner={owner}/>}
     {experience.guests.length > 0 && <p className="manage-guest-summary">{h.openedSummary(experience.guests.filter(g => g.openedAt).length, experience.guests.length, experience.guests.filter(g => rsvps.some(r => r.guestId === g.id)).length)}</p>}
     {experience.guests.length > 0 && <ul className="manage-guests">{[...experience.guests].reverse().map(guest => <GuestRow key={guest.id} owner={owner} origin={origin} guest={guest} experience={experience} reply={rsvps.find(r => r.guestId === guest.id)} onChanged={onChanged}/>)}</ul>}
     {experience.guests.length > 0 && <div className="manage-downloads"><span>{h.download}</span><button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "invitations"), invitationsCsv({ experience, rsvps }, origin))}>{h.listCsv}</button></div>}
@@ -236,7 +238,7 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   const [showUrl, setShowUrl] = useState(false);
   const id = useId();
   const schedule = experience.events;
-  const url = `${origin}/e/${experience.slug}/${guest.id}`;
+  const url = `${origin}/e/${linkOf(experience)}/${guest.id}`;
   const missing = missingEvents(guest.events, schedule);
   const seesNothing = guest.events !== "all" && schedule.length > 0 && !schedule.some(e => invitedTo(guest.events, e.id));
   const unanswered = seesNothing ? [] : unansweredBy(reply, guest, schedule);
@@ -323,7 +325,7 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
 }
 
 /** Guests' wishes: all of them for the host, and a choice of which (if any) the invitation shows. */
-export function WishesCard({ owner, experience, rsvps, onChanged }: { owner: Owner; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void> }) {
+export function WishesCard({ owner, experience, rsvps, onChanged, pro }: { owner: Owner; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void>; pro: boolean }) {
   const h = useHostText();
   const tr = useTranslate();
   const [busy, setBusy] = useState(false);
@@ -347,15 +349,16 @@ export function WishesCard({ owner, experience, rsvps, onChanged }: { owner: Own
   }
 
   return <>
-    <label className="manage-wishes-toggle">
+    {!pro && <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {h.proWishes} <a href="#creator-studio">{h.askPro}</a></p>}
+    {pro && <label className="manage-wishes-toggle">
       <input type="checkbox" checked={show} disabled={busy} onChange={e => {
         const next = e.target.checked;
         setShow(next);
         void run(() => ownerCall(owner, "", "PATCH", { showWishes: next }).catch(failure => { setShow(!next); throw failure; }));
       }}/>
       {h.showWishes}
-    </label>
-    <p className="manage-muted">{h.wishesNote(show)}</p>
+    </label>}
+    {pro && <p className="manage-muted">{h.wishesNote(show)}</p>}
     {error && <p className="studio-error" role="alert">{tr(error)}</p>}
     {withWishes.length ? <ul className="manage-wishes">{withWishes.map(r => {
       const from = [r.name, household(r.guestId) && h.forHousehold(household(r.guestId)!)].filter(Boolean).join(" ") || h.noName;
@@ -369,4 +372,33 @@ export function WishesCard({ owner, experience, rsvps, onChanged }: { owner: Own
       </li>;
     })}</ul> : <p className="manage-muted">{h.noWishes}</p>}
   </>;
+}
+
+/**
+ * "Remind everyone who hasn't replied": WhatsApp can only open one chat at a time, so this walks through them. Each
+ * step opens the next household's reminder; the host sends it in WhatsApp and comes back for the next one.
+ */
+function RemindAll({ experience, rsvps, origin, owner }: { experience: Experience; rsvps: Rsvp[]; origin: string; owner: Owner }) {
+  const h = useHostText();
+  const [step, setStep] = useState<number | null>(null);
+  const words = MESSAGES[experience.language ?? "en"];
+  const queue = experience.rsvp === false ? [] : experience.guests.flatMap(guest => {
+    const reply = rsvps.find(r => r.guestId === guest.id);
+    const schedule = experience.events;
+    if (guest.events !== "all" && schedule.length > 0 && !schedule.some(e => invitedTo(guest.events, e.id))) return [];
+    const unanswered = unansweredBy(reply, guest, schedule);
+    if (reply && !unanswered.length) return [];
+    const url = `${origin}/e/${linkOf(experience)}/${guest.id}`;
+    return [{ guest, href: whatsApp(words.reminder(guest.name, experience.title, reply ? unanswered.map(e => e.name) : null, url), guest.phone) }];
+  });
+  if (queue.length < 2) return null;
+  if (step === null) return <div className="manage-actions"><button type="button" className="share-chip" onClick={() => setStep(0)}>{h.remindAll(queue.length)}</button></div>;
+  if (step >= queue.length) return <p className="manage-muted" role="status">{h.remindDone} <button type="button" className="inv-replay-link" onClick={() => setStep(null)}>{h.cancel}</button></p>;
+  const current = queue[step];
+  return <div className="manage-confirm manage-remind" role="group" aria-label={h.remindAll(queue.length)}>
+    <p aria-live="polite">{h.remindNext(current.guest.name, step + 1, queue.length)}</p>
+    <a className="cin-cta cin-cta-light" href={current.href} target="_blank" rel="noreferrer" onClick={() => { countShare(owner, "personal"); setStep(step + 1); }}>{h.remindOpen}</a>
+    <button type="button" className="share-chip" onClick={() => setStep(step + 1)}>{h.remindSkip}</button>
+    <button type="button" className="share-chip" onClick={() => setStep(null)}>{h.remindStop}</button>
+  </div>;
 }

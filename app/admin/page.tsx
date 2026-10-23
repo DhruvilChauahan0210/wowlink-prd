@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getInvitationTemplate, formatInvitationDate, formatShortDay, invitationTemplates } from "../lib/invitations";
 import { SHARE_CHANNELS } from "../lib/insights";
 import { REASON_TEXT } from "../lib/reports";
-import type { AdminInvitation, Moderation, appNumbers } from "../lib/store";
+import type { AdminInvitation, AdminUpgrade, Moderation, appNumbers } from "../lib/store";
 import { WowLinkBrand } from "../ui/brand";
 
 /*
@@ -30,6 +30,7 @@ export default function AdminPage() {
   // Announced to screen readers: what the last action did.
   const [message, setMessage] = useState("");
   const [reported, setReported] = useState<AdminInvitation[] | null>(null);
+  const [requests, setRequests] = useState<AdminUpgrade[]>([]);
   const [numbers, setNumbers] = useState<Numbers | null>(null);
   const [days, setDays] = useState(30);
   const [lookup, setLookup] = useState("");
@@ -40,8 +41,9 @@ export default function AdminPage() {
     const reports = await request<{ invitations: AdminInvitation[] }>(k, "/reports");
     if (!reports.data) return reports.status;
     setReported(reports.data.invitations);
-    const nums = await call<Numbers>(k, `/numbers?days=${d}`);
+    const [nums, upgrades] = await Promise.all([call<Numbers>(k, `/numbers?days=${d}`), call<{ requests: AdminUpgrade[] }>(k, "/upgrades")]);
     if (nums) setNumbers(nums);
+    if (upgrades) setRequests(upgrades.requests);
     return 200;
   }, []);
 
@@ -78,6 +80,11 @@ export default function AdminPage() {
     // The list re-sorts, so focus goes back to the invitation's own heading.
     requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-admin-card="${slug}"] h3`)?.focus());
   }
+  async function decide(id: string, action: "approve" | "decline", title: string) {
+    const result = await call<{ ok: boolean }>(key, `/upgrades/${id}`, { method: "POST", body: JSON.stringify({ action }) });
+    await load(key, days);
+    setMessage(result ? `${action === "approve" ? "Moved to the Creator studio" : "Declined"}: ${title}` : "That didn’t work. Try again.");
+  }
   async function find(event: FormEvent) {
     event.preventDefault();
     const slug = lookup.trim().match(/(?:\/e\/)?([2-9b-df-hjkmnp-tv-zB-DF-HJ-NP-TV-Z]{7})(?:[/?#]|$)/)?.[1];
@@ -110,6 +117,25 @@ export default function AdminPage() {
         </form>
       </section> : <>
         <h1 className="studio-sr-only">WowLink admin</h1>
+        <section className="sketch-card manage-card" aria-labelledby="requests-heading">
+          <h2 id="requests-heading">Creator studio requests</h2>
+          {!requests.length ? <p className="manage-muted">No requests yet.</p> : <ul className="admin-list">{requests.map(request => <li key={request.id} className="admin-card">
+            <div className="admin-card-head">
+              <div>
+                <span className="mine-kind">{getInvitationTemplate(request.invitation.templateId).category}</span>
+                <h3><Link href={`/admin/view/${request.invitation.slug}`}>{request.invitation.title}</Link></h3>
+                <p className="manage-muted">Asked {formatShortDay(request.createdAt)} · for {formatInvitationDate(request.invitation.date, true)}</p>
+              </div>
+              <span className={`manage-plan${request.status === "approved" ? " is-pro" : ""}`}>{request.status === "open" ? "Waiting" : request.status === "approved" ? "Approved" : "Declined"}</span>
+            </div>
+            {(request.note || request.contact) && <ul className="admin-reports"><li>{request.note && <span className="admin-report-details">“{request.note}”</span>}{request.contact && <strong>{request.contact}</strong>}</li></ul>}
+            {request.status === "open" && <div className="manage-actions">
+              <button type="button" className="cin-cta cin-cta-light" onClick={() => void decide(request.id, "approve", request.invitation.title)}>Approve</button>
+              <button type="button" className="share-chip" onClick={() => void decide(request.id, "decline", request.invitation.title)}>Decline</button>
+            </div>}
+          </li>)}</ul>}
+        </section>
+
         <section className="sketch-card manage-card" aria-labelledby="reports-heading">
           <h2 id="reports-heading">Reports</h2>
           {!reported?.length ? <p className="manage-muted">No reports yet.</p> : <ul className="admin-list">{reported.map(invitation => <AdminCard key={invitation.slug} invitation={invitation} onAct={act}/>)}</ul>}
@@ -176,13 +202,14 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
   { title: "Sharing", rows: SHARE_CHANNELS.map(channel => [`share:${channel}`, { whatsapp: "WhatsApp", copy: "Link copied", native: "Share sheet", qr: "QR code shown", personal: "Personal links sent" }[channel]]) },
   { title: "Published by occasion", rows: invitationTemplates.map(t => [`published:${t.id}`, t.category]) },
   { title: "Safety", rows: [["report", "Reports"], ["taken-down", "Taken down"]] },
+  { title: "Creator studio", rows: [["upgrade-request", "Requests"]] },
 ];
 
 function AdminNumbers({ numbers }: { numbers: Numbers }) {
   const { totals, now, daily, dates } = numbers;
   return <>
     <dl className="manage-insights">
-      <div><dt>Live now</dt><dd>{now.live}</dd><span>{now.unpublished} unpublished · {now.takenDown} taken down</span></div>
+      <div><dt>Live now</dt><dd>{now.live}</dd><span>{now.unpublished} unpublished · {now.takenDown} taken down · {now.pro} in the Creator studio</span></div>
       <div><dt>Replies kept</dt><dd>{now.replies}</dd></div>
       <div><dt>Open reports</dt><dd>{now.openReports}</dd></div>
     </dl>

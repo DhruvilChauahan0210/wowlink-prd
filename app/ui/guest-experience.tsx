@@ -29,6 +29,8 @@ type Props = {
   reply?: Reply | null;
   /** A host checking a personal link: everything as the guest sees it, but replies aren't sent. */
   previewOnly?: boolean;
+  /** What the header calls a preview ("Host preview", or "Preview" for a client). */
+  previewLabel?: string;
   /** Guests' wishes the host shows on the invitation; null when the host keeps them private. */
   wishes?: PublicWish[] | null;
 };
@@ -100,7 +102,7 @@ const reportHref = (slug: string, lang: Lang, guestId?: string) => {
 };
 
 /** Everything a guest sees: the opening, the details, the message and the RSVP. */
-export function GuestExperience({ template, draft, mode, slug, guest, reply, previewOnly = false, wishes = null }: Props) {
+export function GuestExperience({ template, draft, mode, slug, guest, reply, previewOnly = false, wishes = null, previewLabel = "Host preview" }: Props) {
   const live = mode === "live";
   const sends = live && !previewOnly;
   const earlier = sends ? reply ?? null : null;
@@ -285,7 +287,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
     <header className="invitation-header theme-paper">
       <WowLinkBrand/>
       {!live && <span className="invitation-context" lang="en">{mode === "draft" ? "Draft preview" : "Template preview"}<i aria-hidden="true">·</i>{template.category}</span>}
-      {previewOnly && <span className="invitation-context" lang="en">Host preview</span>}
+      {previewOnly && <span className="invitation-context" lang="en">{previewLabel}</span>}
       <div className="invitation-header-actions">
         <span className="inv-langs">{LANGS.filter(other => other !== lang).map(other => <button key={other} type="button" className="inv-lang" aria-label={t.readIn[other]} onClick={() => switchLanguage(other)}><span lang={other}>{LANG_NAMES[other]}</span></button>)}</span>
         <Link className="cin-cta cin-cta-outline" href={`/create?template=${template.id}`}>{mode === "draft" ? "Back to editor" : live ? t.makeYourOwn : "Make it yours"}</Link>
@@ -423,6 +425,11 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         <ul className="inv-wishes">{wishes.map((w, i) => <li key={i} className="inv-wish"><p>{w.text}</p><span>— {w.name || t.aGuest}</span></li>)}</ul>
       </section>}
     </main>
+    {draft.brand?.name && <div className="invitation-brand theme-paper">
+      {/* eslint-disable-next-line @next/next/no-img-element -- the planner's logo, a checked data URL */}
+      {draft.brand.logo && <img src={draft.brand.logo} alt={draft.brand.name}/>}
+      <span>{draft.brand.signoff || t.plannedBy(draft.brand.name)}</span>
+    </div>}
     <footer className="invitation-footer"><WowLinkBrand/>{draft.attribution !== false && <span lang={live ? undefined : "en"}>{live ? t.madeWith : "Made with love, shared with one link."}</span>}<Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}{draft.attribution !== false && <Link className="invitation-footer-create" href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link>}</footer>
   </div>;
 }

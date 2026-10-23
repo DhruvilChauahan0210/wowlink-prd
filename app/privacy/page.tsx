@@ -30,6 +30,7 @@ const PRIVACY: Record<Lang, Content> = {
           "Personal invitations: the name of each household, and a WhatsApp number if the host adds one.",
           "When each personal link was first and last opened. The page itself reports this, so a link preview in WhatsApp doesn’t count.",
           "The private manage key, kept only in scrambled form (a hash), so it can’t be read back or recovered.",
+          "In the Creator studio: custom links, a planner’s name, sign-off and logo, and client previews with what the client wrote back. Anyone with a client preview link can open it until it ends, 14 days later.",
           "Plain counts, day by day: visits, how many people opened it, how many played the opening, visits from the QR code, and how the host shared it. Nobody is identified by them.",
         ],
       },
@@ -60,6 +61,7 @@ const PRIVACY: Record<Lang, Content> = {
           "Wishes appear on the invitation only if the host turns that on, and only with the name the writer typed. The host can hide any one of them.",
           "Search engines are asked not to list invitations.",
           "WowLink sees totals for the whole app: how many invitations are made, opened and replied to, visits to its own pages (like the studio and the samples), and clicks on “Create yours free”. Never who replied.",
+          "If you ask for the Creator studio, what you write, and a phone number or email if you give one, is kept so WowLink can answer you.",
         ],
       },
       {
@@ -108,6 +110,7 @@ const PRIVACY: Record<Lang, Content> = {
           "વ્યક્તિગત આમંત્રણો: દરેક પરિવારનું નામ, અને યજમાન ઉમેરે તો WhatsApp નંબર.",
           "દરેક વ્યક્તિગત લિંક પહેલી અને છેલ્લી વાર ક્યારે ખોલાઈ. પાનું પોતે જ આ જણાવે છે, એટલે WhatsAppમાં લિંકનું પ્રીવ્યૂ ગણાતું નથી.",
           "મેનેજ લિંકની ખાનગી ચાવી, ફક્ત ગૂંચવેલા રૂપમાં (hash), એટલે તે પાછી વાંચી કે મેળવી શકાતી નથી.",
+          "ક્રિએટર સ્ટુડિયોમાં: પોતાની લિંક, આયોજકનું નામ, અંતિમ પંક્તિ અને લોગો, અને ક્લાયન્ટ પ્રીવ્યૂ સાથે ક્લાયન્ટે લખેલો જવાબ. ક્લાયન્ટ પ્રીવ્યૂની લિંક જેની પાસે હોય તે 14 દિવસ પછી પૂરી થાય ત્યાં સુધી તેને ખોલી શકે.",
           "દિવસ પ્રમાણે સાદી ગણતરી: મુલાકાતો, કેટલા લોકોએ ખોલ્યું, કેટલાએ ખોલવાની વિધિ માણી, QR કોડથી કેટલી મુલાકાતો, અને યજમાને કેવી રીતે શેર કર્યું. તેનાથી કોઈની ઓળખ થતી નથી.",
         ],
       },
@@ -138,6 +141,7 @@ const PRIVACY: Record<Lang, Content> = {
           "શુભેચ્છાઓ આમંત્રણ પર ત્યારે જ દેખાય જ્યારે યજમાન તે ચાલુ કરે, અને ફક્ત લખનારે લખેલા નામ સાથે. યજમાન કોઈ પણ શુભેચ્છા છુપાવી શકે છે.",
           "સર્ચ એન્જિનને આમંત્રણો ન બતાવવા કહેવામાં આવે છે.",
           "WowLink આખી એપની કુલ સંખ્યા જુએ છે: કેટલાં આમંત્રણો બન્યાં, ખોલાયાં અને તેના જવાબ આવ્યા, તેનાં પોતાનાં પાનાંની મુલાકાતો (જેમ કે સ્ટુડિયો અને નમૂના), અને “આપનું મફત બનાવો” પરના ક્લિક. કોણે જવાબ આપ્યો તે ક્યારેય નહીં.",
+          "આપ ક્રિએટર સ્ટુડિયો માટે પૂછો, તો આપે લખેલું, અને આપ આપો તો ફોન નંબર કે ઇમેઇલ, WowLink આપને જવાબ આપી શકે તે માટે સચવાય છે.",
         ],
       },
       {
@@ -186,6 +190,7 @@ const PRIVACY: Record<Lang, Content> = {
           "व्यक्तिगत निमंत्रण: हर परिवार का नाम, और अगर मेज़बान जोड़ें तो WhatsApp नंबर।",
           "हर व्यक्तिगत लिंक पहली और आख़िरी बार कब खोला गया। यह पेज खुद बताता है, इसलिए WhatsApp में लिंक का प्रीव्यू नहीं गिना जाता।",
           "निजी मैनेज कुंजी, सिर्फ़ उलझे हुए रूप में (hash), ताकि उसे न वापस पढ़ा जा सके, न वापस पाया जा सके।",
+          "क्रिएटर स्टूडियो में: अपनी लिंक, आयोजक का नाम, आख़िरी पंक्ति और लोगो, और क्लाइंट प्रीव्यू के साथ क्लाइंट का लिखा जवाब। क्लाइंट प्रीव्यू की लिंक जिसके पास हो, वह 14 दिन बाद ख़त्म होने तक उसे खोल सकता है।",
           "दिन-ब-दिन की सीधी गिनती: विज़िट, कितने लोगों ने खोला, कितनों ने खुलने का दृश्य देखा, QR कोड से कितनी विज़िट, और मेज़बान ने कैसे शेयर किया। इनसे किसी की पहचान नहीं होती।",
         ],
       },
@@ -216,6 +221,7 @@ const PRIVACY: Record<Lang, Content> = {
           "शुभकामनाएँ निमंत्रण पर तभी दिखती हैं जब मेज़बान इसे चालू करें, और सिर्फ़ उसी नाम के साथ जो लिखने वाले ने लिखा। मेज़बान इनमें से किसी को भी छिपा सकते हैं।",
           "सर्च इंजनों से कहा जाता है कि वे निमंत्रणों को अपनी सूची में न दिखाएँ।",
           "WowLink पूरे ऐप के कुल आँकड़े देखता है: कितने निमंत्रण बने, खोले गए और उनके जवाब आए, उसके अपने पेजों पर विज़िट (जैसे स्टूडियो और नमूने), और “अपना मुफ़्त बनाएँ” पर क्लिक। किसने जवाब दिया, यह कभी नहीं।",
+          "अगर आप क्रिएटर स्टूडियो के लिए पूछते हैं, तो आपका लिखा, और आप दें तो फ़ोन नंबर या ईमेल, WowLink आपको जवाब दे सके इसलिए रखा जाता है।",
         ],
       },
       {

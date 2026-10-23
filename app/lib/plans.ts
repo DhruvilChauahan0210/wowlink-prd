@@ -18,11 +18,12 @@ export const PLAN_LIMITS = {
 } as const satisfies Record<Plan, { replies: number; daysAfter: number | null }>;
 
 /** What the Creator studio adds, by name. */
-export type ProFeature = "occasion" | "schedule" | "colours" | "attribution" | "song" | "poll" | "personal" | "csv" | "copy" | "insights";
+export type ProFeature = "occasion" | "schedule" | "colours" | "attribution" | "song" | "poll" | "brand" | "personal" | "csv" | "copy" | "insights" | "alias" | "preview" | "wishes" | "remind";
 
 const FEATURE_NAMES: Record<ProFeature, string> = {
   occasion: "this occasion", schedule: "a schedule of celebrations", colours: "your own colours", attribution: "hiding “Made with WowLink”",
-  song: "song requests", poll: "a poll", personal: "personal invitations", csv: "spreadsheet downloads", copy: "copying an invitation", insights: "detailed insights",
+  song: "song requests", poll: "a poll", brand: "your brand", personal: "personal invitations", csv: "spreadsheet downloads", copy: "copying an invitation", insights: "detailed insights",
+  alias: "a custom link", preview: "client previews", wishes: "showing wishes on the invitation", remind: "reminding everyone at once",
 };
 /** "A schedule of celebrations and your own colours are part of the Creator studio." (the server's words; the studio shows its own). */
 export function proMessage(features: ProFeature[]) {
@@ -40,11 +41,12 @@ export function proFeaturesIn(templateId: TemplateId, draft: InvitationDraft): P
   if (draft.attribution === false) used.push("attribution");
   if (draft.askSong) used.push("song");
   if (draft.poll) used.push("poll");
+  if (draft.brand) used.push("brand");
   return used;
 }
 
 /** The draft with the Creator studio's parts taken out: what a free invitation publishes. */
-export const freeDraft = (draft: InvitationDraft): InvitationDraft => ({ ...draft, events: [], palette: "", attribution: true, askSong: false, poll: null });
+export const freeDraft = (draft: InvitationDraft): InvitationDraft => ({ ...draft, events: [], palette: "", attribution: true, askSong: false, poll: null, brand: null });
 
 /** The plan an invitation is on. Missing means it was made before plans existed, and keeps everything. */
 export const planOf = (e: { plan?: Plan }): Plan => e.plan ?? "pro";
