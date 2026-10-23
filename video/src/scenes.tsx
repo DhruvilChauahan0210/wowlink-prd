@@ -1,5 +1,5 @@
 import { AbsoluteFill, Img, interpolate, Sequence, Audio, staticFile, useCurrentFrame } from "remotion";
-import { C, Chip, F, Logo, Mark, Paper, Phone, Pop, Sparkle, Tap, Bunting, onScreen, useIn, useRange, useShape } from "./kit";
+import { C, Chip, F, Logo, Mark, Paper, Phone, Pop, Sparkle, Tap, Bunting, onScreen, useIn, useRange, useShape, useT } from "./kit";
 
 /*
  * The scenes, one per line of the voiceover. Frames count from each scene's own start. The vertical Reel has the
@@ -29,12 +29,13 @@ function Bubble({ delay, children, wide }: { delay: number; children: React.Reac
 }
 
 export function Hook() {
+  const t = useT(159);
   const frame = useCurrentFrame();
   const { wide, phoneX, phoneW } = useLayout();
-  const card = useIn(0, { damping: 16 });
-  const scribble = useRange(98, 116);
-  const shake = frame > 112 && frame < 128 ? Math.sin(frame * 2.2) * 10 : 0;
-  const leave = useRange(140, 159);
+  const card = useIn(t(0), { damping: 16 });
+  const scribble = useRange(t(98), t(116));
+  const shake = frame > t(112) && frame < t(128) ? Math.sin(frame * 2.2) * 10 : 0;
+  const leave = useRange(t(140), t(159));
   const left = wide ? phoneX - 120 : 70;
   const width = wide ? phoneW + 200 : 940;
   return <AbsoluteFill>
@@ -44,7 +45,7 @@ export function Hook() {
           <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.marigold, display: "grid", placeItems: "center", font: `700 30px ${F.serif}`, color: C.dark }}>S</div>
           <div><div style={{ font: `700 ${wide ? 30 : 36}px ${F.sans}`, color: C.ink }}>Sharma Parivar</div><div style={{ font: `500 ${wide ? 22 : 26}px ${F.sans}`, color: C.muted }}>23 members</div></div>
         </div>
-        <Bubble delay={8} wide={wide}>
+        <Bubble delay={t(8)} wide={wide}>
           <div style={{ position: "relative", display: "flex", gap: 20, alignItems: "center" }}>
             <div style={{ width: 84, height: 100, borderRadius: 12, background: "#d64532", color: "white", display: "grid", placeItems: "center", font: `800 26px ${F.sans}` }}>PDF</div>
             <div><div style={{ font: `600 ${wide ? 28 : 34}px/1.2 ${F.sans}` }}>Shaadi_Card_FINAL_v3.pdf</div><div style={{ color: C.muted, font: `500 ${wide ? 22 : 26}px ${F.sans}`, marginTop: 6 }}>4.2 MB · 12 pages</div></div>
@@ -54,42 +55,43 @@ export function Hook() {
             </svg>
           </div>
         </Bubble>
-        <Bubble delay={52} wide={wide}>Bhai, download hi nahi ho raha</Bubble>
-        <Bubble delay={76} wide={wide}>Venue kaunsa hai??</Bubble>
-        <Bubble delay={100} wide={wide}>Zoom karke bhi padh nahi paa raha</Bubble>
+        <Bubble delay={t(52)} wide={wide}>Bhai, download hi nahi ho raha</Bubble>
+        <Bubble delay={t(76)} wide={wide}>Venue kaunsa hai??</Bubble>
+        <Bubble delay={t(100)} wide={wide}>Zoom karke bhi padh nahi paa raha</Bubble>
       </div>
     </div>
-    {[8, 52, 76, 100].map((at) => sfx("pop", at, 0.35))}
-    {sfx("whoosh", 140, 0.6)}
+    {[8, 52, 76, 100].map((at) => sfx("pop", t(at), 0.35))}
+    {sfx("whoosh", t(140), 0.6)}
   </AbsoluteFill>;
 }
 
 // ---------- 2. "Milo WowLink se. Haath se bana, animated invitation, bas ek link mein." ----------
 
 export function Reveal() {
+  const t = useT(206);
   const frame = useCurrentFrame();
   const { wide, phoneX, phoneY, phoneW, centerX, centerY } = useLayout();
-  const draw = useRange(4, 36);
-  const logoIn = useIn(2, { damping: 10, stiffness: 150 });
-  const logoOut = useRange(46, 62);
+  const draw = useRange(t(4), t(36));
+  const logoIn = useIn(t(2), { damping: 10, stiffness: 150 });
+  const logoOut = useRange(t(46), t(62));
   const phone = usePhoneIn(50);
   const float = Math.sin(frame / 18) * 8;
   return <AbsoluteFill>
-    <Bunting delay={0} top={wide ? 0 : 0}/>
+    <Bunting delay={t(0)} top={wide ? 0 : 0}/>
     <div style={{ position: "absolute", left: centerX, top: centerY, transform: `translate(-50%, -50%) scale(${(0.6 + logoIn * 0.4) * (1 - logoOut * 0.5)})`, opacity: 1 - logoOut }}>
       <Logo size={wide ? 120 : 140} draw={draw}/>
     </div>
     <div style={{ position: "absolute", left: phoneX, top: phoneY + float, ...phone }}>
       <Phone screen="footage/guest-closed.png" width={phoneW}/>
     </div>
-    <Sparkle x={phoneX - 40} y={phoneY + 220} delay={70} size={70} kind="flower"/>
-    <Sparkle x={phoneX + phoneW + 40} y={phoneY + 120} delay={78} size={56} color={C.red}/>
-    <Sparkle x={phoneX + phoneW + 30} y={phoneY + 700} delay={86} size={64} kind="flower"/>
-    <Sparkle x={phoneX - 30} y={phoneY + 900} delay={94} size={50} color={C.red}/>
-    <Pop delay={128} style={{ position: "absolute", left: wide ? phoneX - 210 : 90, top: wide ? phoneY + 760 : 1700, transform: "rotate(-3deg)" }}>
+    <Sparkle x={phoneX - 40} y={phoneY + 220} delay={t(70)} size={70} kind="flower"/>
+    <Sparkle x={phoneX + phoneW + 40} y={phoneY + 120} delay={t(78)} size={56} color={C.red}/>
+    <Sparkle x={phoneX + phoneW + 30} y={phoneY + 700} delay={t(86)} size={64} kind="flower"/>
+    <Sparkle x={phoneX - 30} y={phoneY + 900} delay={t(94)} size={50} color={C.red}/>
+    <Pop delay={t(128)} style={{ position: "absolute", left: wide ? phoneX - 210 : 90, top: wide ? phoneY + 760 : 1700, transform: "rotate(-3deg)" }}>
       <Chip size={wide ? 30 : 38}><LinkIcon/> wowlink-one.vercel.app/e/isha-kabir</Chip>
     </Pop>
-    {sfx("whoosh", 0, 0.5)}{sfx("whoosh", 48, 0.4)}{sfx("pop", 128, 0.5)}
+    {sfx("whoosh", t(0), 0.5)}{sfx("whoosh", t(48), 0.4)}{sfx("pop", t(128), 0.5)}
   </AbsoluteFill>;
 }
 
@@ -100,16 +102,17 @@ function LinkIcon() {
 // ---------- 3. "Occasion chuno, naam aur date likho, aur publish karo." ----------
 
 export function Studio() {
+  const t = useT(144);
   const frame = useCurrentFrame();
   const { wide, phoneX, phoneY, phoneW } = useLayout();
   const phone = usePhoneIn(0);
-  const scroll = interpolate(frame, [4, 34], [0, 260], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: (t) => t * t * (3 - 2 * t) });
-  const toStudio = useRange(38, 46);
-  const toPublish = useRange(100, 108);
+  const scroll = interpolate(frame, [t(4), t(34)], [0, 260], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: (t) => t * t * (3 - 2 * t) });
+  const toStudio = useRange(t(38), t(46));
+  const toPublish = useRange(t(100), t(108));
   const name = "Isha & Kabir";
-  const typed = name.slice(0, Math.max(0, Math.floor((frame - 50) / 2.4)));
-  const typing = useIn(44, { damping: 13 });
-  const typingOut = useRange(96, 104);
+  const typed = name.slice(0, Math.max(0, Math.floor((frame - t(50)) / 2.4)));
+  const typing = useIn(t(44), { damping: 13 });
+  const typingOut = useRange(t(96), t(104));
   const tapCard = onScreen(phoneW, 585, 1456 - 240);
   const tapPublish = onScreen(phoneW, 993, 95);
   return <AbsoluteFill>
@@ -119,8 +122,8 @@ export function Studio() {
         <Img src={staticFile("footage/studio-edit.png")} style={{ position: "absolute", top: 0, width: "100%", opacity: toStudio * (1 - toPublish), transform: `translateX(${(1 - toStudio) * 60}px)` }}/>
         <Img src={staticFile("footage/publish.png")} style={{ position: "absolute", top: 0, width: "100%", opacity: toPublish, transform: `scale(${0.94 + toPublish * 0.06})` }}/>
       </Phone>
-      <Tap at={30} {...tapCard}/>
-      <Tap at={94} {...tapPublish} size={70}/>
+      <Tap at={t(30)} {...tapCard}/>
+      <Tap at={t(94)} {...tapPublish} size={70}/>
     </div>
     <div style={{ position: "absolute", left: wide ? phoneX - 330 : 120, top: wide ? phoneY + 560 : phoneY + 820, width: wide ? 560 : 840, opacity: typing * (1 - typingOut), transform: `translateY(${(1 - typing) * 60}px) rotate(-2deg)` }}>
       <div style={{ background: C.surface, border: `3px solid ${C.ink}`, borderRadius: 24, padding: wide ? "20px 26px" : "26px 34px", boxShadow: `8px 10px 0 ${C.red}` }}>
@@ -128,27 +131,29 @@ export function Studio() {
         <div style={{ font: `500 ${wide ? 50 : 64}px ${F.serif}`, color: C.ink, marginTop: 6 }}>{typed}<span style={{ opacity: Math.floor(frame / 8) % 2 ? 1 : 0.15, color: C.red }}>|</span></div>
       </div>
     </div>
-    {sfx("whoosh", 0, 0.45)}{sfx("tap", 30, 0.8)}
-    {Array.from({ length: name.length }, (_, i) => sfx("tap", 50 + Math.round(i * 2.4), 0.25))}
-    {sfx("tap", 94, 0.8)}{sfx("pop", 102, 0.6)}
+    {sfx("whoosh", t(0), 0.45)}{sfx("tap", t(30), 0.8)}
+    {Array.from({ length: name.length }, (_, i) => sfx("tap", t(50) + Math.round(i * 2.4), 0.25))}
+    {sfx("tap", t(94), 0.8)}{sfx("pop", t(102), 0.6)}
   </AbsoluteFill>;
 }
 
 // ---------- 4. "Mehmaan link kholte hain, toh invitation sach mein khulta hai." ----------
 
 export function Guest() {
+  const t = useT(135);
   const frame = useCurrentFrame();
   const { wide, phoneX, phoneY, phoneW } = useLayout();
   const phone = usePhoneIn(0);
-  const note = useIn(4, { damping: 14 });
-  const noteOut = useRange(24, 32);
-  const open = Math.max(0, Math.min(102, frame - 30));
+  const note = useIn(t(4), { damping: 14 });
+  const noteOut = useRange(t(24), t(32));
+  // The opening plays at the speed that fits the line (it was made at 30 fps).
+  const open = Math.max(0, Math.min(102, Math.round(((frame - t(30)) * 135) / t(135))));
   const tapKnot = onScreen(phoneW, 585, 1515);
   const inner = phoneW * 0.93;
   return <AbsoluteFill>
     <div style={{ position: "absolute", left: phoneX, top: phoneY, ...phone }}>
       <Phone width={phoneW}>
-        {frame < 30
+        {frame < t(30)
           ? <Img src={staticFile("footage/guest-closed.png")} style={{ position: "absolute", width: "100%" }}/>
           : <Img src={staticFile(`footage/opening/${String(open).padStart(3, "0")}.jpg`)} style={{ position: "absolute", width: "100%" }}/>}
         <div style={{ position: "absolute", left: inner * 0.04, right: inner * 0.04, top: inner * 0.05, transform: `translateY(${(1 - note) * -160 - noteOut * 200}px)`, opacity: 1 - noteOut, background: "rgba(250,245,234,.97)", borderRadius: inner * 0.05, padding: inner * 0.035, boxShadow: "0 12px 30px rgba(0,0,0,.25)", display: "flex", gap: inner * 0.03, alignItems: "center" }}>
@@ -156,24 +161,25 @@ export function Guest() {
           <div style={{ font: `500 ${inner * 0.037}px/1.3 ${F.sans}`, color: C.ink }}><b>Isha</b> · now<br/>Hamari shaadi mein zaroor aana! wowlink-one.vercel.app/e/isha-kabir</div>
         </div>
       </Phone>
-      <Tap at={26} {...tapKnot}/>
+      <Tap at={t(26)} {...tapKnot}/>
     </div>
-    <Sparkle x={phoneX - 30} y={phoneY + 300} delay={70} size={64} kind="flower"/>
-    <Sparkle x={phoneX + phoneW + 30} y={phoneY + 500} delay={78} size={58} color={C.red}/>
-    <Sparkle x={phoneX + phoneW - 10} y={phoneY + 120} delay={90} size={50}/>
-    {sfx("pop", 4, 0.4)}{sfx("tap", 26, 0.8)}{sfx("whoosh", 32, 0.35)}{sfx("chime", 96, 0.3)}
+    <Sparkle x={phoneX - 30} y={phoneY + 300} delay={t(70)} size={64} kind="flower"/>
+    <Sparkle x={phoneX + phoneW + 30} y={phoneY + 500} delay={t(78)} size={58} color={C.red}/>
+    <Sparkle x={phoneX + phoneW - 10} y={phoneY + 120} delay={t(90)} size={50}/>
+    {sfx("pop", t(4), 0.4)}{sfx("tap", t(26), 0.8)}{sfx("whoosh", t(32), 0.35)}{sfx("chime", t(96), 0.3)}
   </AbsoluteFill>;
 }
 
 // ---------- 5. "Countdown, calendar, aur ek tap mein RSVP." ----------
 
 export function Rsvp() {
+  const t = useT(135);
   const frame = useCurrentFrame();
   const { wide, phoneX, phoneY, phoneW } = useLayout();
-  const toForm = useRange(52, 60);
-  const toDone = useRange(88, 94);
+  const toForm = useRange(t(52), t(60));
+  const toDone = useRange(t(88), t(94));
   const tapSend = onScreen(phoneW, 585, 1988);
-  const check = useIn(92, { damping: 9, stiffness: 160 });
+  const check = useIn(t(92), { damping: 9, stiffness: 160 });
   const side = (left: boolean) => (left ? phoneX - (wide ? 250 : 175) : wide ? phoneX + phoneW - 60 : 545);
   return <AbsoluteFill>
     <div style={{ position: "absolute", left: phoneX, top: phoneY }}>
@@ -182,28 +188,29 @@ export function Rsvp() {
         <Img src={staticFile("footage/guest-rsvp.png")} style={{ position: "absolute", width: "100%", opacity: toForm * (1 - toDone) }}/>
         <Img src={staticFile("footage/guest-replied.png")} style={{ position: "absolute", width: "100%", opacity: toDone }}/>
       </Phone>
-      <Tap at={84} {...tapSend}/>
+      <Tap at={t(84)} {...tapSend}/>
     </div>
-    <Pop delay={6} style={{ position: "absolute", left: side(true), top: phoneY + 160, transform: "rotate(-4deg)" }}><Chip size={wide ? 30 : 38}>⏳ 49 din baaki</Chip></Pop>
-    <Pop delay={30} style={{ position: "absolute", left: side(false), top: phoneY + 470, transform: "rotate(3deg)" }}><Chip size={wide ? 30 : 38}>📅 Calendar mein add</Chip></Pop>
-    <div style={{ position: "absolute", left: phoneX + phoneW - (wide ? 110 : 120), top: phoneY + (wide ? 150 : 210), width: 170, height: 170, borderRadius: "50%", background: C.red, display: "grid", placeItems: "center", transform: `scale(${check})`, opacity: Math.min(1, check * 1.5) * interpolate(frame, [118, 132], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }), boxShadow: "0 20px 50px rgba(168,52,31,.45)" }}>
+    <Pop delay={t(6)} style={{ position: "absolute", left: side(true), top: phoneY + 160, transform: "rotate(-4deg)" }}><Chip size={wide ? 30 : 38}>⏳ 49 din baaki</Chip></Pop>
+    <Pop delay={t(30)} style={{ position: "absolute", left: side(false), top: phoneY + 470, transform: "rotate(3deg)" }}><Chip size={wide ? 30 : 38}>📅 Calendar mein add</Chip></Pop>
+    <div style={{ position: "absolute", left: phoneX + phoneW - (wide ? 110 : 120), top: phoneY + (wide ? 150 : 210), width: 170, height: 170, borderRadius: "50%", background: C.red, display: "grid", placeItems: "center", transform: `scale(${check})`, opacity: Math.min(1, check * 1.5) * interpolate(frame, [t(118), t(132)], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }), boxShadow: "0 20px 50px rgba(168,52,31,.45)" }}>
       <svg width="100" height="100" viewBox="0 0 24 24"><path d="M3 13C6 15 8 18 10 21C13 13 17 8 22 3" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - Math.min(1, Math.max(0, (frame - 94) / 10))}/></svg>
     </div>
-    <Pop delay={100} style={{ position: "absolute", left: side(false), top: phoneY + (wide ? 690 : 900), transform: "rotate(-3deg)" }}><Chip dark size={wide ? 30 : 38}>RSVP sent!</Chip></Pop>
-    {sfx("pop", 6, 0.4)}{sfx("pop", 30, 0.4)}{sfx("tap", 84, 0.8)}{sfx("chime", 92, 0.55)}
+    <Pop delay={t(100)} style={{ position: "absolute", left: side(false), top: phoneY + (wide ? 690 : 900), transform: "rotate(-3deg)" }}><Chip dark size={wide ? 30 : 38}>RSVP sent!</Chip></Pop>
+    {sfx("pop", t(6), 0.4)}{sfx("pop", t(30), 0.4)}{sfx("tap", t(84), 0.8)}{sfx("chime", t(92), 0.55)}
   </AbsoluteFill>;
 }
 
 // ---------- 6. "Gujarati, Hindi ya English, jismein chaho." ----------
 
 export function Languages() {
+  const t = useT(132);
   const frame = useCurrentFrame();
   const { wide } = useLayout();
   const w = wide ? 300 : 420;
   const y = wide ? 170 : 640;
   const phones = wide
-    ? [{ screen: "gujarati-opened", label: "ગુજરાતી", font: F.guj, x: 1010, rot: -8, delay: 4 }, { screen: "hindi-opened", label: "हिन्दी", font: F.deva, x: 1560, rot: 8, delay: 28 }, { screen: "guest-opened", label: "English", font: F.hand, x: 1285, rot: 0, delay: 52 }]
-    : [{ screen: "gujarati-opened", label: "ગુજરાતી", font: F.guj, x: 40, rot: -9, delay: 4 }, { screen: "hindi-opened", label: "हिन्दी", font: F.deva, x: 640, rot: 9, delay: 28 }, { screen: "guest-opened", label: "English", font: F.hand, x: 340, rot: 0, delay: 52 }];
+    ? [{ screen: "gujarati-opened", label: "ગુજરાતી", font: F.guj, x: 1010, rot: -8, delay: t(4) }, { screen: "hindi-opened", label: "हिन्दी", font: F.deva, x: 1560, rot: 8, delay: t(28) }, { screen: "guest-opened", label: "English", font: F.hand, x: 1285, rot: 0, delay: t(52) }]
+    : [{ screen: "gujarati-opened", label: "ગુજરાતી", font: F.guj, x: 40, rot: -9, delay: t(4) }, { screen: "hindi-opened", label: "हिन्दी", font: F.deva, x: 640, rot: 9, delay: t(28) }, { screen: "guest-opened", label: "English", font: F.hand, x: 340, rot: 0, delay: t(52) }];
   return <AbsoluteFill>
     {phones.map((p) => <PhoneIn key={p.screen} {...p} w={w} y={y + (p.rot ? 60 : 0)}/>)}
     {phones.map((p) => sfx("pop", p.delay, 0.45))}
@@ -222,22 +229,23 @@ export function Languages() {
 // ---------- 7. "Aur saare jawaab, ek hi jagah." ----------
 
 export function Host() {
+  const t = useT(97);
   const frame = useCurrentFrame();
   const { wide, phoneX, phoneY, phoneW } = useLayout();
   const phone = usePhoneIn(0);
-  const coming = Math.round(interpolate(frame, [14, 44], [0, 7], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
-  const guests = Math.round(interpolate(frame, [26, 60], [0, 19], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
+  const coming = Math.round(interpolate(frame, [t(14), t(44)], [0, 7], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
+  const guests = Math.round(interpolate(frame, [t(26), t(60)], [0, 19], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
   return <AbsoluteFill>
     <div style={{ position: "absolute", left: phoneX, top: phoneY, ...phone }}>
       <Phone screen="footage/host-replies.png" width={phoneW}/>
     </div>
-    <Pop delay={12} style={{ position: "absolute", left: wide ? phoneX - 240 : 60, top: phoneY + (wide ? 220 : 300), transform: "rotate(-4deg)" }}>
+    <Pop delay={t(12)} style={{ position: "absolute", left: wide ? phoneX - 240 : 60, top: phoneY + (wide ? 220 : 300), transform: "rotate(-4deg)" }}>
       <Stat n={coming} label="aa rahe hain" wide={wide}/>
     </Pop>
-    <Pop delay={24} style={{ position: "absolute", left: wide ? phoneX + phoneW - 60 : 700, top: phoneY + (wide ? 520 : 760), transform: "rotate(4deg)" }}>
+    <Pop delay={t(24)} style={{ position: "absolute", left: wide ? phoneX + phoneW - 60 : 700, top: phoneY + (wide ? 520 : 760), transform: "rotate(4deg)" }}>
       <Stat n={guests} label="mehmaan" wide={wide} dark/>
     </Pop>
-    {sfx("whoosh", 0, 0.4)}{sfx("pop", 12, 0.45)}{sfx("pop", 24, 0.45)}
+    {sfx("whoosh", t(0), 0.4)}{sfx("pop", t(12), 0.45)}{sfx("pop", t(24), 0.45)}
   </AbsoluteFill>;
 }
 

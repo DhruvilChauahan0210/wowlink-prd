@@ -1,6 +1,6 @@
 import { AbsoluteFill, Audio, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import lines from "../public/voice/lines.json";
-import { C, F, Paper, useShape } from "./kit";
+import { C, F, Paper, SceneLength, useShape } from "./kit";
 import { Cta, Guest, Hook, Host, Languages, Reveal, Rsvp, Studio } from "./scenes";
 
 /*
@@ -30,9 +30,9 @@ const SCENES = { hook: Hook, reveal: Reveal, studio: Studio, guest: Guest, rsvp:
 export function Launch() {
   return <AbsoluteFill style={{ background: C.paper }}>
     <Paper/>
-    <Audio src={staticFile("music.wav")} volume={(f) => (f < VOICE_END ? 0.32 : 0.6)}/>
-    {LINES.map((line) => <Sequence key={line.id} from={START[line.id]} durationInFrames={length(line.id) + 15}><Audio src={staticFile(`voice/${line.id}.mp3`)} volume={1}/></Sequence>)}
-    {Object.entries(SCENES).map(([id, Scene]) => <Sequence key={id} from={START[id]} durationInFrames={length(id)}><Scene/></Sequence>)}
+    <Audio src={staticFile("music.wav")} volume={(f) => (f < VOICE_END ? 0.36 : 0.6)}/>
+    {LINES.map((line) => <Sequence key={line.id} from={START[line.id]} durationInFrames={length(line.id) + 15}><Audio src={staticFile(`voice/${line.id}.wav`)} volume={1}/></Sequence>)}
+    {Object.entries(SCENES).map(([id, Scene]) => <Sequence key={id} from={START[id]} durationInFrames={length(id)}><SceneLength.Provider value={length(id)}><Scene/></SceneLength.Provider></Sequence>)}
     <Sequence from={START.cta} durationInFrames={TOTAL - START.cta}><Cta/></Sequence>
     {LINES.filter((line) => line.id !== "cta").map((line) => <Sequence key={`caption-${line.id}`} from={START[line.id]} durationInFrames={length(line.id)}><Caption line={line} frames={length(line.id)}/></Sequence>)}
   </AbsoluteFill>;

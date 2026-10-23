@@ -16,7 +16,7 @@ import numpy as np
 
 RATE = 44100
 END_HOLD = 3.2  # the end card after the last line
-BPM = 100
+BPM = 118  # Reels pace
 BEAT = 60 / BPM
 rng = np.random.default_rng(7)
 
@@ -72,6 +72,24 @@ def dhol_high(seconds=0.18):
     ring = np.sin(2 * np.pi * 410 * t) * env(n, 0.001, 0.05)
     slap = np.diff(rng.standard_normal(n + 1)) * env(n, 0.0005, 0.02) * 0.5
     return (ring + slap) * 0.55
+
+
+def clap(seconds=0.16):
+    """A clap: a few quick bursts of mid noise, the way hands never land at once."""
+    n = int(seconds * RATE)
+    out = np.zeros(n)
+    noise = np.diff(rng.standard_normal(n + 1))
+    for k, d in enumerate([0, 0.008, 0.017]):
+        i = int(d * RATE)
+        out[i:] += noise[: n - i] * env(n - i, 0.0005, 0.03 if k == 2 else 0.006)
+    return out * 0.45
+
+
+def kick(seconds=0.3):
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    freq = 45 + 90 * np.exp(-t * 40)
+    return np.sin(2 * np.pi * np.cumsum(freq) / RATE) * env(n, 0.001, 0.12) * 0.9
 
 
 def shaker(seconds=0.06):
@@ -176,6 +194,10 @@ while at < VOICE_END + 0.6:
         put(dhol_low(), at, 1.0)
     if pos in HIGH:
         put(dhol_high(), at, 0.6 if soft else 0.9, pan=-0.25)
+    if not soft and pos in (0, 4):
+        put(kick(), at, 0.8)
+    if pos in (2, 6):
+        put(clap(), at, 0.5 if soft else 0.85, pan=0.1)
     for k in range(2):
         put(shaker(), at + k * step / 2, 0.8 if k == 0 else 0.5, pan=0.35)
     m = MELODY[i % len(MELODY)]

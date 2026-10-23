@@ -1,70 +1,70 @@
 [
   {
     "id": "hook",
-    "caption": "Shaadi ka invitation... abhi bhi PDF mein?",
+    "caption": "Shaadi ka invitation... abhi bhi PDF mein?!",
     "highlight": [
       "PDF"
     ],
-    "seconds": 5.304
+    "seconds": 3.25
   },
   {
     "id": "reveal",
-    "caption": "Milo WowLink se. Haath se bana, animated invitation, bas ek link mein.",
+    "caption": "Toh milo WowLink se! Haath se bana, animated invitation, bas ek link mein!",
     "highlight": [
       "WowLink",
       "link"
     ],
-    "seconds": 6.864
+    "seconds": 5.268
   },
   {
     "id": "studio",
-    "caption": "Occasion chuno, naam aur date likho, aur publish karo.",
+    "caption": "Occasion chuno, naam likho, aur publish! Bas!",
     "highlight": [
       "publish"
     ],
-    "seconds": 4.8
+    "seconds": 4.021
   },
   {
     "id": "guest",
-    "caption": "Mehmaan link kholte hain, toh invitation sach mein khulta hai.",
+    "caption": "Mehmaan link kholte hain, aur invitation sach mein khulta hai!",
     "highlight": [
       "khulta"
     ],
-    "seconds": 4.512
+    "seconds": 3.24
   },
   {
     "id": "rsvp",
-    "caption": "Countdown, calendar, aur ek tap mein RSVP.",
+    "caption": "Countdown! Calendar! Aur ek tap mein RSVP!",
     "highlight": [
       "RSVP"
     ],
-    "seconds": 4.512
+    "seconds": 4.584
   },
   {
     "id": "languages",
-    "caption": "Gujarati, Hindi ya English, jismein chaho.",
+    "caption": "Gujarati, Hindi ya English, aapki marzi!",
     "highlight": [
       "Gujarati",
       "Hindi",
       "English"
     ],
-    "seconds": 4.416
+    "seconds": 3.03
   },
   {
     "id": "host",
-    "caption": "Aur saare jawaab, ek hi jagah.",
+    "caption": "Aur saare jawaab, ek hi jagah!",
     "highlight": [
       "ek",
       "jagah"
     ],
-    "seconds": 3.24
+    "seconds": 2.113
   },
   {
     "id": "cta",
-    "caption": "Apna pehla invitation free mein banao.",
+    "caption": "Toh der kis baat ki? Apna pehla invitation free mein banao!",
     "highlight": [
       "free"
     ],
-    "seconds": 3.696
+    "seconds": 4.318
   }
 ]

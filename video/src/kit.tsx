@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
 import { AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { loadFont } from "@remotion/fonts";
 
@@ -12,6 +12,18 @@ export const F = { serif: "Fraunces, serif", sans: "Figtree, sans-serif", hand: 
 
 for (const [family, file, style] of [["Fraunces", "fraunces.woff2", "normal"], ["Fraunces", "fraunces-italic.woff2", "italic"], ["Figtree", "figtree.woff2", "normal"], ["Caveat", "caveat.woff2", "normal"], ["Noto Serif Devanagari", "noto-serif-devanagari.woff2", "normal"], ["Noto Serif Gujarati", "noto-serif-gujarati.woff2", "normal"]] as const) {
   loadFont({ family, url: staticFile(`fonts/${file}`), style, weight: "100 900" });
+}
+
+/** How many frames the current scene really has (its voice line's length). */
+export const SceneLength = createContext(0);
+
+/**
+ * The scene's timing, fitted to its line: each scene was designed `base` frames long, and t(n) moves frame n to the
+ * same moment in the real length, so a new script never leaves a scene's animations out of step.
+ */
+export function useT(base: number) {
+  const length = useContext(SceneLength) || base;
+  return (n: number) => Math.round((n * length) / base);
 }
 
 /** The frame size, and whether this is the wide (16:9) version. */
