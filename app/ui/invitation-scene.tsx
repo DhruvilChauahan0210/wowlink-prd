@@ -2,6 +2,7 @@
 
 import { GUEST_TEXT, OCCASION_GU } from "../lib/i18n";
 import { formatEventDay, formatInvitationDate, formatInvitationTime, sortSchedule, type InvitationDraft, type InvitationTemplate, type Lang } from "../lib/invitations";
+import { paletteFor, paletteStyle } from "../lib/palette";
 import { Art, type ArtName } from "./art";
 import { Flower, Star } from "./doodles";
 import { OPEN_HINT, Opener, ScrollRod } from "./openers";
@@ -33,7 +34,8 @@ export function InvitationScene({ template, draft, opened, onOpen, onReplay, onD
   const art = template.id as ArtName;
   const city = draft.venue.split(",").at(-1)?.trim() || t.venueFallback;
   const schedule = sortSchedule(draft.events);
-  return <section className={`inv-scene inv-${template.id}${opened ? " is-open" : ""}${compact ? " is-compact" : ""}`} aria-label={`${template.category} invitation preview`}>
+  const palette = paletteFor(draft.palette);
+  return <section className={`inv-scene inv-${template.id}${opened ? " is-open" : ""}${compact ? " is-compact" : ""}${palette ? " has-palette" : ""}`} style={palette ? paletteStyle(palette) : undefined} aria-label={`${template.category} invitation preview`}>
     <div className="inv-backdrop" aria-hidden="true">
       <Flower className="doodle inv-d1"/><Star className="doodle inv-d2"/><Flower className="doodle inv-d3"/><Star className="doodle inv-d4"/>
     </div>

@@ -1,4 +1,5 @@
 import type { Attendance, Lang, TemplateId } from "./invitations";
+import type { PaletteId } from "./palette";
 
 /*
  * The host's screens (the studio, the manage page, My invitations), in English and Gujarati. Separate from what
@@ -75,6 +76,11 @@ const en = {
   forGuests: "for guests",
   languageHelp: "The language the invitation opens in. Guests can switch between Gujarati and English themselves.",
   languageGroup: "Language for guests",
+  colours: "Colours",
+  coloursHelp: "Tint the invitation’s handwriting, underlines and little doodles. The drawing keeps its own watercolours.",
+  occasionColours: "The occasion’s own",
+  ownColour: "Your own colour",
+  paletteNames: { sindoor: "Sindoor red", marigold: "Marigold", rani: "Rani pink", peacock: "Peacock", mehndi: "Mehndi green", indigo: "Indigo", kesar: "Kesar" } as Record<PaletteId, string>,
   messageLegend: "Message to guests",
   messageLabel: "Your message to guests",
   messagePlaceholder: "A few words for the people you’re inviting…",
@@ -326,6 +332,11 @@ const gu: HostText = {
   forGuests: "મહેમાનો માટે",
   languageHelp: "આમંત્રણ કઈ ભાષામાં ખૂલશે. મહેમાનો જાતે ગુજરાતી અને અંગ્રેજી વચ્ચે બદલી શકે છે.",
   languageGroup: "મહેમાનો માટે ભાષા",
+  colours: "રંગ",
+  coloursHelp: "આમંત્રણના હાથે લખેલા શબ્દો, લીટીઓ અને નાનાં ચિત્રોનો રંગ. મુખ્ય ચિત્ર પોતાના રંગમાં જ રહેશે.",
+  occasionColours: "પ્રસંગના પોતાના રંગ",
+  ownColour: "આપનો પોતાનો રંગ",
+  paletteNames: { sindoor: "સિંદૂરી", marigold: "ગલગોટા", rani: "રાણી ગુલાબી", peacock: "મોરપીંછ", mehndi: "મહેંદી લીલો", indigo: "ગળી", kesar: "કેસરી" },
   messageLegend: "મહેમાનો માટે સંદેશ",
   messageLabel: "મહેમાનો માટે આપનો સંદેશ",
   messagePlaceholder: "આપ જેમને આમંત્રણ આપો છો તેમના માટે થોડા શબ્દો…",

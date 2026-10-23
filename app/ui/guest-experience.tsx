@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ATTENDANCE, LIMITS, formatEventDay, formatInvitationDate, formatInvitationTime, formatShortDay, isLang, sortSchedule, type Attendance, type InvitationTemplate, type Lang, type ScheduleItem } from "../lib/invitations";
 import { calendarEvents, dayPhase, daysUntil, eventStartMs, googleCalendarUrl, toIcs, type DayPhase } from "../lib/calendar";
 import { answerFor, type AudienceView, type ByEvent } from "../lib/guests";
+import { paletteFor, paletteStyle } from "../lib/palette";
 import { GUEST_TEXT, LANG_KEY, type GuestText } from "../lib/i18n";
 import type { PublicWish } from "../lib/store";
 import { MomentMark, WowLinkBrand } from "./brand";
@@ -253,7 +254,8 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const [pendingThe, pendingWord] = t.pendingHeading;
   const [celebrationsThe, celebrationsWord] = t.celebrationsHeading(!!guest);
 
-  return <div className="cinema invitation-page" lang={lang}>
+  const palette = paletteFor(draft.palette);
+  return <div className={`cinema invitation-page${palette ? " has-palette" : ""}`} style={palette ? paletteStyle(palette) : undefined} lang={lang}>
     <header className="invitation-header theme-paper">
       <WowLinkBrand/>
       {!live && <span className="invitation-context">{mode === "draft" ? "Draft preview" : "Template preview"}<i aria-hidden="true">·</i>{template.category}</span>}

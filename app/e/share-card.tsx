@@ -3,6 +3,7 @@ import path from "node:path";
 import { ImageResponse } from "next/og";
 import { formatInvitationDate, formatInvitationTime, getInvitationTemplate, sortSchedule } from "../lib/invitations";
 import type { PublicExperience } from "../lib/store";
+import { paletteFor } from "../lib/palette";
 import { renderSvg } from "../lib/svg-string";
 import { StandaloneArt, type ArtName } from "../ui/art";
 
@@ -61,7 +62,8 @@ export async function shareCard(experience: PublicExperience | null, addressee?:
 
   const name = (experience?.templateId ?? "wedding") as ArtName;
   const template = getInvitationTemplate(name);
-  const tone = TONE[name];
+  // the host's colours, when they chose some
+  const tone = paletteFor(experience?.palette)?.accent ?? TONE[name];
   const title = drawable(experience?.title ?? "This invitation isn’t available");
   const titleSize = title.length > 34 ? 54 : title.length > 22 ? 66 : 80;
   const when = experience ? [formatInvitationDate(experience.date, true), formatInvitationTime(experience.time)].filter(Boolean).join(" · ") : "";

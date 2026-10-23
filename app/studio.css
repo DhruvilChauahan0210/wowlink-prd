@@ -310,7 +310,8 @@
 
 /* ---------- Guest page: countdown and add-to-calendar ---------- */
 .inv-countdown{display:flex;align-items:center;gap:12px;margin:16px 0 0;font:700 30px/1.1 var(--hand);color:var(--accent);rotate:-1.5deg}
-.inv-countdown-n{display:grid;place-items:center;min-width:86px;height:74px;padding:0 16px;font:400 46px/1 var(--serif);color:var(--text);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 100' preserveAspectRatio='none'%3E%3Cpath d='M64 8C30 5 7 27 9 53 11 81 41 95 69 91 99 87 115 63 111 39 107 17 82 5 55 9 45 11 37 15 30 21' fill='none' stroke='%23a8341f' stroke-width='3' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+.inv-countdown-n{display:grid;place-items:center;min-width:86px;height:74px;padding:0 16px;font:400 46px/1 var(--serif);color:var(--text);position:relative;isolation:isolate}
+.inv-countdown-n:before{content:"";position:absolute;inset:0;z-index:-1;background:var(--scribble,#a8341f);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 100' preserveAspectRatio='none'%3E%3Cpath d='M64 8C30 5 7 27 9 53 11 81 41 95 69 91 99 87 115 63 111 39 107 17 82 5 55 9 45 11 37 15 30 21' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 100' preserveAspectRatio='none'%3E%3Cpath d='M64 8C30 5 7 27 9 53 11 81 41 95 69 91 99 87 115 63 111 39 107 17 82 5 55 9 45 11 37 15 30 21' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
 .inv-calendar{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;margin-top:16px}
 .inv-calendar>span{font-size:14px;color:var(--muted)}
 .cinema .inv-calendar a,.cinema .inv-calendar button{margin:0;padding:0;border:0;background:none;cursor:pointer;font:700 26px/1 var(--hand);color:var(--accent-soft);text-decoration:underline wavy;text-underline-offset:6px}
@@ -324,6 +325,21 @@
 .cinema .studio-event-remove:hover{color:var(--accent)}
 .studio-event .studio-field{margin-bottom:12px}
 .studio-event-add{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:4px}
+.studio-palette,.studio-palette-swatches{display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px}
+.studio-palette label{position:relative;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;cursor:pointer}
+.studio-palette input[type=radio]{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.studio-palette .swatch{pointer-events:none;width:28px;height:28px;border-radius:50%;background:var(--swatch);box-shadow:inset 0 0 0 2px #2a1d1426;rotate:-6deg}
+/* the occasion's own: half its colour, half paper, like a sample */
+.studio-palette .swatch.is-own{background:linear-gradient(135deg,var(--swatch) 50%,var(--surface) 50%)}
+.studio-palette label.is-selected:after{content:"";position:absolute;inset:2px;border:2px solid var(--text);border-radius:47% 53% 50% 50%;rotate:-10deg}
+.studio-palette label:has(input:focus-visible){outline:2px dashed var(--accent);outline-offset:2px}
+.studio-palette label.studio-own-colour{width:auto;height:42px;display:inline-flex;gap:8px;padding:0 14px 0 8px;border-radius:999px;font:700 22px/1 var(--hand);color:var(--muted)}
+.studio-palette label.studio-own-colour.is-selected:after{border-radius:999px;rotate:-1.5deg}
+@media (max-width:480px){.studio-palette label{width:38px;height:38px}.studio-palette .swatch{width:26px;height:26px}}
+.studio-own-colour input[type=color]{width:30px;height:30px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer}
+.studio-own-colour input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.studio-own-colour input[type=color]::-webkit-color-swatch{border:0;border-radius:50%}
+.studio-palette-name{margin:8px 0 0;font:700 22px/1.1 var(--hand);color:var(--muted)}
 .studio-removed{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#e0922f24}
 .studio-removed p{flex:1 1 220px;font-size:14px;line-height:1.5;color:var(--text)}
 .studio-removed .share-chip{font-size:22px}
@@ -337,7 +353,7 @@
 .cinema .inv-schedule-head .cin-text-link{border:0;border-bottom:1.5px solid currentColor;background:none;cursor:pointer;padding:6px 0;font:700 24px/1.1 var(--hand);text-align:left}
 .inv-timeline{list-style:none;margin:0 auto;padding:0;max-width:860px;position:relative}
 /* the thread that ties the events together, hand-drawn and wavy */
-.inv-timeline:before{content:"";position:absolute;left:31px;top:24px;bottom:24px;width:14px;margin-left:-7px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cpath d='M7 0C12 16 2 32 7 48S12 64 7 64' fill='none' stroke='%23a8341f' stroke-opacity='.55' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/14px 64px repeat-y}
+.inv-timeline:before{content:"";position:absolute;left:31px;top:24px;bottom:24px;width:14px;margin-left:-7px;background:var(--scribble,#a8341f);opacity:.55;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cpath d='M7 0C12 16 2 32 7 48S12 64 7 64' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/14px 64px repeat-y;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cpath d='M7 0C12 16 2 32 7 48S12 64 7 64' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/14px 64px repeat-y}
 .inv-timeline-item{position:relative;padding:0 0 34px 92px;min-height:64px}
 .inv-timeline-item:last-child{padding-bottom:0}
 .inv-timeline-mark{position:absolute;left:0;top:-2px;display:grid;place-items:center;width:62px;height:62px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 2px var(--text),0 8px 16px -8px #2a1d1466;color:var(--accent);rotate:-4deg}
@@ -387,6 +403,13 @@
 .inv-rsvp-confirmation .inv-rsvp-summary{font:400 21px/1.35 var(--serif);color:var(--text);margin-bottom:10px}
 .inv-rsvp-confirmation .inv-rsvp-meta{font-size:14px;margin-bottom:8px}
 .inv-rsvp-confirmation .inv-rsvp-fresh{font:700 22px/1.25 var(--hand);color:var(--accent);margin-bottom:8px}
+
+/* ---------- The host's colours (palette.ts): they override the occasion's, on the page and in the studio preview ---------- */
+/* The guest page itself is dark, so words on it take the light shade; the paper sections and the opening scene take the deep one. */
+.has-palette{--accent:var(--p-light);--accent-soft:var(--p-light);--tone:var(--p-tone);--tone-2:var(--p-tone2);--scribble:var(--p-accent)}
+.has-palette :is(.theme-paper,.inv-scene),.inv-scene.has-palette{--accent:var(--p-accent);--accent-soft:var(--p-accent)}
+.has-palette .theme-dark{--accent:var(--p-light);--accent-soft:var(--p-light)}
+.has-palette .inv-timeline-item:nth-child(even) .inv-timeline-mark{color:var(--p-tone2)}
 
 /* ---------- On the day, and after it ---------- */
 .inv-today{display:flex;align-items:flex-start;gap:14px 28px;flex-wrap:wrap;padding:18px clamp(20px,7vw,112px);border-bottom:1.5px dashed var(--line-strong)}

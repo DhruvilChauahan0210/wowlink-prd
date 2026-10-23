@@ -69,7 +69,9 @@ html.lenis,html.lenis body{height:auto}
 .cinema h1 em,.cinema h2 em{font-style:italic;color:var(--accent-soft)}
 
 /* Hand-drawn extras */
-.scribble{white-space:nowrap;padding-bottom:.08em;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'%3E%3Cpath d='M3 9C28 3 52 12 84 6S146 11 197 4' fill='none' stroke='%23a8341f' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") 0 100%/100% .28em no-repeat}
+/* the hand-drawn underline: a mask in --scribble (sindoor red unless the host picks colours, see .has-palette) */
+.scribble{position:relative;white-space:nowrap;padding-bottom:.08em}
+.scribble:after{content:"";position:absolute;left:0;right:0;bottom:0;height:.28em;pointer-events:none;background:var(--scribble,#a8341f);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'%3E%3Cpath d='M3 9C28 3 52 12 84 6S146 11 197 4' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'%3E%3Cpath d='M3 9C28 3 52 12 84 6S146 11 197 4' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
 .cin-note{font:700 26px/1.1 var(--hand);color:var(--accent)}
 .doodle{display:block;width:34px;height:34px;color:var(--accent);flex:none}
 
@@ -229,6 +231,8 @@ html.lenis,html.lenis body{height:auto}
 .cin-plan{position:relative;isolation:isolate;display:flex;flex-direction:column;padding:clamp(32px,3.6vw,52px)}
 .cin-plan::before{inset:-3px;z-index:-2;background:var(--surface);-webkit-mask-image:var(--rough-f2);mask-image:var(--rough-f2)}
 .cin-plan::after{inset:-3px;z-index:-1;background:var(--text);-webkit-mask-image:var(--rough-b);mask-image:var(--rough-b)}
+/* the dark card takes .theme-dark's colours but not its square background: its only fill is the hand-cut shape */
+.cin-plan-pro{background:none}
 .cin-plan-pro::before{background:#1f1813}
 .cin-plan-pro::after{background:#1f1813}
 .cin-plan-note{position:absolute;top:26px;right:34px;rotate:4deg;font:700 28px/1 var(--hand);color:var(--accent)}

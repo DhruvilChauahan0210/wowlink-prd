@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { EVENT_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
 import { WowLinkBrand } from "../ui/brand";
@@ -9,6 +9,7 @@ import { InvitationScene } from "../ui/invitation-scene";
 import { CopyField, ShareTools } from "../ui/share-tools";
 import { HostLangSwitch, useHostLang } from "../ui/host-lang";
 import { hostMessage, type HostText } from "../lib/host-i18n";
+import { OCCASION_TONES, PALETTES, PALETTE_IDS, type PaletteId } from "../lib/palette";
 import type { Experience, Rsvp } from "../lib/store";
 
 const LANGUAGE_CHOICES = [["en", "English"], ["gu", "ગુજરાતી"]] as const;
@@ -70,7 +71,7 @@ export default function CreatePage() {
       if (!response.ok) throw new Error();
       const { experience, rsvps } = (await response.json()) as { experience: Experience; rsvps: Rsvp[] };
       setTemplateId(experience.templateId);
-      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en", thanks: experience.thanks ?? "" });
+      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en", thanks: experience.thanks ?? "", palette: experience.palette ?? "" });
       published.current = experience.events ?? [];
       usage.current = Object.fromEntries(published.current.map(e => [e.id, {
         replies: rsvps.filter(r => r.byEvent && Object.hasOwn(r.byEvent, e.id)).length,
@@ -196,6 +197,7 @@ export default function CreatePage() {
     setPublishing(false);
   }
 
+  const customColour = /^#[0-9a-f]{6}$/i.test(draft.palette ?? "") ? draft.palette! : "";
   const fieldError = (key: keyof InvitationDraft) => errors[key] ? <p className="studio-error" id={`${key}-error`}>{message(errors[key]!)}</p> : null;
   const described = (key: keyof InvitationDraft) => errors[key] ? { "aria-invalid": true, "aria-describedby": `${key}-error` } : {};
 
@@ -253,6 +255,18 @@ export default function CreatePage() {
           </div>}
           {fieldError("events")}
           <datalist id="event-names">{EVENT_NAMES.map(name => <option key={name} value={name}/>)}</datalist>
+        </fieldset>
+        <fieldset className="studio-fieldset">
+          <legend>{h.colours}</legend>
+          <p className="studio-help">{h.coloursHelp}</p>
+          <div className="studio-palette">
+            <div className="studio-palette-swatches" role="radiogroup" aria-label={h.colours}>
+              <label className={!draft.palette ? "is-selected" : ""} title={h.occasionColours}><input type="radio" name="palette" checked={!draft.palette} onChange={() => update("palette", "")} aria-label={h.occasionColours}/><span className="swatch is-own" style={{ "--swatch": OCCASION_TONES[template.id] } as CSSProperties}/></label>
+              {PALETTE_IDS.map(id => <label key={id} className={draft.palette === id ? "is-selected" : ""} title={h.paletteNames[id]}><input type="radio" name="palette" checked={draft.palette === id} onChange={() => update("palette", id)} aria-label={h.paletteNames[id]}/><span className="swatch" style={{ "--swatch": PALETTES[id].tone } as CSSProperties}/></label>)}
+            </div>
+            <label className={`studio-own-colour${customColour ? " is-selected" : ""}`}><input type="color" value={customColour || "#7a3fb5"} onChange={event => update("palette", event.target.value.toLowerCase())} aria-label={h.ownColour}/><span>{h.ownColour}</span></label>
+          </div>
+          <p className="studio-palette-name" aria-live="polite">{!draft.palette ? h.occasionColours : customColour ? "" : h.paletteNames[draft.palette as PaletteId]}</p>
         </fieldset>
         <fieldset className="studio-fieldset">
           <legend>{h.language} <span className="studio-legend-note">{h.forGuests}</span></legend>
