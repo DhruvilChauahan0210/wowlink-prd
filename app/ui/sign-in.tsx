@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { HostText } from "../lib/host-i18n";
 import { browserSupabase } from "../lib/supabase-browser";
 
@@ -13,11 +13,48 @@ export function SignIn({ h, next, onSignedIn, beforeLeaving }: { h: HostText; ne
   const id = useId();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [stage, setStage] = useState<"email" | "code">("email");
+  const [stage, setStage] = useState<"email" | "code" | "done">("email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const supabase = browserSupabase();
   const callback = () => `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
+  // "Continue with Google" only once Google is switched on in the Supabase project (its public settings say so).
+  const [google, setGoogle] = useState(false);
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    if (!url || !key) return;
+    fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } }).then(r => r.json()).then(settings => setGoogle(settings?.external?.google === true)).catch(() => undefined);
+  }, []);
+
+  // Signed in only once, however it happens.
+  const signedIn = useRef(onSignedIn);
+  signedIn.current = onSignedIn;
+  const finish = () => {
+    setStage("done");
+    signedIn.current();
+  };
+
+  // Waiting for the code, the host may tap the email's link instead (in another tab): notice, and carry on.
+  useEffect(() => {
+    if (stage !== "code") return;
+    let stopped = false;
+    const check = async () => {
+      const body = await fetch("/api/account", { cache: "no-store" }).then(r => r.json()).catch(() => null);
+      if (!stopped && body?.user) {
+        stopped = true;
+        finish();
+      }
+    };
+    const timer = setInterval(() => void check(), 4000);
+    addEventListener("focus", check);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+      removeEventListener("focus", check);
+    };
+  }, [stage]);
 
   async function sendCode(event?: FormEvent) {
     event?.preventDefault();
@@ -40,10 +77,10 @@ export function SignIn({ h, next, onSignedIn, beforeLeaving }: { h: HostText; ne
     const { error: failed } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.replace(/\s/g, ""), type: "email" });
     setBusy(false);
     if (failed) return setError(h.wrongCode);
-    onSignedIn();
+    finish();
   }
 
-  async function google() {
+  async function withGoogle() {
     if (!supabase) return;
     beforeLeaving?.();
     setBusy(true);
@@ -54,7 +91,7 @@ export function SignIn({ h, next, onSignedIn, beforeLeaving }: { h: HostText; ne
     }
   }
 
-  if (!supabase) return null;
+  if (!supabase || stage === "done") return null;
   return <div className="sign-in">
     {stage === "email" ? <form className="sign-in-form" onSubmit={sendCode}>
       <div className="studio-field"><label htmlFor={`${id}-email`}>{h.emailLabel}</label><input id={`${id}-email`} type="email" autoComplete="email" inputMode="email" required value={email} onChange={e => setEmail(e.target.value)}/></div>
@@ -69,7 +106,9 @@ export function SignIn({ h, next, onSignedIn, beforeLeaving }: { h: HostText; ne
       </div>
     </form>}
     {error && <p className="studio-error" role="alert">{error}</p>}
-    <p className="sign-in-or"><span>{h.orWord}</span></p>
-    <button type="button" className="cin-cta cin-cta-outline sign-in-google" disabled={busy} onClick={() => void google()}>{h.continueGoogle}</button>
+    {google && <>
+      <p className="sign-in-or"><span>{h.orWord}</span></p>
+      <button type="button" className="cin-cta cin-cta-outline sign-in-google" disabled={busy} onClick={() => void withGoogle()}>{h.continueGoogle}</button>
+    </>}
   </div>;
 }

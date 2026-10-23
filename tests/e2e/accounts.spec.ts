@@ -74,6 +74,14 @@ test("My invitations: who's signed in, and the account's invitations on a phone 
   await expect(page.locator(".manage-hero h1")).toHaveText("Aarav's mundan");
 });
 
+test("a sign-in link that comes back to the home page goes on to finish signing in", async ({ request }) => {
+  const landed = await request.get("/?code=abc123", { maxRedirects: 0 });
+  expect(landed.status()).toBe(303);
+  expect(landed.headers().location).toMatch(/\/auth\/callback\?code=abc123&next=%2Fmine$/);
+  // The home page itself is untouched.
+  expect((await request.get("/", { maxRedirects: 0 })).status()).toBe(200);
+});
+
 test.describe("signed out", () => {
   test.use({ signedIn: false });
 
