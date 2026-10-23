@@ -17,10 +17,16 @@ page /templates
 page /create
 page /api/account
 
-health=$(curl -s --max-time 20 "$SITE/api/health" || true)
 field() { echo "$health" | python3 -c "import json,sys
 try: print(json.load(sys.stdin).get('$1'))
 except Exception: print('unreadable')"; }
+# Right after a deploy the old site can answer for a few seconds: try for up to a minute, past any cache.
+for attempt in 1 2 3 4 5 6; do
+  health=$(curl -s --max-time 20 -H "Cache-Control: no-cache" "$SITE/api/health?t=$(date +%s)" || true)
+  [ "$(field db)" = "ok" ] && break
+  [ "$attempt" -lt 6 ] && sleep 10
+done
+[ "$(field db)" = "unreadable" ] && echo "health answered: $(echo "$health" | head -c 150)"
 echo "health: db $(field db), errors in the last hour $(field errorsLastHour)"
 if [ "$(field ok)" != "True" ] || [ "$(field db)" != "ok" ]; then
   echo "FAIL  /api/health: the site or its database isn't well"; fail=1
