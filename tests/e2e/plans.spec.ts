@@ -94,3 +94,14 @@ test("the manage page shows a free invitation what the Creator studio adds", asy
   await expect(page.getByRole("button", { name: "Every reply (CSV)" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Make another like this/ })).toHaveCount(0);
 });
+
+test("the home page and /pricing show the same plan cards, and only what's true today", async ({ page }) => {
+  await page.goto("/pricing");
+  const pricing = await page.locator(".cin-plan-grid").innerText();
+  await page.goto("/");
+  const home = await page.locator("#plans .cin-plan-grid").innerText();
+  expect(home).toBe(pricing);
+  expect(home).toContain("One live invitation at a time");
+  expect(home).toContain("Coming soon");
+  expect(home).not.toMatch(/20 live invitations|Preview the creator studio/i);
+});

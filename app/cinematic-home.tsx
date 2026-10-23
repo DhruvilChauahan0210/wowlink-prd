@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PlanCards } from "./ui/plan-cards";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Art, ArtImage } from "./ui/art";
 import { ArrowCurl, Diya, Flower, Pen, Star } from "./ui/doodles";
@@ -180,11 +181,9 @@ function ShareJourney({ reduced }: { reduced: boolean }) {
 }
 
 function Plans() {
-  return <section className="cin-plans theme-paper" id="plans"><div className="cin-section-top"><h2>Free for your own <span className="scribble">occasion</span>.</h2><p>Creating for clients? The studio plan holds up to 20 live invitations.</p></div>
-    <div className="cin-plan-grid">
-      <article className="cin-plan"><span className="cin-plan-note">for your own day</span><span className="cin-plan-name">Personal</span><h3>Your moment</h3><p>One beautiful occasion, with every essential.</p><div className="cin-price">₹0<span>free to create</span></div><ul><li>The four starter occasions</li><li>One celebration, up to 50 replies</li><li>Shareable link and QR code</li><li>Up until 30 days after the day</li></ul><Link className="cin-cta cin-cta-outline" href="/templates">Create your invitation</Link></article>
-      <article className="cin-plan cin-plan-pro theme-dark"><span className="cin-plan-note">for planners</span><span className="cin-plan-name">Creator studio</span><h3>Your signature</h3><p>A home for the occasions you create for others.</p><div className="cin-price">₹1,999<span>per month</span></div><ul><li>Every occasion, and schedules of celebrations</li><li>A personal link for each family</li><li>Your own colours, songs and polls</li><li>Spreadsheets and detailed insights</li></ul><Link className="cin-cta cin-cta-light" href="/create?template=wedding">Preview the creator studio</Link></article>
-    </div></section>;
+  return <section className="cin-plans theme-paper" id="plans"><div className="cin-section-top"><h2>Free for your own <span className="scribble">occasion</span>.</h2><p>Planning for clients? The Creator studio is opening soon.</p></div>
+    <PlanCards lang="en"/>
+    <p className="cin-plans-more"><Link href="/pricing">Compare the plans <span aria-hidden="true">→</span></Link></p></section>;
 }
 
 export default function CinematicHome() {
