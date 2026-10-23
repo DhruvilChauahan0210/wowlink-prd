@@ -1,0 +1,20 @@
+# WowLink's Supabase Auth settings, kept in the repo. `supabase config push` sends only what this file declares to the
+# linked project (everything else there stays as it is); `supabase config diff` shows the changes first.
+
+project_id = "wowlink"
+
+[auth]
+# Where sign-in emails and Google send hosts back: the live site, and a local `npm run dev`.
+site_url = "https://wowlink-one.vercel.app"
+additional_redirect_urls = ["https://wowlink-one.vercel.app/**", "http://localhost:3000/**"]
+
+# Sign-in emails carry a code to type (app/ui/sign-in.tsx), and a link as well. A first sign-in sends the
+# confirmation email, later ones the magic link email: both say the same. Supabase's free plan only allows changing
+# them with an email provider of our own (custom SMTP); until then these stay off and the emails have only a link.
+# [auth.email.template.confirmation]
+# subject = "Your WowLink code"
+# content_path = "./supabase/templates/sign-in-code.html"
+#
+# [auth.email.template.magic_link]
+# subject = "Your WowLink code"
+# content_path = "./supabase/templates/sign-in-code.html"

@@ -61,8 +61,10 @@ export function SignIn({ h, next, onSignedIn, beforeLeaving }: { h: HostText; ne
     if (!supabase) return;
     setBusy(true);
     setError("");
-    // The email has the code, and a link too: opened in this browser, the link signs in as well.
-    const { error: failed } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: callback() } });
+    // The email's link (and the code, when the email has one) signs in this browser. The link opens a new tab: that one
+    // says so, while this one notices and carries on.
+    const linkLanding = `/signin?signed=1&next=${encodeURIComponent(next)}`;
+    const { error: failed } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(linkLanding)}` } });
     setBusy(false);
     if (failed) return setError(failed.status === 429 ? h.waitForCode : h.codeFailed);
     setCode("");

@@ -13,17 +13,20 @@ export default function SignInPage() {
   const account = useAccount();
   const [next, setNext] = useState("/mine");
   const [failed, setFailed] = useState(false);
+  // Arrived from the email's link, in a new tab: the tab that asked for it carries on by itself.
+  const [fromLink, setFromLink] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const wanted = params.get("next") ?? "";
     if (/^\/(?!\/)[^\\]*$/.test(wanted)) setNext(wanted);
     setFailed(params.has("failed"));
+    setFromLink(params.has("signed"));
   }, []);
-  // Already signed in: straight on.
+  // Already signed in: straight on (unless this tab came from the email's link).
   useEffect(() => {
-    if (account.email) location.replace(next);
-  }, [account.email, next]);
+    if (account.email && !fromLink && !new URLSearchParams(location.search).has("signed")) location.replace(next);
+  }, [account.email, next, fromLink]);
 
   return <div className="cinema manage-page mine-page" lang={lang}>
     <header className="studio-header theme-paper">
@@ -33,10 +36,16 @@ export default function SignInPage() {
     </header>
     <main className="manage theme-paper">
       <section className="sketch-card manage-card sign-in-card" aria-labelledby="sign-in-heading">
-        <h1 id="sign-in-heading">{h.signInTitle}</h1>
-        <p className="manage-muted">{h.signInBody}</p>
-        {failed && <p className="studio-error" role="alert">{h.signInFailed}</p>}
-        {account.ready && !account.accounts ? <p className="manage-muted">{h.accountsOff}</p> : <SignIn h={h} next={next} onSignedIn={() => location.replace(next)}/>}
+        {fromLink && account.email ? <>
+          <h1 id="sign-in-heading">{h.signedInTitle}</h1>
+          <p className="manage-muted">{h.signedInBody}</p>
+          <div className="manage-actions"><Link className="cin-cta cin-cta-light" href={next}>{h.continueHere}</Link></div>
+        </> : <>
+          <h1 id="sign-in-heading">{h.signInTitle}</h1>
+          <p className="manage-muted">{h.signInBody}</p>
+          {failed && <p className="studio-error" role="alert">{h.signInFailed}</p>}
+          {account.ready && !account.accounts ? <p className="manage-muted">{h.accountsOff}</p> : <SignIn h={h} next={next} onSignedIn={() => location.replace(next)}/>}
+        </>}
       </section>
     </main>
   </div>;
