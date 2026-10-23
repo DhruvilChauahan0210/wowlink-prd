@@ -16,6 +16,8 @@ export type InvitationDraft = {
   events: ScheduleItem[];
   /** The language guests see first (they can switch). Missing means English. */
   language?: Lang;
+  /** A thank-you note the invitation shows once the occasion is over. Optional. */
+  thanks?: string;
 };
 
 export const invitationTemplates = [
@@ -77,7 +79,7 @@ const SAMPLE_SCHEDULE: Partial<Record<InvitationTemplate["id"], ScheduleItem[]>>
 };
 
 export function initialDraft(template: InvitationTemplate): InvitationDraft {
-  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })), language: "en" };
+  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })), language: "en", thanks: "" };
 }
 export const draftKey = (id: string) => `wowlink:draft:${id}`;
 
@@ -91,7 +93,7 @@ export function readDraft(id: string): InvitationDraft | null {
     if (!["title", "date", "time", "venue", "message"].every(key => typeof data[key] === "string")) return null;
     // Drafts saved before schedules existed simply have none.
     const events = Array.isArray(data.events) ? data.events.filter(isScheduleItem) : [];
-    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events, language: isLang(data.language) ? data.language : "en" };
+    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events, language: isLang(data.language) ? data.language : "en", thanks: typeof data.thanks === "string" ? data.thanks : "" };
   } catch { return null; }
 }
 
@@ -180,7 +182,7 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
     // "main" is reserved: calendar links use ?event=main for the main occasion.
     return { id: /^[\w-]{1,40}$/.test(id) && id !== "main" ? id : newEventId(), name: text("name", item), date: text("date", item), time: text("time", item), venue: text("venue", item) };
   });
-  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events, language: isLang(data.language) ? data.language : "en" };
+  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events, language: isLang(data.language) ? data.language : "en", thanks: text("thanks") };
   const errors: DraftErrors = {};
   if (!value.title) errors.title = "Add the names or a title for the occasion.";
   else if (value.title.length > LIMITS.title) errors.title = `Keep the title under ${LIMITS.title} characters.`;
@@ -189,6 +191,7 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
   if (!value.venue) errors.venue = "Add where it’s happening.";
   else if (value.venue.length > LIMITS.venue) errors.venue = `Keep the venue under ${LIMITS.venue} characters.`;
   if (value.message.length > LIMITS.message) errors.message = `Keep the message under ${LIMITS.message} characters.`;
+  if (value.thanks!.length > LIMITS.message) errors.thanks = `Keep the note under ${LIMITS.message} characters.`;
   if (events.length > LIMITS.events) errors.events = `A schedule can have up to ${LIMITS.events} events.`;
   else if (events.some(scheduleItemError)) errors.events = "One of the events in the schedule needs a look.";
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value };

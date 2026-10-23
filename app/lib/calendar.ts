@@ -47,6 +47,32 @@ export function daysUntil(date: string, now = Date.now()) {
   return Math.round((Date.UTC(y, m - 1, d) - today) / 86_400_000);
 }
 
+/** A celebration on the day: still to come today, or under way right now. */
+export type TodayItem = { name: string; time: string; venue: string; now: boolean };
+export type DayPhase = { phase: "before" } | { phase: "today"; items: TodayItem[] } | { phase: "after" };
+
+/**
+ * Where an invitation stands right now, for the celebrations this link shows (or the occasion itself).
+ *   today   something is still to come today, or is under way (a timed celebration lasts three hours)
+ *   after   every one of them is over (an all-day one ends at midnight, India time)
+ *   before  otherwise, including a day whose only celebration has already finished, with more to come
+ */
+export function dayPhase(draft: Pick<InvitationDraft, "date" | "time" | "venue" | "events">, now: number): DayPhase {
+  const all = draft.events.length ? draft.events : [{ name: "", date: draft.date, time: draft.time, venue: "" }];
+  const items = all.filter((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.date)).map((e) => {
+    const start = eventStartMs(e.date, e.time);
+    const end = e.time ? start + DEFAULT_LENGTH_HOURS * 3600_000 : eventStartMs(e.date, "") + 24 * 3600_000;
+    return { name: e.name, time: e.time, venue: e.venue || draft.venue, start, end, dayStart: eventStartMs(e.date, "") };
+  });
+  if (!items.length) return { phase: "before" };
+  if (items.every((e) => e.end <= now)) return { phase: "after" };
+  // Its day has begun and it isn't over (a late celebration running past midnight still counts).
+  const today = items.filter((e) => e.dayStart <= now && e.end > now)
+    .sort((a, b) => a.start - b.start)
+    .map(({ name, time, venue, start }) => ({ name, time, venue, now: !!time && start <= now }));
+  return today.length ? { phase: "today", items: today } : { phase: "before" };
+}
+
 const describe = (e: Event) => [e.message, e.url && `Your invitation: ${e.url}`].filter(Boolean).join("\n\n");
 
 export function googleCalendarUrl(e: Event) {

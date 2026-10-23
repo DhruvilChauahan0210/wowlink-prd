@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ATTENDANCE, LIMITS, formatEventDay, formatInvitationDate, formatInvitationTime, formatShortDay, isLang, sortSchedule, type Attendance, type InvitationTemplate, type Lang, type ScheduleItem } from "../lib/invitations";
-import { calendarEvents, daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../lib/calendar";
+import { calendarEvents, dayPhase, daysUntil, eventStartMs, googleCalendarUrl, toIcs, type DayPhase } from "../lib/calendar";
 import { answerFor, type AudienceView, type ByEvent } from "../lib/guests";
 import { GUEST_TEXT, LANG_KEY, type GuestText } from "../lib/i18n";
 import type { PublicWish } from "../lib/store";
@@ -138,6 +138,15 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const [error, setError] = useState("");
   const [whichError, setWhichError] = useState(false);
   const [pageUrl, setPageUrl] = useState<string | undefined>();
+  // On the day and after it, the page changes. Worked out in the browser (it depends on the clock), every minute.
+  const [phase, setPhase] = useState<DayPhase>({ phase: "before" });
+  useEffect(() => {
+    const check = () => setPhase(dayPhase(draft, Date.now()));
+    check();
+    const tick = setInterval(check, 60_000);
+    return () => clearInterval(tick);
+  }, [draft]);
+  const over = phase.phase === "after";
   const whichRef = useRef<HTMLFieldSetElement>(null);
   const attendanceRef = useRef<HTMLFieldSetElement>(null);
   const focusForm = useRef(false);
@@ -256,16 +265,26 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
     </header>
     <main>
       {previewOnly && guest && <p className="inv-preview-banner" role="note" lang="en">This is how {guest.name} sees their invitation. Replies sent from this preview don’t count.</p>}
+      {!draft.pending && phase.phase === "today" && <section className="inv-today theme-paper" aria-labelledby="today-heading">
+        <h2 id="today-heading" className="inv-today-label">{t.today}</h2>
+        <ul>{phase.items.map((item, i) => <li key={i}>
+          <strong>{item.name || draft.title}</strong>
+          <span>{item.now ? t.happeningNow : formatInvitationTime(item.time, lang) || t.allDay}</span>
+          {item.venue && <span>{item.venue}</span>}
+          {item.venue && <a href={maps(item.venue)} target="_blank" rel="noreferrer">{t.directions} <span aria-hidden="true">→</span></a>}
+        </li>)}</ul>
+      </section>}
+      {!draft.pending && over && <p className="inv-after theme-paper" role="note">{t.afterBanner}</p>}
       <InvitationScene template={template} draft={draft} lang={lang} addressee={guest?.name} opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)} onDetails={() => document.getElementById("occasion-details")?.scrollIntoView({ behavior: smooth() })}/>
       {draft.pending ? <section className="inv-details-section inv-pending theme-paper" id="occasion-details">
         <h2>{pendingThe} <span className="scribble">{pendingWord}</span></h2>
         <p>{t.pendingBody}</p>
       </section> : <>
         <section className="inv-details-section theme-paper" id="occasion-details">
-          <div className="inv-details-heading"><h2>{saveThe} <span className="scribble">{saveWord}</span></h2><Countdown date={draft.date} time={draft.time} events={schedule} t={t}/><button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>{t.replay}</button></div>
+          <div className="inv-details-heading"><h2>{over ? t.rememberThe[0] : saveThe} <span className="scribble">{over ? t.rememberThe[1] : saveWord}</span></h2>{!over && <Countdown date={draft.date} time={draft.time} events={schedule} t={t}/>}<button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>{t.replay}</button></div>
           <div className="inv-details-grid">
             <div><span className="inv-detail-label">{t.when}</span><h3>{formatInvitationDate(draft.date, true, lang)}</h3><p>{[mainItem?.name, formatInvitationTime(draft.time, lang)].filter(Boolean).join(" · ")}</p>
-              {hasDate(draft.date) && <div className="inv-calendar"><span>{t.addToCalendar}</span><a href={googleCalendarUrl(mainEntry)} target="_blank" rel="noreferrer">Google</a>{base ? <a href={`${base}/invite.ics${schedule.length ? "?event=main" : ""}`}>Apple / Outlook</a> : <button type="button" onClick={() => downloadIcs([mainEntry])}>Apple / Outlook</button>}</div>}
+              {hasDate(draft.date) && !over && <div className="inv-calendar"><span>{t.addToCalendar}</span><a href={googleCalendarUrl(mainEntry)} target="_blank" rel="noreferrer">Google</a>{base ? <a href={`${base}/invite.ics${schedule.length ? "?event=main" : ""}`}>Apple / Outlook</a> : <button type="button" onClick={() => downloadIcs([mainEntry])}>Apple / Outlook</button>}</div>}
             </div>
             <div><span className="inv-detail-label">{t.where}</span><h3>{draft.venue || t.somewhere}</h3>{draft.venue && <a href={maps(draft.venue)} target="_blank" rel="noreferrer">{t.openInMaps} <span aria-hidden="true">→</span></a>}</div>
           </div>
@@ -273,9 +292,9 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         {showSchedule && <section className="inv-schedule-section theme-paper" aria-labelledby="schedule-heading">
           <div className="inv-schedule-head">
             <h2 id="schedule-heading">{celebrationsThe} <span className="scribble">{celebrationsWord}</span></h2>
-            {base
+            {!over && (base
               ? <a className="cin-text-link" href={`${base}/invite.ics`}>{t.addAll} <span aria-hidden="true">→</span></a>
-              : <button type="button" className="cin-text-link" onClick={() => downloadIcs(calendarEvents(draft))}>{t.addAll} <span aria-hidden="true">→</span></button>}
+              : <button type="button" className="cin-text-link" onClick={() => downloadIcs(calendarEvents(draft))}>{t.addAll} <span aria-hidden="true">→</span></button>)}
           </div>
           <ol className="inv-timeline">
             {schedule.map(item => {
@@ -286,20 +305,25 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
                 <span className="inv-timeline-day">{formatEventDay(item.date, lang)}</span>
                 <h3>{item.name}</h3>
                 <p>{[formatInvitationTime(item.time, lang) || t.allDay, venue].filter(Boolean).join(" · ")}</p>
-                <div className="inv-calendar">
+                {!over && <div className="inv-calendar">
                   <a href={googleCalendarUrl(entry)} target="_blank" rel="noreferrer" aria-label={t.addGoogle(item.name)}>Google</a>
                   {base
                     ? <a href={`${base}/invite.ics?event=${item.id}`} aria-label={t.addApple(item.name)}>Apple / Outlook</a>
                     : <button type="button" onClick={() => downloadIcs([entry])} aria-label={t.addApple(item.name)}>Apple / Outlook</button>}
                   {item.venue && item.venue !== draft.venue && <a href={maps(item.venue)} target="_blank" rel="noreferrer" aria-label={t.mapFor(item.name)}>{t.map}</a>}
-                </div>
+                </div>}
               </li>;
             })}
           </ol>
         </section>}
       </>}
       <section className="inv-message-section theme-dark"><MomentMark/><blockquote>{draft.message || t.defaultMessage}</blockquote><span className="inv-message-sign">{t.withLove(draft.title)}</span></section>
-      {!draft.pending && <section className="inv-rsvp-section theme-paper" aria-labelledby="rsvp-heading">
+      {!draft.pending && over && <section className="inv-thanks-section theme-paper" aria-labelledby="thanks-heading">
+        <h2 id="thanks-heading">{t.thanksHeading[0]} <span className="scribble">{t.thanksHeading[1]}</span></h2>
+        <p>{draft.thanks || t.thanksDefault}</p>
+        <span className="inv-message-sign">{t.withLove(draft.title)}</span>
+      </section>}
+      {!draft.pending && !over && <section className="inv-rsvp-section theme-paper" aria-labelledby="rsvp-heading">
         <div><h2 id="rsvp-heading">{t.rsvpHeading}</h2><p>{t.rsvpIntro(schedule.length > 1)}</p></div>
         <div className="inv-rsvp-card">
           {state === "done" ? <div className="inv-rsvp-confirmation" role="status">

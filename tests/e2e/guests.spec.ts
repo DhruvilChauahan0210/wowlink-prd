@@ -412,7 +412,6 @@ test.describe("countdown with celebrations after the main day", () => {
   for (const [label, now, expected] of [
     ["before the wedding, it counts to the wedding", "2026-11-07T10:00:00+05:30", /^Tomorrow!$/],
     ["the morning after, it counts to the reception", "2026-11-09T10:00:00+05:30", /^Today: the Reception, in 10 hours$/],
-    ["after the last celebration", "2026-11-10T10:00:00+05:30", /^This day has passed/],
   ] as const) {
     test(label, async ({ page }) => {
       await page.clock.install({ time: new Date(now) });

@@ -123,7 +123,7 @@ function newSlug(taken: Set<string>, length = 7) {
   }
 }
 
-const draftOf = ({ title, date, time, venue, message, events, language }: Experience): InvitationDraft => ({ title, date, time, venue, message, events, language });
+const draftOf = ({ title, date, time, venue, message, events, language, thanks }: Experience): InvitationDraft => ({ title, date, time, venue, message, events, language, thanks });
 /** The most wishes an invitation shows (the latest ones). */
 const SHOWN_WISHES = 30;
 /**

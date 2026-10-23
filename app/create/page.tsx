@@ -66,7 +66,7 @@ export default function CreatePage() {
       if (!response.ok) throw new Error();
       const { experience, rsvps } = (await response.json()) as { experience: Experience; rsvps: Rsvp[] };
       setTemplateId(experience.templateId);
-      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en" });
+      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en", thanks: experience.thanks ?? "" });
       published.current = experience.events ?? [];
       usage.current = Object.fromEntries(published.current.map(e => [e.id, {
         replies: rsvps.filter(r => r.byEvent && Object.hasOwn(r.byEvent, e.id)).length,
@@ -255,7 +255,9 @@ export default function CreatePage() {
             {LANGUAGE_CHOICES.map(([value, label]) => <label key={value} className={(draft.language ?? "en") === value ? "is-selected" : ""} lang={value}><input type="radio" name="language" checked={(draft.language ?? "en") === value} onChange={() => update("language", value)}/><span>{label}</span></label>)}
           </div>
         </fieldset>
-        <fieldset className="studio-fieldset studio-message-field"><legend>Message to guests</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">Your message to guests</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder="A few words for the people you’re inviting…" onChange={event => update("message", event.target.value)} {...described("message")}/><span className="studio-character-count">{draft.message.length} / 500</span>{fieldError("message")}</div></fieldset>
+        <fieldset className="studio-fieldset studio-message-field"><legend>Message to guests</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">Your message to guests</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder="A few words for the people you’re inviting…" onChange={event => update("message", event.target.value)} {...described("message")}/><span className="studio-character-count">{draft.message.length} / 500</span>{fieldError("message")}</div>
+          <div className="studio-field studio-thanks-field"><label htmlFor="thanks">After the day <span>Optional</span></label><p className="studio-help">Once it’s all over, the invitation turns into a thank-you. Write the note guests will see then.</p><textarea id="thanks" rows={3} value={draft.thanks ?? ""} maxLength={500} placeholder="Thank you for the love, the blessings, and for being there…" onChange={event => update("thanks", event.target.value)} {...described("thanks")}/><span className="studio-character-count">{(draft.thanks ?? "").length} / 500</span>{fieldError("thanks")}</div>
+        </fieldset>
         <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status}</span></div>
         <p className="studio-storage-note">{owned ? <>Live at <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. Drafts are also kept on this device.</> : "Drafts are saved on this device. Publish to get a link you can share."}</p>
       </section>

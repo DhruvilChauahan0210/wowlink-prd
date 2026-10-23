@@ -62,7 +62,6 @@ const COUNTDOWN: [string, string, RegExp][] = [
   ["just after midnight India time", "2026-11-08T00:30:00+05:30", /^Today, in 18 hours$/],
   ["that afternoon", "2026-11-08T15:00:00+05:30", /^Today, in 3 hours$/],
   ["once it has started", "2026-11-08T19:00:00+05:30", /^Happening now!$/],
-  ["afterwards", "2026-11-10T10:00:00+05:30", /^This day has passed/],
 ];
 
 test.describe("countdown", () => {
@@ -77,4 +76,10 @@ test.describe("countdown", () => {
       await expect(page.locator(".inv-countdown")).toHaveText(expected);
     });
   }
+  test("afterwards, the countdown gives way to a thank-you", async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-11-10T10:00:00+05:30") });
+    await page.goto(`/e/${slug}`);
+    await expect(page.locator(".inv-after")).toBeVisible();
+    await expect(page.locator(".inv-countdown")).toHaveCount(0);
+  });
 });

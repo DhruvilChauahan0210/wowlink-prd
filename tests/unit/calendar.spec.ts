@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { calendarEvents, daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../../app/lib/calendar";
+import { calendarEvents, dayPhase, daysUntil, eventStartMs, googleCalendarUrl, toIcs } from "../../app/lib/calendar";
 
 const event = { title: "Isha & Kabir", date: "2026-11-08", time: "18:00", venue: "Lakeview Lawns, Udaipur", message: "", events: [] };
 const at = (iso: string) => new Date(iso).getTime();
@@ -72,4 +72,29 @@ test("a schedule becomes one calendar entry per event, named for the occasion, w
   expect(ics).toContain("UID:abc-puja@wowlink");
   // Without a schedule, the occasion itself is the one entry.
   expect(calendarEvents(event, undefined, "abc").map((e) => e.uid)).toEqual(["abc"]);
+});
+
+// ---------- on the day, and after it ----------
+
+test("on the day: what's still to come today, or under way", () => {
+  const draft = { ...event, events: [
+    { id: "sangeet", name: "Sangeet", date: "2026-11-07", time: "19:30", venue: "Lakeview Lawns" },
+    { id: "wedding", name: "Wedding", date: "2026-11-08", time: "18:00", venue: "" },
+  ] };
+  expect(dayPhase(draft, at("2026-11-01T10:00:00+05:30"))).toEqual({ phase: "before" });
+  expect(dayPhase(draft, at("2026-11-07T10:00:00+05:30"))).toEqual({ phase: "today", items: [{ name: "Sangeet", time: "19:30", venue: "Lakeview Lawns", now: false }] });
+  expect(dayPhase(draft, at("2026-11-07T20:00:00+05:30"))).toMatchObject({ phase: "today", items: [{ name: "Sangeet", now: true }] });
+  // Past midnight, the sangeet (19:30 + 3h) is over: the wedding is today, but not yet.
+  expect(dayPhase(draft, at("2026-11-07T23:00:00+05:30"))).toEqual({ phase: "before" });
+  expect(dayPhase(draft, at("2026-11-08T09:00:00+05:30"))).toEqual({ phase: "today", items: [{ name: "Wedding", time: "18:00", venue: "Lakeview Lawns, Udaipur", now: false }] });
+  expect(dayPhase(draft, at("2026-11-08T21:00:01+05:30"))).toEqual({ phase: "after" });
+});
+
+test("a late celebration running past midnight is still on; an all-day one lasts until midnight", () => {
+  const late = { ...event, time: "22:30" };
+  expect(dayPhase(late, at("2026-11-09T00:30:00+05:30"))).toMatchObject({ phase: "today", items: [{ now: true }] });
+  expect(dayPhase(late, at("2026-11-09T01:31:00+05:30"))).toEqual({ phase: "after" });
+  const allDay = { ...event, time: "" };
+  expect(dayPhase(allDay, at("2026-11-08T23:59:00+05:30"))).toMatchObject({ phase: "today", items: [{ now: false }] });
+  expect(dayPhase(allDay, at("2026-11-09T00:00:01+05:30"))).toEqual({ phase: "after" });
 });
