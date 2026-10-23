@@ -51,8 +51,10 @@ export default function ManagePage() {
   useEffect(() => {
     setOrigin(location.origin);
     // Also runs when only the #fragment changes (pasting a different manage link doesn't reload the page).
-    function readKey() {
+    function readKey(event?: Event) {
       const fromLink = new URLSearchParams(location.hash.slice(1)).get("k");
+      // Following a link on this page (#creator-studio) changes the fragment too: the key stays as it is.
+      if (!fromLink && event) return;
       if (fromLink) {
         try { localStorage.setItem(ownerKey(slug), fromLink); } catch { /* private mode: keep it for this visit only */ }
         history.replaceState(null, "", location.pathname);
@@ -88,6 +90,11 @@ export default function ManagePage() {
   }, [slug]);
 
   useEffect(() => { if (key) void load(key); }, [key, load]);
+  // Sent here from the studio (/manage/…#creator-studio): the card only exists once the invitation has loaded.
+  const loaded = !!data;
+  useEffect(() => {
+    if (loaded && location.hash === "#creator-studio") document.getElementById("creator-studio")?.scrollIntoView();
+  }, [loaded]);
 
   async function setStatus(status: Experience["status"]) {
     if (!key) return;
@@ -159,6 +166,8 @@ export default function ManagePage() {
   const live = experience?.status === "published" && !removed;
   const schedule = sortSchedule(experience?.events ?? []);
   const owner = key ? { slug, ownerKey: key } : null;
+  // Whether this page has the card for asking for the Creator studio (not for a taken-down invitation).
+  const canAsk = !pro && !removed && !!owner;
   const reload = useCallback(async () => { if (key) await load(key); }, [key, load]);
   const guestName = (id?: string) => experience?.guests.find(g => g.id === id)?.name;
   const { lang, h, choose } = useHostLang();
@@ -203,10 +212,10 @@ export default function ManagePage() {
           <h2 id="share-heading">{h.shareIt}</h2>
           {live ? <ShareTools url={`${origin}/e/${linkOf(experience)}`} title={experience.title} lang={experience.language} ui={lang} owner={owner ?? undefined}/> : <p className="manage-muted">{removed ? h.takenDownShare : h.unpublishedNote}</p>}
           {owner && schedule.length > 1 && <GeneralLinkAudience owner={owner} experience={experience} onSaved={reload}/>}
-          {!removed && (pro ? owner && <CustomLink h={h} owner={owner} experience={experience} onSaved={reload}/> : <ProNote h={h} text={h.proAlias}/>)}
+          {!removed && (pro ? owner && <CustomLink h={h} owner={owner} experience={experience} onSaved={reload}/> : <ProNote h={h} text={h.proAlias} ask={canAsk}/>)}
         </section>
 
-        {!pro && !removed && owner && <section className="sketch-card manage-card" id="creator-studio" aria-labelledby="creator-studio-heading">
+        {canAsk && owner && <section className="sketch-card manage-card" id="creator-studio" aria-labelledby="creator-studio-heading">
           <h2 id="creator-studio-heading">{h.proBadge}</h2>
           <AskPro h={h} owner={owner} upgrade={data.upgrade} onSent={reload}/>
         </section>}
@@ -218,7 +227,7 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="guests-heading">
           <h2 id="guests-heading">{h.personalInvitations}</h2>
-          {!pro ? <ProNote h={h} text={h.proPersonal}/> : owner && <GuestList owner={owner} origin={origin} experience={experience} rsvps={data.rsvps} onChanged={reload}/>}
+          {!pro ? <ProNote h={h} text={h.proPersonal} ask={canAsk}/> : owner && <GuestList owner={owner} origin={origin} experience={experience} rsvps={data.rsvps} onChanged={reload}/>}
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="replies-heading">
@@ -258,7 +267,7 @@ export default function ManagePage() {
               </div></td></tr>}</Fragment>;
             })}</tbody>
           </table></div> : <p className="manage-muted">{h.noRepliesYet}</p>}
-          {data.rsvps.length > 0 && !pro && <ProNote h={h} text={h.proDownloads}/>}
+          {data.rsvps.length > 0 && !pro && <ProNote h={h} text={h.proDownloads} ask={canAsk}/>}
           {data.rsvps.length > 0 && pro && <div className="manage-downloads"><span>{h.download}</span>
             <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "replies"), repliesCsv(data))}>{h.everyReplyCsv}</button>
             {schedule.length > 0 && <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "headcount"), headcountCsv(data))}>{h.headcountCsv}</button>}
@@ -272,7 +281,7 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="wishes-heading">
           <h2 id="wishes-heading">{h.wishesHeading}</h2>
-          {owner && <WishesCard owner={owner} experience={experience} rsvps={data.rsvps} onChanged={reload} pro={pro}/>}
+          {owner && <WishesCard owner={owner} experience={experience} rsvps={data.rsvps} onChanged={reload} pro={pro} canAsk={canAsk}/>}
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="private-heading">
@@ -307,8 +316,8 @@ export default function ManagePage() {
 }
 
 /** A feature this invitation's plan doesn't include, and where to read about the Creator studio. */
-function ProNote({ text, h }: { text: string; h: HostText }) {
-  return <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} <a href="#creator-studio">{h.askPro}</a></p>;
+function ProNote({ text, h, ask }: { text: string; h: HostText; ask: boolean }) {
+  return <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} {ask ? <a href="#creator-studio">{h.askPro}</a> : <Link href="/pricing">{h.seePlans}</Link>}</p>;
 }
 
 /** The invitation's custom link (Creator studio). Earlier ones keep working. */

@@ -1,7 +1,7 @@
 import { cleanWish } from "../../../../lib/guests";
 import { ATTENDANCE, LIMITS, type Attendance } from "../../../../lib/invitations";
 import { allow, clientId } from "../../../../lib/rate-limit";
-import { addRsvp } from "../../../../lib/store";
+import { addRsvp, liveSlug } from "../../../../lib/store";
 
 /**
  * A guest's reply. No account needed; guarded by a honeypot field and rate limits.
@@ -10,12 +10,15 @@ import { addRsvp } from "../../../../lib/store";
  *   wish     an optional wish or blessing for the hosts
  */
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: link } = await params;
   const body = await request.json().catch(() => null);
   if (!body) return Response.json({ error: "Something went wrong. Please try again." }, { status: 400 });
   // Bots fill in every field; people never see this one. Pretend it worked.
   if (typeof body.website === "string" && body.website.trim()) return Response.json({ ok: true }, { status: 201 });
   const guestId = typeof body.guest === "string" && body.guest ? body.guest.slice(0, 40) : undefined;
+  // Limits go by the invitation, not the link used: its slug and custom links share them.
+  const slug = await liveSlug(link);
+  if (!slug) return Response.json({ error: "This invitation isn’t available any more." }, { status: 404 });
   // A personal link is limited per household, not per network: one cousin often replies for several families from
   // one phone, and relatives at a gathering share an address. The general link is limited per address.
   const limitKey = guestId ? `rsvp:${slug}:guest:${guestId}` : `rsvp:${clientId(request)}:${slug}`;

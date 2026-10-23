@@ -3,6 +3,7 @@
 import { useId, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { hostMessage, type HostText } from "../lib/host-i18n";
+import { dayKey } from "../lib/insights";
 import { formatInvitationDate } from "../lib/invitations";
 
 type Upgrade = { status: "open" | "approved" | "declined"; createdAt: string };
@@ -35,7 +36,7 @@ export function AskPro({ h, owner, upgrade, onSent }: { h: HostText; owner: { sl
   }
 
   if (state === "sent") return <p className="manage-muted" role="status">{h.askProSent}</p>;
-  if (upgrade?.status === "open") return <p className="manage-muted">{h.askProPending(formatInvitationDate(upgrade.createdAt.slice(0, 10), true, h.lang))}</p>;
+  if (upgrade?.status === "open") return <p className="manage-muted">{h.askProPending(formatInvitationDate(dayKey(Date.parse(upgrade.createdAt)), true, h.lang))}</p>;
   return <>
     <p className="manage-muted">{upgrade?.status === "declined" ? `${h.askProDeclined} ` : ""}{h.askProBody} <Link href="/pricing">{h.seePlans}</Link></p>
     {!open ? <div className="manage-actions"><button type="button" className="cin-cta cin-cta-light" onClick={() => setOpen(true)}>{h.askPro}</button></div> : <form className="ask-pro-form" onSubmit={send}>

@@ -40,7 +40,7 @@ export default async function ReportPage({ params, searchParams }: Props) {
       <h1>{t.title}</h1>
       {experience ? <>
         <p className="report-which">{t.reporting(experience.title)}</p>
-        <ReportForm slug={slug} lang={lang} back={back}/>
+        <ReportForm slug={experience.slug} lang={lang} back={back}/>
       </> : <p className="report-which">{t.gone}</p>}
       <Link className="report-privacy" href={langHref("/privacy", lang)}>{t.privacy}</Link>
     </main>

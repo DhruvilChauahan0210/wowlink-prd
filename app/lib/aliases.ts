@@ -7,10 +7,38 @@
 export const ALIAS_LIMITS = { min: 4, max: 40, kept: 3 } as const;
 
 const RESERVED = ["preview", "admin", "api", "manage", "create", "new", "help", "pricing", "privacy", "report", "templates", "mine", "wowlink", "invite", "invitation", "edit", "login", "signup"];
-// Matched inside the link with the hyphens and look-alike digits taken out, so "f-u-c-k" and "p0rn" are caught too.
-// Kept short on purpose: words that are also inside real names (Nazir, Randive, Chodhary) aren't here.
-const RUDE = ["fuck", "shit", "porn", "nude", "rape", "bitch", "cunt", "chutiya", "chutia", "madarchod", "bhenchod", "behenchod", "bhosdi", "gandu", "harami", "lauda", "gaand"];
+// Checked with look-alike digits read as letters ("p0rn"), and with spelled-out letters joined up ("f-u-c-k").
+// Real names come first: short words hide inside names (Ishita, Harshit, Anudeep, Aporna), so those only count as a
+// whole word or the start of one; a community's name (Chutia) isn't here.
+const RUDE = {
+  anywhere: ["fuck", "bitch", "chutiya", "madarchod", "bhenchod", "behenchod", "bhosdi"],
+  starting: ["porn", "gandu", "gaand", "harami", "lauda"],
+  whole: ["shit", "nude", "rape", "cunt"],
+};
 const LOOKALIKE: Record<string, string> = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b", "@": "a", $: "s" };
+const plain = (text: string) => text.replace(/[0-9@$]/g, (c) => LOOKALIKE[c] ?? c);
+
+/** The link's words, look-alikes read as letters, with runs of single letters joined ("f-u-c-k" is "fuck"). */
+function wordsOf(alias: string) {
+  const words: string[] = [];
+  let letters = "";
+  for (const token of alias.split("-").map(plain)) {
+    if (token.length === 1) letters += token;
+    else {
+      if (letters) words.push(letters);
+      letters = "";
+      words.push(token);
+    }
+  }
+  if (letters) words.push(letters);
+  return words;
+}
+
+const isRude = (alias: string) => {
+  const words = wordsOf(alias);
+  const joined = words.join("");
+  return RUDE.anywhere.some((w) => joined.includes(w)) || words.some((word) => RUDE.starting.some((w) => word.startsWith(w)) || RUDE.whole.includes(word));
+};
 
 /** The invitation's link: its current custom link, or its slug. */
 export const linkOf = (e: { slug: string; aliases?: string[] }) => e.aliases?.[0] ?? e.slug;
@@ -24,7 +52,6 @@ export function aliasError(alias: string) {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(alias)) return "Use lowercase letters, numbers and hyphens, like “isha-kabir”.";
   if (/^\d+(-\d+)*$/.test(alias)) return "Add a word or two, not just numbers.";
   if (RESERVED.includes(alias)) return "That one is WowLink’s own. Try another.";
-  const plain = alias.replace(/-/g, "").replace(/[0-9@$]/g, (c) => LOOKALIKE[c] ?? c);
-  if (RUDE.some((word) => plain.includes(word))) return "That link isn’t allowed. Try another.";
+  if (isRude(alias)) return "That link isn’t allowed. Try another.";
   return "";
 }

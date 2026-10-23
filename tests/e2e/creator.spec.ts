@@ -63,6 +63,13 @@ test("custom links: tidy, unique, never rude, and earlier ones keep working", as
   const second = `${name}-wedding`;
   expect((await (await setLink(second)).json()).aliases).toEqual([second, name]);
   expect((await request.get(`/e/${name}`)).status()).toBe(200);
+  // The admin finds it by any of its links.
+  expect((await (await request.get(`/api/admin/invitations/${name}`, { headers: adminHeaders() })).json()).invitation.slug).toBe(slug);
+  // Only the latest three keep working; the one that drops off is retired, never given to someone else.
+  await setLink(`${name}-party`);
+  expect((await (await setLink(`${name}-sangeet`)).json()).aliases).toEqual([`${name}-sangeet`, `${name}-party`, second]);
+  expect((await request.get(`/e/${name}`)).status()).toBe(404);
+  expect((await setLink(name, other.slug, other.key)).status()).toBe(409);
   // Deleted, the links are retired: nobody can take them.
   expect((await request.delete(`/api/experiences/${slug}`, { headers: ownerHeaders(key) })).status()).toBe(200);
   expect((await request.get(`/e/${second}`)).status()).toBe(404);
@@ -120,6 +127,11 @@ test("a client preview: the planner shares it, the client asks for a change, the
   expect((await request.post(`/api/experiences/${free.slug}/previews`, { headers: ownerHeaders(free.key), data: { templateId: "wedding", draft: sampleDraft() } })).status()).toBe(403);
   expect((await request.post(`/api/previews/${token}/feedback`, { headers: general(), data: { verdict: "changes" } })).status()).toBe(422);
   expect((await request.get("/p/nothing-here")).status()).toBe(404);
+  // Taken down, its previews go too, and no new ones can be made.
+  expect((await request.post(`/api/admin/invitations/${slug}`, { headers: adminHeaders(), data: { action: "take-down" } })).status()).toBe(200);
+  expect((await request.get(`/p/${token}`)).status()).toBe(404);
+  expect((await request.post(`/api/previews/${token}/feedback`, { headers: general(), data: { verdict: "approve" } })).status()).toBe(404);
+  expect((await request.post(`/api/experiences/${slug}/previews`, { headers: ownerHeaders(key), data: { templateId: "wedding", draft: sampleDraft() } })).status()).toBe(403);
 });
 
 test("wishes on the invitation, and reminding everyone, are the Creator studio's", async ({ page, request }) => {
@@ -137,5 +149,7 @@ test("wishes on the invitation, and reminding everyone, are the Creator studio's
   await remind.getByRole("button", { name: "Skip" }).click();
   await expect(remind.locator("p")).toHaveText(/^2 of 2: /);
   await remind.getByRole("button", { name: "Skip" }).click();
-  await expect(page.getByText("Done: everyone has been reminded.")).toBeVisible();
+  await expect(page.getByText("Done: 0 reminded, 2 skipped.")).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("button", { name: "Remind everyone who hasn’t replied (2)" })).toBeVisible();
 });

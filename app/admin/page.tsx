@@ -87,8 +87,10 @@ export default function AdminPage() {
   }
   async function find(event: FormEvent) {
     event.preventDefault();
-    const slug = lookup.trim().match(/(?:\/e\/)?([2-9b-df-hjkmnp-tv-zB-DF-HJ-NP-TV-Z]{7})(?:[/?#]|$)/)?.[1];
-    const result = slug ? await call<{ invitation: AdminInvitation }>(key, `/invitations/${slug}`) : null;
+    // A whole link (the part after /e/, a personal link's household dropped), or just its code or custom link.
+    const text = lookup.trim();
+    const link = text.match(/\/e\/([^/?#\s]+)/)?.[1] ?? text.replace(/[?#].*$/, "").replace(/\/+$/, "");
+    const result = /^[A-Za-z0-9-]{4,40}$/.test(link) ? await call<{ invitation: AdminInvitation }>(key, `/invitations/${link}`) : null;
     setFound(result?.invitation ?? "none");
     setMessage(result ? `Found: ${result.invitation.title}` : "There’s no invitation at that link.");
   }
@@ -145,7 +147,7 @@ export default function AdminPage() {
           <h2 id="find-heading">Find an invitation</h2>
           <form className="admin-find" onSubmit={find}>
             <label className="studio-sr-only" htmlFor="admin-find">Invitation link</label>
-            <input id="admin-find" value={lookup} placeholder="https://…/e/… or its 7-letter code" onChange={e => setLookup(e.target.value)}/>
+            <input id="admin-find" value={lookup} placeholder="https://…/e/… or its code or custom link" onChange={e => setLookup(e.target.value)}/>
             <button type="submit" className="cin-cta cin-cta-outline" disabled={!lookup.trim()}>Find</button>
           </form>
           {found === "none" && <p className="manage-muted">There’s no invitation at that link.</p>}

@@ -248,7 +248,7 @@ export default function CreatePage() {
       setPreviews(list.previews);
     } else {
       const body = await response?.json().catch(() => null);
-      setStatus(() => (t: HostText) => (body?.error ? hostMessage(body.error, t.lang) : t.couldntPublish));
+      setStatus(() => (t: HostText) => (body?.error ? hostMessage(body.error, t.lang) : t.previewFailed));
     }
     setPreviewBusy(false);
   }

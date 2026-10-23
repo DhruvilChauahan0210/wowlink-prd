@@ -33,6 +33,8 @@ type Props = {
   previewLabel?: string;
   /** Guests' wishes the host shows on the invitation; null when the host keeps them private. */
   wishes?: PublicWish[] | null;
+  /** Told when the language the invitation is shown in changes (the guest picked another, say). */
+  onLangChange?: (lang: Lang) => void;
 };
 
 const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth") as ScrollBehavior;
@@ -102,7 +104,7 @@ const reportHref = (slug: string, lang: Lang, guestId?: string) => {
 };
 
 /** Everything a guest sees: the opening, the details, the message and the RSVP. */
-export function GuestExperience({ template, draft, mode, slug, guest, reply, previewOnly = false, wishes = null, previewLabel = "Host preview" }: Props) {
+export function GuestExperience({ template, draft, mode, slug, guest, reply, previewOnly = false, wishes = null, previewLabel = "Host preview", onLangChange }: Props) {
   const live = mode === "live";
   const sends = live && !previewOnly;
   const earlier = sends ? reply ?? null : null;
@@ -123,6 +125,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
       if (isLang(saved)) setLang(saved);
     } catch { /* storage blocked: keep the host's choice */ }
   }, [live, draft.language]);
+  useEffect(() => onLangChange?.(lang), [lang, onLangChange]);
   function switchLanguage(next: Lang) {
     setLang(next);
     if (live) try { localStorage.setItem(LANG_KEY, next); } catch { /* fine: this visit only */ }
@@ -427,7 +430,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
     </main>
     {draft.brand?.name && <div className="invitation-brand theme-paper">
       {/* eslint-disable-next-line @next/next/no-img-element -- the planner's logo, a checked data URL */}
-      {draft.brand.logo && <img src={draft.brand.logo} alt={draft.brand.name}/>}
+      {draft.brand.logo ? <img src={draft.brand.logo} alt={draft.brand.name}/> : draft.brand.signoff && !draft.brand.signoff.toLowerCase().includes(draft.brand.name.toLowerCase()) && <strong>{draft.brand.name}</strong>}
       <span>{draft.brand.signoff || t.plannedBy(draft.brand.name)}</span>
     </div>}
     <footer className="invitation-footer"><WowLinkBrand/>{draft.attribution !== false && <span lang={live ? undefined : "en"}>{live ? t.madeWith : "Made with love, shared with one link."}</span>}<Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}{draft.attribution !== false && <Link className="invitation-footer-create" href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link>}</footer>

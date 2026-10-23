@@ -18,5 +18,7 @@ export async function POST(request: Request, { params }: Params) {
   if (!checked.ok) return Response.json({ error: "A few details are missing.", fields: checked.errors }, { status: 422 });
   const result = await createPreview((await params).slug, keyFrom(request), body.templateId, checked.value);
   if (result.ok) return Response.json({ token: result.token }, { status: 201 });
-  return result.reason === "pro" ? Response.json({ error: "Client previews are part of the Creator studio." }, { status: 403 }) : notYours();
+  if (result.reason === "pro") return Response.json({ error: "Client previews are part of the Creator studio." }, { status: 403 });
+  if (result.reason === "removed") return Response.json({ error: "This invitation was taken down, so it can’t be previewed." }, { status: 403 });
+  return notYours();
 }

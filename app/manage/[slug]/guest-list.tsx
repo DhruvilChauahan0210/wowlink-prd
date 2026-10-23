@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { LIMITS, formatEventDay, formatShortDay, sortSchedule, type ScheduleItem } from "../../lib/invitations";
 import { answerFor, invitedTo, missingEvents, repliesUsed, tallyByEvent, type EventFilter, type Guest } from "../../lib/guests";
 import { csvName, invitationsCsv } from "../../lib/export";
@@ -325,7 +326,7 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
 }
 
 /** Guests' wishes: all of them for the host, and a choice of which (if any) the invitation shows. */
-export function WishesCard({ owner, experience, rsvps, onChanged, pro }: { owner: Owner; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void>; pro: boolean }) {
+export function WishesCard({ owner, experience, rsvps, onChanged, pro, canAsk }: { owner: Owner; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void>; pro: boolean; canAsk: boolean }) {
   const h = useHostText();
   const tr = useTranslate();
   const [busy, setBusy] = useState(false);
@@ -349,7 +350,7 @@ export function WishesCard({ owner, experience, rsvps, onChanged, pro }: { owner
   }
 
   return <>
-    {!pro && <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {h.proWishes} <a href="#creator-studio">{h.askPro}</a></p>}
+    {!pro && <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {h.proWishes} {canAsk ? <a href="#creator-studio">{h.askPro}</a> : <Link href="/pricing">{h.seePlans}</Link>}</p>}
     {pro && <label className="manage-wishes-toggle">
       <input type="checkbox" checked={show} disabled={busy} onChange={e => {
         const next = e.target.checked;
@@ -362,12 +363,13 @@ export function WishesCard({ owner, experience, rsvps, onChanged, pro }: { owner
     {error && <p className="studio-error" role="alert">{tr(error)}</p>}
     {withWishes.length ? <ul className="manage-wishes">{withWishes.map(r => {
       const from = [r.name, household(r.guestId) && h.forHousehold(household(r.guestId)!)].filter(Boolean).join(" ") || h.noName;
-      return <li key={r.id} className={`manage-wish${r.wishHidden ? " is-hidden" : ""}`}>
+      return <li key={r.id} className={`manage-wish${pro && r.wishHidden ? " is-hidden" : ""}`}>
         <blockquote>{r.wish}</blockquote>
         <div className="manage-wish-meta">
           <span>— {from}</span>
-          {r.wishHidden && <span className="manage-wish-hidden">{h.wishHidden}</span>}
-          <button type="button" className="share-chip" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/rsvps/${r.id}`, "PATCH", { hidden: !r.wishHidden }))} aria-label={h.wishToggleLabel(!!r.wishHidden, from)}>{r.wishHidden ? h.showWish : h.hideWish}</button>
+          {pro && r.wishHidden && <span className="manage-wish-hidden">{h.wishHidden}</span>}
+          {/* Choosing which wishes the invitation shows only means something when it shows them (Creator studio). */}
+          {pro && <button type="button" className="share-chip" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/rsvps/${r.id}`, "PATCH", { hidden: !r.wishHidden }))} aria-label={h.wishToggleLabel(!!r.wishHidden, from)}>{r.wishHidden ? h.showWish : h.hideWish}</button>}
         </div>
       </li>;
     })}</ul> : <p className="manage-muted">{h.noWishes}</p>}
@@ -381,6 +383,7 @@ export function WishesCard({ owner, experience, rsvps, onChanged, pro }: { owner
 function RemindAll({ experience, rsvps, origin, owner }: { experience: Experience; rsvps: Rsvp[]; origin: string; owner: Owner }) {
   const h = useHostText();
   const [step, setStep] = useState<number | null>(null);
+  const [sent, setSent] = useState(0);
   const words = MESSAGES[experience.language ?? "en"];
   const queue = experience.rsvp === false ? [] : experience.guests.flatMap(guest => {
     const reply = rsvps.find(r => r.guestId === guest.id);
@@ -392,12 +395,12 @@ function RemindAll({ experience, rsvps, origin, owner }: { experience: Experienc
     return [{ guest, href: whatsApp(words.reminder(guest.name, experience.title, reply ? unanswered.map(e => e.name) : null, url), guest.phone) }];
   });
   if (queue.length < 2) return null;
-  if (step === null) return <div className="manage-actions"><button type="button" className="share-chip" onClick={() => setStep(0)}>{h.remindAll(queue.length)}</button></div>;
-  if (step >= queue.length) return <p className="manage-muted" role="status">{h.remindDone} <button type="button" className="inv-replay-link" onClick={() => setStep(null)}>{h.cancel}</button></p>;
+  if (step === null) return <div className="manage-actions"><button type="button" className="share-chip" onClick={() => { setSent(0); setStep(0); }}>{h.remindAll(queue.length)}</button></div>;
+  if (step >= queue.length) return <p className="manage-muted" role="status">{h.remindDone(sent, step - sent)} <button type="button" className="inv-replay-link" onClick={() => setStep(null)}>{h.close}</button></p>;
   const current = queue[step];
   return <div className="manage-confirm manage-remind" role="group" aria-label={h.remindAll(queue.length)}>
     <p aria-live="polite">{h.remindNext(current.guest.name, step + 1, queue.length)}</p>
-    <a className="cin-cta cin-cta-light" href={current.href} target="_blank" rel="noreferrer" onClick={() => { countShare(owner, "personal"); setStep(step + 1); }}>{h.remindOpen}</a>
+    <a className="cin-cta cin-cta-light" href={current.href} target="_blank" rel="noreferrer" onClick={() => { countShare(owner, "personal"); setSent(sent + 1); setStep(step + 1); }}>{h.remindOpen}</a>
     <button type="button" className="share-chip" onClick={() => setStep(step + 1)}>{h.remindSkip}</button>
     <button type="button" className="share-chip" onClick={() => setStep(null)}>{h.remindStop}</button>
   </div>;

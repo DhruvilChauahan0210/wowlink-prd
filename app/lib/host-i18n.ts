@@ -110,7 +110,9 @@ const en = {
   remindOpen: "Open WhatsApp",
   remindSkip: "Skip",
   remindStop: "Stop",
-  remindDone: "Done: everyone has been reminded.",
+  remindDone: (sent: number, skipped: number) => (skipped ? `Done: ${sent} reminded, ${skipped} skipped.` : "Done: everyone has been reminded."),
+  close: "Close",
+  previewFailed: "Couldn’t make the preview. Check your connection and try again.",
   proWishes: "Showing wishes on the invitation is part of the Creator studio. You can still read every wish here.",
   makeAnother: "Make another like this",
   copyShort: "Copy",
@@ -501,7 +503,9 @@ const gu: HostText = {
   remindOpen: "WhatsApp ખોલો",
   remindSkip: "છોડો",
   remindStop: "રોકો",
-  remindDone: "થઈ ગયું: બધાને યાદ કરાવ્યું.",
+  remindDone: (sent: number, skipped: number) => (skipped ? `થઈ ગયું: ${sent} ને યાદ કરાવ્યું, ${skipped} છોડ્યા.` : "થઈ ગયું: બધાને યાદ કરાવ્યું."),
+  close: "બંધ કરો",
+  previewFailed: "પ્રીવ્યૂ બન્યું નહીં. ઇન્ટરનેટ તપાસીને ફરી પ્રયાસ કરો.",
   proWishes: "આમંત્રણ પર શુભેચ્છાઓ બતાવવી ક્રિએટર સ્ટુડિયોનો ભાગ છે. આપ અહીં દરેક શુભેચ્છા વાંચી શકો છો.",
   makeAnother: "આના જેવું બીજું બનાવો",
   copyShort: "નકલ કરો",
@@ -880,7 +884,9 @@ const hi: HostText = {
   remindOpen: "WhatsApp खोलें",
   remindSkip: "छोड़ें",
   remindStop: "रोकें",
-  remindDone: "हो गया: सबको याद दिला दिया।",
+  remindDone: (sent: number, skipped: number) => (skipped ? `हो गया: ${sent} को याद दिलाया, ${skipped} छोड़े।` : "हो गया: सबको याद दिला दिया।"),
+  close: "बंद करें",
+  previewFailed: "प्रीव्यू नहीं बन सका। इंटरनेट जाँचकर फिर से कोशिश करें।",
   proWishes: "निमंत्रण पर शुभकामनाएँ दिखाना क्रिएटर स्टूडियो का हिस्सा है। आप यहाँ हर शुभकामना पढ़ सकते हैं।",
   makeAnother: "ऐसा ही एक और बनाएँ",
   copyShort: "कॉपी करें",
@@ -1239,6 +1245,9 @@ const ERRORS_GU: [RegExp, string | ((...m: string[]) => string)][] = [
   [/^This invitation is already in the Creator studio\.$/, "આ આમંત્રણ પહેલેથી ક્રિએટર સ્ટુડિયોમાં છે."],
   [/^Write the poll’s question\.$/, "સવાલ લખો."],
   [/^Give the poll at least two answers\.$/, "ઓછામાં ઓછા બે જવાબ આપો."],
+  [/^You’ve asked a few times already\./, "આપે ઘણી વાર પૂછ્યું છે. અમે સંપર્ક કરીશું."],
+  [/^That’s a lot of new links for one day\./, "એક દિવસમાં ઘણી નવી લિંક થઈ ગઈ. કાલે ફરી પ્રયાસ કરો."],
+  [/^This invitation was taken down, so it can’t be previewed\.$/, "આ આમંત્રણ દૂર કરાયું છે, એટલે તેનું પ્રીવ્યૂ બની શકે નહીં."],
 ];
 
 const ERRORS_HI: [RegExp, string | ((...m: string[]) => string)][] = [
@@ -1290,6 +1299,9 @@ const ERRORS_HI: [RegExp, string | ((...m: string[]) => string)][] = [
   [/^This invitation is already in the Creator studio\.$/, "यह निमंत्रण पहले से क्रिएटर स्टूडियो में है।"],
   [/^Write the poll’s question\.$/, "पोल का सवाल लिखें।"],
   [/^Give the poll at least two answers\.$/, "पोल में कम से कम दो जवाब दें।"],
+  [/^You’ve asked a few times already\./, "आप कई बार पूछ चुके हैं। हम संपर्क करेंगे।"],
+  [/^That’s a lot of new links for one day\./, "एक दिन में बहुत सारी नई लिंक हो गईं। कल फिर कोशिश करें।"],
+  [/^This invitation was taken down, so it can’t be previewed\.$/, "यह निमंत्रण हटा दिया गया है, इसलिए इसका प्रीव्यू नहीं बन सकता।"],
 ];
 
 /** A host-facing message in the host's language (validation and server messages arrive in English). */

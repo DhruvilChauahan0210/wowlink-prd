@@ -744,6 +744,7 @@
 .studio-client-preview{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 .invitation-brand{display:flex;align-items:center;justify-content:center;gap:14px;padding:22px var(--gutter,20px);border-top:1px solid var(--line);text-align:center;font:600 15px/1.4 var(--sans);color:var(--muted)}
 .invitation-brand img{max-width:120px;max-height:44px;object-fit:contain}
+.invitation-brand strong{font-weight:700}
 /* a client preview's bar: what it is, and the client's answer */
 .client-preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 20px;padding:12px 16px;border-bottom:1.5px dashed var(--line-strong);text-align:center}
 .client-preview-bar p{margin:0;font:700 20px/1.25 var(--hand);color:var(--text)}
