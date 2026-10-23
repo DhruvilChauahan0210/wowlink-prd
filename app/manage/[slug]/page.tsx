@@ -95,7 +95,7 @@ export default function ManagePage() {
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
       <span className="studio-header-label">Your invitation</span>
-      <div className="studio-header-actions">{experience && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>Edit in studio</Link>}</div>
+      <div className="studio-header-actions"><Link className="studio-fullscreen" href="/mine">My invitations</Link>{experience && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>Edit in studio</Link>}</div>
     </header>
     <main className="manage theme-paper">
       {problem === "no-key" && <Notice title="This page needs your private link">Open the manage link you saved when you published. The part after the <b>#</b> is what proves the invitation is yours, so copy the whole link.</Notice>}

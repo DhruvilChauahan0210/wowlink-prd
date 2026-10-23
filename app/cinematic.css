@@ -108,6 +108,7 @@ html.lenis,html.lenis body{height:auto}
 .cin-nav nav{display:flex;gap:36px;font:700 26px/1 var(--hand)}
 .cin-nav nav a{color:var(--muted);transition:color .2s}
 .cin-nav nav a:hover{color:var(--accent)}
+.cin-nav-mine{font:700 22px/1 var(--hand);color:var(--accent-soft);text-decoration:underline wavy;text-underline-offset:6px;white-space:nowrap}
 .cin-nav-cta{position:relative;isolation:isolate;display:inline-flex;align-items:center;min-height:44px;padding:0 22px;font:600 14px/1 var(--sans);transition:color .2s}
 .cin-nav-cta::before{inset:0;z-index:-1;background:var(--text);-webkit-mask-image:var(--rough-a);mask-image:var(--rough-a)}
 .cin-nav-cta:hover{color:var(--bg)}
@@ -312,7 +313,7 @@ html.lenis,html.lenis body{height:auto}
 @media(max-width:767px){
   .cinema{font-size:16px}
   .cin-nav{height:64px;gap:16px}
-  .cin-nav nav,.cin-nav-cta{display:none}
+  .cin-nav nav,.cin-nav-cta,.cin-nav-mine{display:none}
   .cin-logo{font-size:20px}
   .cinema .cin-menu-toggle{display:block;border:0;background:none;color:var(--text);font:700 26px/1 var(--hand);padding:10px 0}
   .cin-menu{display:flex;position:fixed;inset:64px 0 0;z-index:-1;flex-direction:column;justify-content:flex-start;gap:6px;padding:28px var(--gutter);background-color:#f3ebdc;background-image:var(--grain);opacity:0;pointer-events:none;transition:opacity .25s}

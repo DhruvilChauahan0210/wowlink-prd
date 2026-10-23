@@ -538,6 +538,38 @@
 .manage-wish-meta .share-chip{font-size:21px}
 .manage-wish.is-hidden blockquote{opacity:.45}
 .manage-wish-hidden{font:700 19px/1 var(--hand);color:var(--faint)}
+/* ---------- My invitations (/mine) ---------- */
+.mine-intro h1{font-size:clamp(40px,5vw,64px);line-height:1.02;margin:0 0 12px}
+.mine-intro p{max-width:40em}
+.mine-list{list-style:none;margin:0;padding:0;display:grid;gap:22px}
+.mine-item{display:flex;align-items:center;gap:clamp(16px,3vw,28px);padding:18px clamp(16px,3vw,26px)}
+.mine-print{flex:none;width:clamp(96px,14vw,130px);rotate:-2deg}
+.mine-print .cin-photo{aspect-ratio:4/5}
+.mine-body{min-width:0;flex:1}
+.mine-kind{display:block;font:700 21px/1.1 var(--hand);color:var(--accent)}
+.mine-body h2{font-size:clamp(26px,3vw,36px);line-height:1.05;margin:2px 0 6px;overflow-wrap:anywhere}
+.mine-body h2 a{text-decoration:none}
+.mine-body h2 a:hover{text-decoration:underline wavy;text-underline-offset:6px}
+.mine-body .manage-status{font-size:19px;padding:3px 10px 2px;margin-left:2px}
+.mine-counts{margin-top:6px;font:700 22px/1.2 var(--hand);color:var(--text)}
+.mine-actions{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px}
+.mine-actions .share-chip{font-size:22px}
+.mine-gone-title{font-size:24px!important}
+.mine-drafts{list-style:none;margin:0;padding:0}
+.mine-drafts li{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 18px;padding:12px 0;border-top:1px dashed var(--line-strong)}
+.mine-drafts li>div{flex:1;min-width:200px;display:flex;flex-direction:column}
+.mine-drafts strong{font:400 22px/1.2 var(--serif)}
+.mine-drafts .share-chip{font-size:22px}
+.mine-backup{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;margin:14px 0 22px}
+.mine-backup .cin-cta{min-height:46px;font-size:14px}
+.mine-add{margin-top:8px}
+.mine-add-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px;margin-top:10px}
+.mine-add-actions .cin-cta{min-height:46px;font-size:14px}
+.mine-file{position:relative;cursor:pointer;font-size:22px}
+.mine-file input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.mine-file:focus-within{outline:2px dashed var(--accent);outline-offset:3px}
+.mine-empty{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+@media(max-width:767px){.mine-item{align-items:flex-start}}
 .manage-notice{margin-top:10vh;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
 .manage-notice h1{font-size:clamp(30px,3.4vw,44px);margin:0}
 .manage-notice p{max-width:32em;color:var(--muted);line-height:1.6}

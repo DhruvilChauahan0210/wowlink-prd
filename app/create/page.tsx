@@ -271,7 +271,7 @@ export default function CreatePage() {
         <ShareTools url={`${origin}/e/${owned.slug}`} title={draft.title} lang={draft.language}/>
         <div className="publish-private">
           <h3>Your private manage link</h3>
-          <p>Open it to see replies and make changes from any device. Anyone with it can edit, so keep it to yourself.</p>
+          <p>Open it to see replies and make changes from any device. Anyone with it can edit, so keep it to yourself. On this device, it’s also under <Link href="/mine">My invitations</Link>.</p>
           <CopyField value={`${origin}/manage/${owned.slug}#k=${owned.key}`} label="Copy manage link"/>
         </div>
         <div className="publish-actions">

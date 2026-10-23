@@ -27,9 +27,10 @@ function Chrome() {
   return <header className={`cin-nav${scrolled ? " is-scrolled" : ""}${open ? " is-menu-open" : ""}`}>
     <NavLink id="top" onNavigate={() => setOpen(false)}><span className="cin-logo"><Mark/>WowLink</span></NavLink>
     <nav aria-label="Main navigation"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><NavLink id="plans">Pricing</NavLink></nav>
+    <Link className="cin-nav-mine" href="/mine">My invitations</Link>
     <Link className="cin-nav-cta" href="/templates">Create invitation</Link>
     <button className="cin-menu-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="cin-menu">{open ? "Close" : "Menu"}</button>
-    <div id="cin-menu" className={`cin-menu${open ? " is-open" : ""}`} inert={!open}><NavLink id="occasions" onNavigate={() => setOpen(false)}>Occasions</NavLink><NavLink id="experience" onNavigate={() => setOpen(false)}>How it works</NavLink><NavLink id="plans" onNavigate={() => setOpen(false)}>Pricing</NavLink><Link href="/templates">Create invitation</Link></div>
+    <div id="cin-menu" className={`cin-menu${open ? " is-open" : ""}`} inert={!open}><NavLink id="occasions" onNavigate={() => setOpen(false)}>Occasions</NavLink><NavLink id="experience" onNavigate={() => setOpen(false)}>How it works</NavLink><NavLink id="plans" onNavigate={() => setOpen(false)}>Pricing</NavLink><Link href="/mine">My invitations</Link><Link href="/templates">Create invitation</Link></div>
   </header>;
 }
 
@@ -198,5 +199,5 @@ export default function CinematicHome() {
     <Flower className="doodle fin-a"/><Star className="doodle fin-b"/><Diya className="doodle fin-c"/><Flower className="doodle fin-d"/>
     <span className="cin-note cin-finale-note">come on in</span><h2>Your day.<br/><em>Their first wow.</em></h2><p>Free to start. Lovely to share.</p><Link href="/templates" className="cin-cta cin-cta-light">Create your invitation</Link>
   </section></main>
-      <footer className="cin-footer"><div className="cin-footer-brand"><span className="cin-logo"><Mark/>WowLink</span><p>Made with love, shared with one link.</p></div><nav aria-label="Footer"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><NavLink id="plans">Pricing</NavLink><Link href="/templates">Templates</Link></nav><span className="cin-footer-note">© 2026 WowLink</span></footer></div>;
+      <footer className="cin-footer"><div className="cin-footer-brand"><span className="cin-logo"><Mark/>WowLink</span><p>Made with love, shared with one link.</p></div><nav aria-label="Footer"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><NavLink id="plans">Pricing</NavLink><Link href="/templates">Templates</Link><Link href="/mine">My invitations</Link></nav><span className="cin-footer-note">© 2026 WowLink</span></footer></div>;
 }
