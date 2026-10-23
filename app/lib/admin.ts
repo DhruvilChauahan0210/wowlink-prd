@@ -7,8 +7,13 @@ import { allow, clientId, under } from "./rate-limit";
  * exist: every admin route answers 404, the same as a wrong key.
  */
 
-const MIN_LENGTH = 24;
+/**
+ * On a live site anyone can try keys, so a short one (like "admin") would be guessed: it needs 24 characters or the
+ * admin stays off. On your own computer (`npm run dev`) any key will do.
+ */
+const MIN_LENGTH = process.env.NODE_ENV === "production" ? 24 : 1;
 const FAILURES = { limit: 10, windowMs: 60 * 60 * 1000 };
+let warned = false;
 const digest = (value: string) => createHash("sha256").update(value).digest();
 
 /**
@@ -17,7 +22,13 @@ const digest = (value: string) => createHash("sha256").update(value).digest();
  */
 export function checkAdmin(request: Request): "ok" | "no" | "locked" {
   const expected = process.env.WOWLINK_ADMIN_KEY ?? "";
-  if (expected.length < MIN_LENGTH) return "no";
+  if (expected.length < MIN_LENGTH) {
+    if (expected && !warned) {
+      warned = true;
+      console.warn(`WOWLINK_ADMIN_KEY is set but shorter than ${MIN_LENGTH} characters, so the admin is off. Make one with: openssl rand -hex 24`);
+    }
+    return "no";
+  }
   const who = `admin-fail:${clientId(request)}`;
   if (!under(who, FAILURES.limit, FAILURES.windowMs)) return "locked";
   const given = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim() ?? "";

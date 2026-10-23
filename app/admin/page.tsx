@@ -104,7 +104,7 @@ export default function AdminPage() {
           <div className="studio-field">
             <label htmlFor="admin-key">Admin key</label>
             <input id="admin-key" type="password" autoComplete="current-password" value={typed} onChange={e => { setTyped(e.target.value); setWrong(""); }} aria-invalid={wrong ? true : undefined} aria-describedby={wrong ? "admin-key-error" : undefined}/>
-            {wrong && <p className="studio-error" id="admin-key-error" role="alert">{wrong === "locked" ? "Too many wrong tries from here. Try again in an hour." : "That key didn’t open it. (The admin only exists when WOWLINK_ADMIN_KEY is set on the server.)"}</p>}
+            {wrong && <p className="studio-error" id="admin-key-error" role="alert">{wrong === "locked" ? "Too many wrong tries from here. Try again in an hour." : "That key didn’t open it. (The admin only exists when WOWLINK_ADMIN_KEY is set on the server; on a live site it needs at least 24 characters.)"}</p>}
           </div>
           <button type="submit" className="cin-cta cin-cta-light" disabled={!typed.trim()}>Open</button>
         </form>

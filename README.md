@@ -47,7 +47,7 @@ Copy `.env.example` to `.env.local` and fill it in.
 
 | Variable | Used for |
 |---|---|
-| `WOWLINK_ADMIN_KEY` | Opens the admin page (`/admin`). At least 24 characters (`openssl rand -base64 32`). Without it the admin doesn't exist. Ten wrong keys from one address lock that address out for an hour (the page then says so). |
+| `WOWLINK_ADMIN_KEY` | Opens the admin page (`/admin`). On a live site it needs at least 24 characters (`openssl rand -hex 24`), or the admin stays off and the server logs a warning; with `npm run dev` any key works. Without it the admin doesn't exist. Ten wrong keys from one address lock that address out for an hour (the page then says so). |
 | `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews, canonical links, `sitemap.xml` and `robots.txt` (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
 
 ## Current limits
