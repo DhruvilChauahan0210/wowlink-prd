@@ -8,7 +8,14 @@ project_id = "wowlink"
 site_url = "https://wowlink-one.vercel.app"
 additional_redirect_urls = ["https://wowlink-one.vercel.app/**", "http://localhost:3000/**"]
 
-# Hosts sign in with Google only (switched on in the dashboard, where its client secret is kept). No sign-in by email:
-# nobody can make the project send sign-in emails.
+# Hosts sign in with Google only. No sign-in by email: nobody can make the project send sign-in emails.
 [auth.email]
 enable_signup = false
+
+# Google sign-in (Google Cloud project wowlink-512516). The client secret is never in this file: push with
+# SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET set (README, "Going live"); without it the CLI leaves the secret as it is.
+[auth.external.google]
+enabled = true
+client_id = "397415263269-7he9pg82tkk0pd2v248agdkjk74cst0s.apps.googleusercontent.com"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = false
