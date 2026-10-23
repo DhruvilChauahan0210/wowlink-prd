@@ -60,7 +60,8 @@ export type HouseholdReply = Pick<Rsvp, "name" | "attendance" | "guestCount" | "
 export type GuestView = { experience: PublicExperience; guest: Pick<Guest, "id" | "name">; reply: HouseholdReply | null };
 
 type StoredExperience = Experience & { keyHash: string };
-type Db = { experiences: StoredExperience[]; rsvps: Rsvp[] };
+/** `retired`: the slugs of deleted invitations, so an old link shared on WhatsApp never opens someone else's. Nothing else of them is kept. */
+type Db = { experiences: StoredExperience[]; rsvps: Rsvp[]; retired: string[] };
 
 // Tests point this at their own file so they never touch real data.
 const FILE = process.env.WOWLINK_DATA_FILE ? path.resolve(process.env.WOWLINK_DATA_FILE) : path.join(process.cwd(), ".data", "wowlink.json");
@@ -80,9 +81,9 @@ const withDefaults = (e: StoredExperience): StoredExperience => ({ ...e, events:
 async function load(): Promise<Db> {
   try {
     const db = JSON.parse(await fs.readFile(FILE, "utf8")) as Db;
-    return { experiences: (db.experiences ?? []).map(withDefaults), rsvps: db.rsvps ?? [] };
+    return { experiences: (db.experiences ?? []).map(withDefaults), rsvps: db.rsvps ?? [], retired: db.retired ?? [] };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { experiences: [], rsvps: [] };
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { experiences: [], rsvps: [], retired: [] };
     throw error;
   }
 }
@@ -149,7 +150,7 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft)
     const stored: StoredExperience = {
       ...draft,
       id: randomUUID(),
-      slug: newSlug(new Set(db.experiences.map((e) => e.slug))),
+      slug: newSlug(new Set([...db.experiences.map((e) => e.slug), ...db.retired])),
       templateId,
       status: "published",
       createdAt: now,
@@ -218,6 +219,22 @@ export function updateOwned(slug: string, key: string, patch: Patch) {
     if (patch.showWishes !== undefined) found.showWishes = patch.showWishes;
     found.updatedAt = new Date().toISOString();
     return { ok: true, experience: strip(found) };
+  });
+}
+
+/**
+ * Delete an invitation for good, with everything in it: its replies and wishes, its personal invitations (and their
+ * WhatsApp numbers) and its links. Only the slug is kept, so the link can't be given to a new invitation.
+ */
+export function deleteOwned(slug: string, key: string) {
+  return write((db): { ok: true; replies: number } | { ok: false } => {
+    const index = db.experiences.findIndex((e) => e.slug === slug);
+    if (index < 0 || !keyMatches(db.experiences[index].keyHash, key)) return { ok: false };
+    const [gone] = db.experiences.splice(index, 1);
+    const before = db.rsvps.length;
+    db.rsvps = db.rsvps.filter((r) => r.experienceId !== gone.id);
+    db.retired.push(gone.slug);
+    return { ok: true, replies: before - db.rsvps.length };
   });
 }
 
@@ -352,6 +369,21 @@ export function addRsvp(slug: string, input: RsvpInput) {
     if (!guest && repliesUsed(rsvpsOf(db, found), found.guests) >= LIMITS.rsvpsPerEvent) return { ok: false, reason: "full" };
     db.rsvps.push({ id: randomUUID(), experienceId: found.id, ...reply, ...(guest && { guestId: guest.id }), createdAt: now });
     return { ok: true, updated: false };
+  });
+}
+
+/**
+ * Delete one reply (a guest asked to be taken off, say), with its wish. A household with a personal link can reply
+ * again; their invitation stays. Owner only.
+ */
+export function removeRsvp(slug: string, key: string, rsvpId: string) {
+  return write((db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
+    const found = db.experiences.find((e) => e.slug === slug);
+    if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
+    const index = db.rsvps.findIndex((r) => r.experienceId === found.id && r.id === rsvpId);
+    if (index < 0) return { ok: false, reason: "missing" };
+    db.rsvps.splice(index, 1);
+    return { ok: true };
   });
 }
 

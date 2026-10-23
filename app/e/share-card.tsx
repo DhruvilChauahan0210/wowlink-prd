@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
-import { formatInvitationDate, formatInvitationTime, getInvitationTemplate, sortSchedule } from "../lib/invitations";
+import { formatInvitationDate, formatInvitationTime, getInvitationTemplate, sortSchedule, type TemplateId } from "../lib/invitations";
+import { OCCASION_PAGES } from "../lib/occasion-pages";
 import type { PublicExperience } from "../lib/store";
 import { paletteFor } from "../lib/palette";
 import { renderSvg } from "../lib/svg-string";
@@ -49,8 +50,10 @@ const mark = renderSvg(
   </svg>,
 );
 
-/** `experience` is null when the link doesn't lead anywhere (still a friendly card, never an error). */
-export async function shareCard(experience: PublicExperience | null, addressee?: string) {
+type CardWords = { name: ArtName; tone: string; eyebrow: string; title: string; lines: string[]; small?: string; cta: string };
+
+/** The card itself: the drawing as a taped print on the left, the words on the right. */
+async function card({ name, tone, eyebrow, title, lines, small, cta }: CardWords) {
   const [serif, hand, sans, gujarati] = await Promise.all([font("fraunces.ttf"), font("caveat.ttf"), font("figtree.ttf"), font("noto-serif-gujarati.ttf")]);
   // Gujarati comes last: it's only reached for characters the others don't have (a household's name, a title).
   const fonts = [
@@ -59,15 +62,7 @@ export async function shareCard(experience: PublicExperience | null, addressee?:
     { name: "Figtree", data: sans, weight: 500 as const, style: "normal" as const },
     { name: "Noto Serif Gujarati", data: gujarati, weight: 500 as const, style: "normal" as const },
   ];
-
-  const name = (experience?.templateId ?? "wedding") as ArtName;
-  const template = getInvitationTemplate(name);
-  // the host's colours, when they chose some
-  const tone = paletteFor(experience?.palette)?.accent ?? TONE[name];
-  const title = drawable(experience?.title ?? "This invitation isn’t available");
   const titleSize = title.length > 34 ? 54 : title.length > 22 ? 66 : 80;
-  const when = experience ? [formatInvitationDate(experience.date, true), formatInvitationTime(experience.time)].filter(Boolean).join(" · ") : "";
-  const eyebrow = drawable(!experience ? "WowLink" : addressee ? `For ${addressee}` : template.eyebrow);
 
   return new ImageResponse(
     (
@@ -84,13 +79,11 @@ export async function shareCard(experience: PublicExperience | null, addressee?:
 
         {/* the words */}
         <div style={{ position: "absolute", left: 540, top: 120, width: 600, display: "flex", flexDirection: "column" }}>
-          <div style={{ fontFamily: "Caveat", fontSize: 40, color: tone, lineHeight: 1.1 }}>{eyebrow}</div>
-          <div style={{ fontFamily: "Fraunces", fontSize: titleSize, lineHeight: 1.02, letterSpacing: "-0.02em", marginTop: 10 }}>{title}</div>
-          {experience && !experience.pending && <div style={{ fontSize: 30, color: "#5d5044", marginTop: 26 }}>{when}</div>}
-          {experience && !experience.pending && <div style={{ fontSize: 28, color: "#5d5044", marginTop: 6 }}>{drawable(experience.venue)}</div>}
-          {experience?.pending && <div style={{ fontSize: 30, color: "#5d5044", marginTop: 26 }}>Details to follow</div>}
-          {experience && experience.events.length > 1 && <div style={{ fontSize: 24, color: "#7b6d5a", marginTop: 14 }}>{drawable(`${sortSchedule(experience.events).slice(0, 4).map(e => e.name).join(" · ")}${experience.events.length > 4 ? " · …" : ""}`)}</div>}
-          <div style={{ fontFamily: "Caveat", fontSize: 40, color: tone, marginTop: 34, transform: "rotate(-2deg)" }}>{experience ? "tap to open your invitation →" : "make your own at WowLink"}</div>
+          <div style={{ fontFamily: "Caveat", fontSize: 40, color: tone, lineHeight: 1.1 }}>{drawable(eyebrow)}</div>
+          <div style={{ fontFamily: "Fraunces", fontSize: titleSize, lineHeight: 1.02, letterSpacing: "-0.02em", marginTop: 10 }}>{drawable(title)}</div>
+          {lines.map((line, i) => <div key={i} style={{ fontSize: i ? 28 : 30, color: "#5d5044", marginTop: i ? 6 : 26 }}>{drawable(line)}</div>)}
+          {small && <div style={{ fontSize: 24, color: "#7b6d5a", marginTop: 14 }}>{drawable(small)}</div>}
+          <div style={{ fontFamily: "Caveat", fontSize: 40, color: tone, marginTop: 34, transform: "rotate(-2deg)" }}>{cta}</div>
         </div>
 
         <div style={{ position: "absolute", right: 60, bottom: 40, display: "flex", alignItems: "center", gap: 10 }}>
@@ -101,4 +94,35 @@ export async function shareCard(experience: PublicExperience | null, addressee?:
     ),
     { ...shareCardSize, fonts },
   );
+}
+
+/** `experience` is null when the link doesn't lead anywhere (still a friendly card, never an error). */
+export function shareCard(experience: PublicExperience | null, addressee?: string) {
+  const name = (experience?.templateId ?? "wedding") as ArtName;
+  const template = getInvitationTemplate(name);
+  const when = experience ? [formatInvitationDate(experience.date, true), formatInvitationTime(experience.time)].filter(Boolean).join(" · ") : "";
+  return card({
+    name,
+    // the host's colours, when they chose some
+    tone: paletteFor(experience?.palette)?.accent ?? TONE[name],
+    eyebrow: !experience ? "WowLink" : addressee ? `For ${addressee}` : template.eyebrow,
+    title: experience?.title ?? "This invitation isn’t available",
+    lines: !experience ? [] : experience.pending ? ["Details to follow"] : [when, experience.venue],
+    small: experience && experience.events.length > 1 ? `${sortSchedule(experience.events).slice(0, 4).map(e => e.name).join(" · ")}${experience.events.length > 4 ? " · …" : ""}` : undefined,
+    cta: experience ? "tap to open your invitation →" : "make your own at WowLink",
+  });
+}
+
+/** The card for an occasion's own page (/templates/<id>), when that page is shared. */
+export function occasionCard(id: TemplateId) {
+  const template = getInvitationTemplate(id);
+  const { heading } = OCCASION_PAGES[template.id];
+  return card({
+    name: template.id,
+    tone: TONE[template.id],
+    eyebrow: template.category,
+    title: `${heading[0]} ${heading[1]}`,
+    lines: ["Hand-drawn, in Gujarati or English", "One link for WhatsApp, with replies"],
+    cta: "make yours free →",
+  });
 }

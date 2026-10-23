@@ -115,6 +115,10 @@ const en = {
   wishPlaceholder: "Wishing you a lifetime of happiness…",
   wishesHeading: ["Blessings &", "wishes"] as Pair,
   aGuest: "A guest",
+  // privacy
+  privacyNote: (wishesShown: boolean): string => (wishesShown ? "Only the hosts see your reply. A wish may be shown on this page, with your name." : "Your reply goes to the hosts only."),
+  privacyLink: "How it’s kept",
+  privacy: "Privacy",
   // footer
   madeWith: "Made with WowLink",
   createYours: "Create yours free",
@@ -214,6 +218,9 @@ const gu: GuestText = {
   wishPlaceholder: "જીવનભર સુખી રહો…",
   wishesHeading: ["આશીર્વાદ અને", "શુભેચ્છાઓ"],
   aGuest: "એક મહેમાન",
+  privacyNote: (wishesShown: boolean) => (wishesShown ? "આપનો જવાબ ફક્ત યજમાન જ જોશે. શુભેચ્છા આપના નામ સાથે આ પાના પર દેખાઈ શકે છે." : "આપનો જવાબ ફક્ત યજમાન જ જોશે."),
+  privacyLink: "તે કેવી રીતે સચવાય છે",
+  privacy: "ગોપનીયતા",
   madeWith: "WowLink થી બનાવેલું",
   createYours: "આપનું મફત બનાવો",
   countdown: {

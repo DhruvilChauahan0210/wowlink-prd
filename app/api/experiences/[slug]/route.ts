@@ -1,6 +1,6 @@
 import { isTemplateId, validateDraft } from "../../../lib/invitations";
 import { keyFrom, notYours } from "../../../lib/owner";
-import { getOwned, updateOwned } from "../../../lib/store";
+import { deleteOwned, getOwned, updateOwned } from "../../../lib/store";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -38,4 +38,11 @@ export async function PATCH(request: Request, { params }: Params) {
   const result = await updateOwned(slug, keyFrom(request), patch);
   if (result.ok) return Response.json({ experience: result.experience });
   return result.reason === "invalid" ? Response.json({ error: "Pick at least one celebration for the general link." }, { status: 422 }) : notYours();
+}
+
+/** Delete the invitation for good: its replies, wishes, personal invitations and links go with it. Needs the manage key. */
+export async function DELETE(request: Request, { params }: Params) {
+  const { slug } = await params;
+  const result = await deleteOwned(slug, keyFrom(request));
+  return result.ok ? Response.json({ ok: true, replies: result.replies }) : notYours();
 }

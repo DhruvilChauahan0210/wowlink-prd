@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { siteUrl } from "./lib/site";
 import { ArtFilters } from "./ui/art";
 import "./globals.css";
 import "./cinematic.css";
 import "./studio.css";
 
-// Absolute URLs for share previews (og:image and friends). Set NEXT_PUBLIC_SITE_URL to the public domain when deploying.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

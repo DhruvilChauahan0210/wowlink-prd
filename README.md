@@ -27,6 +27,9 @@ Open [http://localhost:3000](http://localhost:3000).
 - **My invitations** (`/mine`): every invitation this device can manage, with replies at a glance, plus drafts. Since there are no accounts yet, it can save all your manage links to a small private file, and add invitations from a pasted link or that file on another device.
 - **Personal invitations** (`/e/<slug>/<id>`): a link for one household ("the Patel family"). It opens addressed to them and shows only the celebrations the host picked. The household has one reply, which they can change later. The general link can also be limited, for example to the reception only. Celebrations a link doesn't show never reach that browser: not in the page, the calendar file or the share image.
 - **The manage page** (`/manage/<slug>#k=…`): a private link for reply totals, the headcount for each celebration, who hasn't replied, personal invitations, editing, and unpublishing. You can add invitations one at a time or paste a whole list (one household per line, optionally with a WhatsApp number), then preview, send, remind, replace a link or remove each one. With a number, WhatsApp opens that family's chat directly. Each household shows whether they've opened their link yet ("Opened 22 Oct · no reply yet"), counted from real visits only, not link previews. Numbers are only ever shown to the host. Everything can be downloaded as a spreadsheet: every reply, the headcount per celebration for the caterer, and the invitation list with links.
+- **Deleting.** On the manage page a host can delete a single reply (when a guest asks to be taken off), or the whole invitation with every reply, wish, household and number in it. Both ask first; deleting the invitation offers to download the replies, then takes it off My invitations on that device. Only a deleted invitation's slug is kept, so its old link can never open someone else's invitation.
+- **Privacy** (`/privacy`, `/privacy?lang=gu`): what WowLink keeps, who sees it, that a link isn't a lock, and how things are deleted, in plain English and Gujarati. Guests reach it from the reply form and the invitation's footer, in their language; hosts from the manage page.
+- **Occasion pages for search** (`/templates/<occasion>`): each occasion has its own page with a sample that opens right there, what it's good for, what guests get, and a few questions answered, written for searches like "Garba invitation maker online" or "Gujarati wedding invitation website" (`app/lib/occasion-pages.ts`). Each has its own share card. `sitemap.xml` lists the home page, the occasions, their pages and the privacy page; `robots.txt` keeps crawlers out of the API and the hosts' pages. Invitations, the studio, the manage pages and My invitations all carry `noindex`.
 
 ## Tests
 
@@ -40,7 +43,7 @@ Playwright runs the unit and end-to-end tests against a production build on port
 
 | Variable | Used for |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
+| `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews, canonical links, `sitemap.xml` and `robots.txt` (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
 
 ## Current limits
 
@@ -51,6 +54,7 @@ Playwright runs the unit and end-to-end tests against a production build on port
 - The free plan's 100 replies count every general-link reply plus one place kept for each personal invitation, so an invited household can always reply.
 - Subscriptions, analytics and the free plan's 60-day expiry aren't built yet.
 - The PRD puts custom colours in the paid plan. Until plans exist, every host has them.
+- The privacy page describes the app as it is today. Before launch it needs a proper review: where the data is hosted, how long it's kept, what the hosting provider logs, and consent.
 
 ## Performance on phones
 

@@ -8,6 +8,10 @@ const PAGES = [
   { path: "/create", check: "Make it" },
   { path: "/e/preview?template=wedding", check: "Aarav & Meera" },
   { path: "/e/preview?template=opening", check: "A new beginning" },
+  { path: "/templates/wedding", check: "A wedding invitation" },
+  { path: "/templates/babyshower", check: "A seemant invitation" },
+  { path: "/privacy", check: "What we keep" },
+  { path: "/privacy?lang=gu", check: "અમે શું સાચવીએ છીએ" },
 ];
 
 for (const { path, check } of PAGES) {

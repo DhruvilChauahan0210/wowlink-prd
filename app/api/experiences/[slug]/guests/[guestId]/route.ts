@@ -15,7 +15,7 @@ export async function PATCH(request: Request, { params }: Params) {
   return result.reason === "missing" ? noSuchGuest() : notYours();
 }
 
-/** Remove a personal invitation; its link stops working. Replies are kept. Needs the manage key. */
+/** Remove a personal invitation; its link stops working and its reply is removed with it. Needs the manage key. */
 export async function DELETE(request: Request, { params }: Params) {
   const { slug, guestId } = await params;
   const result = await removeGuest(slug, keyFrom(request), guestId);

@@ -103,6 +103,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   // The host's language first; on a live link, a guest's own choice (kept on their device) wins once the page is up.
   const [lang, setLang] = useState<Lang>(draft.language ?? "en");
   const t = GUEST_TEXT[lang];
+  const privacyHref = lang === "gu" ? "/privacy?lang=gu" : "/privacy";
   useEffect(() => {
     if (!live) return setLang(draft.language ?? "en");
     try {
@@ -377,6 +378,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
             {error && <p className="inv-rsvp-error" role="alert">{error}</p>}
             <button type="submit" className="cin-cta cin-cta-light" disabled={state === "sending"}>{sends ? (state === "sending" ? t.sending : replied ? t.update : t.send) : t.previewSubmit}</button>
             {!sends && <p className="inv-rsvp-preview-note">{t.previewNote}</p>}
+            <p className="inv-rsvp-privacy">{t.privacyNote(wishes !== null)} <Link href={privacyHref} target="_blank" rel="noreferrer">{t.privacyLink}</Link></p>
           </form>}
         </div>
       </section>}
@@ -385,6 +387,6 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         <ul className="inv-wishes">{wishes.map((w, i) => <li key={i} className="inv-wish"><p>{w.text}</p><span>— {w.name || t.aGuest}</span></li>)}</ul>
       </section>}
     </main>
-    <footer className="invitation-footer"><WowLinkBrand/><span>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link href="/templates">{t.createYours} <span aria-hidden="true">→</span></Link></footer>
+    <footer className="invitation-footer"><WowLinkBrand/><span>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link><Link href="/templates">{t.createYours} <span aria-hidden="true">→</span></Link></footer>
   </div>;
 }

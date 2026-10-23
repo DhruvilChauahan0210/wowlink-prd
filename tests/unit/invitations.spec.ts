@@ -65,10 +65,10 @@ test("each schedule entry needs a name and a real date; time and venue are optio
   expect(validateDraft({ ...good, events: [event({ name: "" })] })).toMatchObject({ ok: false, errors: { events: "One of the events in the schedule needs a look." } });
 });
 
-test("a schedule has at most 8 events", () => {
-  const nine = Array.from({ length: 9 }, (_, i) => event({ id: `e${i}` }));
-  expect(validateDraft({ ...good, events: nine })).toMatchObject({ ok: false, errors: { events: "A schedule can have up to 8 events." } });
-  expect(validateDraft({ ...good, events: nine.slice(0, 8) }).ok).toBe(true);
+test("a schedule has at most 10 events (all nine nights of Navratri fit, and Dussehra)", () => {
+  const eleven = Array.from({ length: 11 }, (_, i) => event({ id: `e${i}` }));
+  expect(validateDraft({ ...good, events: eleven })).toMatchObject({ ok: false, errors: { events: "A schedule can have up to 10 events." } });
+  expect(validateDraft({ ...good, events: eleven.slice(0, 10) }).ok).toBe(true);
 });
 
 test("wedding presets land on sensible days relative to the main day", () => {

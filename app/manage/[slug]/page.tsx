@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { formatInvitationDate, formatInvitationTime, formatShortDay, ownerKey, sortSchedule } from "../../lib/invitations";
@@ -29,6 +29,17 @@ export default function ManagePage() {
   const [problem, setProblem] = useState<Problem>("");
   const [busy, setBusy] = useState(false);
   const [origin, setOrigin] = useState("");
+  // Deleting: asking first, then the deleted invitation's title once it's gone.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmReply, setConfirmReply] = useState<string | null>(null);
+  const [failed, setFailed] = useState<"" | "invitation" | "reply">("");
+  const [deleted, setDeleted] = useState<string | null>(null);
+  const deletedRef = useRef<HTMLHeadingElement>(null);
+  // Focus follows the questions: into each one as it opens, and back to what opened it.
+  const deleteToggleRef = useRef<HTMLButtonElement>(null);
+  const deleteQuestionRef = useRef<HTMLParagraphElement>(null);
+  const replyQuestionRef = useRef<HTMLParagraphElement>(null);
+  const repliesHeadingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     setOrigin(location.origin);
@@ -39,7 +50,7 @@ export default function ManagePage() {
         try { localStorage.setItem(ownerKey(slug), fromLink); } catch { /* private mode: keep it for this visit only */ }
         history.replaceState(null, "", location.pathname);
         setProblem("");
-        setData(null);
+        setDeleted(null);
         setKey(fromLink);
         return;
       }
@@ -56,7 +67,11 @@ export default function ManagePage() {
   const load = useCallback(async (k: string) => {
     try {
       const response = await fetch(`/api/experiences/${slug}`, { headers: { authorization: `Bearer ${k}` }, cache: "no-store" });
-      if (response.status === 404) return setProblem("invalid");
+      if (response.status === 404) {
+        // Deleted elsewhere, or a key that doesn't fit: don't leave the old page up as if it were still there.
+        setData(null);
+        return setProblem("invalid");
+      }
       if (!response.ok) throw new Error();
       setData(await response.json());
       setProblem("");
@@ -74,6 +89,49 @@ export default function ManagePage() {
     await load(key);
     setBusy(false);
   }
+
+  async function deleteInvitation() {
+    if (!key || !data) return;
+    setBusy(true);
+    setFailed("");
+    const response = await fetch(`/api/experiences/${slug}`, { method: "DELETE", headers: { authorization: `Bearer ${key}` } }).catch(() => null);
+    setBusy(false);
+    // A 404 for a key that just opened this page means it's already gone: deleted on another device, or by an
+    // earlier try whose answer was lost on the way back.
+    if (!response?.ok && response?.status !== 404) return setFailed("invitation");
+    // It's gone, so this device no longer needs its key (and My invitations stops listing it).
+    try { localStorage.removeItem(ownerKey(slug)); } catch { /* nothing saved */ }
+    setDeleted(data.experience.title);
+    setData(null);
+    setKey(null);
+  }
+
+  async function removeReply(id: string) {
+    if (!key) return;
+    setBusy(true);
+    setFailed("");
+    const response = await fetch(`/api/experiences/${slug}/rsvps/${id}`, { method: "DELETE", headers: { authorization: `Bearer ${key}` } }).catch(() => null);
+    // Already gone (removed on another device) is as good as removed. Reloading also shows if the whole invitation went.
+    if (response?.ok || response?.status === 404) {
+      setConfirmReply(null);
+      await load(key);
+      repliesHeadingRef.current?.focus();
+    } else setFailed("reply");
+    setBusy(false);
+  }
+
+  function keepReply(id: string) {
+    setConfirmReply(null);
+    document.getElementById(`remove-reply-${id}`)?.focus();
+  }
+  function keepInvitation() {
+    setConfirmDelete(false);
+    deleteToggleRef.current?.focus();
+  }
+
+  useEffect(() => { if (deleted) deletedRef.current?.focus(); }, [deleted]);
+  useEffect(() => { if (confirmDelete) deleteQuestionRef.current?.focus(); }, [confirmDelete]);
+  useEffect(() => { if (confirmReply) replyQuestionRef.current?.focus(); }, [confirmReply]);
 
   const totals = useMemo(() => {
     const t = { Attending: 0, Maybe: 0, "Not attending": 0, guests: 0, maybeGuests: 0 };
@@ -106,7 +164,12 @@ export default function ManagePage() {
       {problem === "no-key" && <Notice h={h} title={h.noKeyTitle}>{h.noKeyBody[0]} <b>#</b> {h.noKeyBody[1]}</Notice>}
       {problem === "invalid" && <Notice h={h} title={h.invalidTitle}>{h.invalidBody}</Notice>}
       {problem === "offline" && <Notice h={h} title={h.offlineTitle} action={key ? <button className="cin-cta cin-cta-outline" onClick={() => void load(key)}>{h.tryAgain}</button> : null}>{h.offlineBody}</Notice>}
-      {!data && !problem && <p className="manage-loading">{h.opening}</p>}
+      {deleted !== null && <section className="sketch-card manage-card manage-notice" role="status">
+        <h1 ref={deletedRef} tabIndex={-1}>{h.deletedTitle}</h1>
+        <p>{h.deletedBody(deleted)}</p>
+        <div className="manage-actions"><Link className="cin-cta cin-cta-light" href="/mine">{h.myInvitations}</Link><Link className="cin-text-link" href="/templates">{h.makeNew} <span aria-hidden="true">→</span></Link></div>
+      </section>}
+      {!data && !problem && deleted === null && <p className="manage-loading">{h.opening}</p>}
 
       {experience && data && <>
         <section className="manage-hero">
@@ -130,7 +193,7 @@ export default function ManagePage() {
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="replies-heading">
-          <div className="manage-card-head"><h2 id="replies-heading">{h.repliesHeading}</h2><button className="inv-replay-link" onClick={() => key && void load(key)}>{h.refresh}</button></div>
+          <div className="manage-card-head"><h2 id="replies-heading" ref={repliesHeadingRef} tabIndex={-1}>{h.repliesHeading}</h2><button className="inv-replay-link" onClick={() => key && void load(key)}>{h.refresh}</button></div>
           <dl className="manage-totals">
             <div><dt>{h.coming}</dt><dd>{totals.Attending}</dd><span>{h.guestsInAll(totals.guests)}</span></div>
             <div><dt>{h.maybe}</dt><dd>{totals.Maybe}</dd>{totals.maybeGuests > 0 && <span>{h.people(totals.maybeGuests)}</span>}</div>
@@ -139,10 +202,12 @@ export default function ManagePage() {
           {schedule.length > 0 && <Headcount experience={experience} rsvps={data.rsvps}/>}
           {data.rsvps.length ? <div className="manage-table-wrap"><table className="manage-table manage-replies">
             {schedule.length > 0 && <caption className="manage-caption">{h.everyReply}</caption>}
-            <thead><tr><th scope="col">{h.colName}</th><th scope="col">{h.colReply}</th><th scope="col">{h.colGuests}</th>{schedule.length > 0 && <th scope="col">{h.colCelebrations}</th>}<th scope="col">{h.colWhen}</th></tr></thead>
+            <thead><tr><th scope="col">{h.colName}</th><th scope="col">{h.colReply}</th><th scope="col">{h.colGuests}</th>{schedule.length > 0 && <th scope="col">{h.colCelebrations}</th>}<th scope="col">{h.colWhen}</th><th scope="col"><span className="studio-sr-only">{h.colRemove}</span></th></tr></thead>
             <tbody>{data.rsvps.map(r => {
               const household = guestName(r.guestId);
-              return <tr key={r.id}>
+              const who = r.name || household || h.aReply;
+              const asking = confirmReply === r.id;
+              return <Fragment key={r.id}><tr className={asking ? "is-asking" : undefined}>
                 <td>{r.name || household || <span className="manage-muted">{h.noName}</span>}{household && r.name && <span className="manage-via">{h.forHousehold(household)}</span>}</td>
                 <td><span className={`manage-reply is-${r.attendance.replace(" ", "-").toLowerCase()}`}>{h.attendance[r.attendance]}</span></td>
                 <td>{r.attendance === "Not attending" ? "–" : r.guestCount}</td>
@@ -153,7 +218,14 @@ export default function ManagePage() {
                   return <li key={e.id} className={`is-${answer.attendance.replace(" ", "-").toLowerCase()}`}><span aria-hidden="true">{mark}</span> {e.name}{answer.attendance !== "Not attending" && answer.guestCount !== r.guestCount ? ` (${answer.guestCount})` : ""}<span className="studio-sr-only">: {h.attendance[answer.attendance]}</span></li>;
                 })}</ul></td>}
                 <td>{when(r.updatedAt ?? r.createdAt)}</td>
-              </tr>;
+                <td><button type="button" id={`remove-reply-${r.id}`} className="manage-row-action" aria-label={h.removeReplyFor(who)} aria-expanded={asking} disabled={busy} onClick={() => { setFailed(""); setConfirmReply(asking ? null : r.id); }}>{h.remove}</button></td>
+              </tr>
+              {asking && <tr className="manage-row-confirm"><td colSpan={schedule.length > 0 ? 6 : 5}><div className="manage-confirm" role="group" aria-label={h.removeReplyFor(who)}>
+                <p ref={replyQuestionRef} tabIndex={-1}>{h.removeReplyConfirm(!!household, !!r.wish)}</p>
+                <button type="button" className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void removeReply(r.id)}>{h.remove}</button>
+                <button type="button" className="share-chip" onClick={() => keepReply(r.id)}>{h.keepIt}</button>
+                {failed === "reply" && <p className="studio-error" role="alert">{h.deleteFailed}</p>}
+              </div></td></tr>}</Fragment>;
             })}</tbody>
           </table></div> : <p className="manage-muted">{h.noRepliesYet}</p>}
           {data.rsvps.length > 0 && <div className="manage-downloads"><span>{h.download}</span>
@@ -177,6 +249,20 @@ export default function ManagePage() {
               : <button className="cin-cta cin-cta-light" disabled={busy} onClick={() => void setStatus("published")}>{h.publishAgain}</button>}
             <span className="manage-muted">{h.unpublishNote(live)}</span>
           </div>
+          <Link className="cin-text-link manage-privacy-link" href={lang === "gu" ? "/privacy?lang=gu" : "/privacy"}>{h.privacyLink} <span aria-hidden="true">→</span></Link>
+        </section>
+
+        <section className="sketch-card manage-card manage-delete" aria-labelledby="delete-heading">
+          <h2 id="delete-heading">{h.deleteHeading}</h2>
+          <p className="manage-muted">{h.deleteBody}</p>
+          <div className="manage-actions"><button type="button" ref={deleteToggleRef} className="cin-cta cin-cta-outline" aria-expanded={confirmDelete} onClick={() => { setFailed(""); setConfirmDelete(!confirmDelete); }}>{h.deleteInvitation}</button></div>
+          {confirmDelete && <div className="manage-confirm" role="group" aria-labelledby="delete-heading">
+            <p ref={deleteQuestionRef} tabIndex={-1}>{h.deleteConfirm(data.rsvps.length, experience.guests.length)}</p>
+            {data.rsvps.length > 0 && <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "replies"), repliesCsv(data))}>{h.downloadRepliesFirst}</button>}
+            <button type="button" className="cin-cta cin-cta-outline manage-delete-confirm" disabled={busy} onClick={() => void deleteInvitation()}>{h.deleteForGood}</button>
+            <button type="button" className="share-chip" onClick={keepInvitation}>{h.keepIt}</button>
+          </div>}
+          {failed === "invitation" && <p className="studio-error" role="alert">{h.deleteFailed}</p>}
         </section>
       </>}
     </main>

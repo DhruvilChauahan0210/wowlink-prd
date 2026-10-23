@@ -287,6 +287,9 @@
 .inv-attendance label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .inv-attendance input{position:absolute;opacity:0;width:100%;height:100%;margin:0;inset:0;cursor:pointer}
 .inv-rsvp-card form>.cin-cta{width:100%;margin-top:6px}
+.inv-rsvp-card .inv-rsvp-privacy{margin:14px 0 0;font-size:13px;line-height:1.5;color:var(--muted);text-align:center}
+.inv-rsvp-privacy a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.invitation-footer>a.invitation-footer-privacy{margin-left:auto;font:600 22px/1 var(--hand);color:var(--faint)}
 .inv-rsvp-preview-note{font:600 22px/1.2 var(--hand)!important;color:var(--faint)!important;margin-top:14px!important;text-align:center}
 .inv-rsvp-confirmation{display:flex;align-items:flex-start;flex-direction:column;min-height:300px;justify-content:center}
 .inv-rsvp-confirmation>svg{width:30px;height:30px;color:var(--accent);margin-bottom:24px}
@@ -502,6 +505,19 @@
 .manage-reply.is-not-attending{color:var(--muted)}
 .manage-limit{margin:16px 0 0;font:600 20px/1.2 var(--hand);color:var(--muted)}
 .manage-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px 18px;margin-top:20px}
+/* removing one reply, and deleting the whole invitation */
+.manage-table .manage-row-action{min-height:32px;padding:4px 0;border:0;background:none;cursor:pointer;font:700 19px/1 var(--hand);color:var(--muted);text-decoration:underline wavy;text-underline-offset:4px;text-decoration-thickness:1px}
+.manage-row-action:hover,.manage-row-action[aria-expanded=true]{color:#a8341f}
+.manage-table tr.is-asking td{background:#a8341f0d}
+.manage-table tr.manage-row-confirm td{border-top:0;padding:0 10px 16px;background:#a8341f0d}
+.manage-row-confirm .manage-confirm{margin-top:0}
+.manage-confirm .studio-error{font:700 20px/1.15 var(--hand);color:var(--accent)}
+.manage-privacy-link{display:inline-flex;margin-top:22px}
+.manage-delete h2{color:#a8341f}
+.manage-delete .cin-cta-outline{color:#a8341f}
+.manage-delete .cin-cta-outline::before{background:#a8341f}
+.manage-delete .manage-delete-confirm{color:#fbf6ec}
+.manage-delete .manage-delete-confirm::before{background:#a8341f;-webkit-mask-image:var(--rough-f);mask-image:var(--rough-f)}
 /* personal invitations, what the general link shows, and the headcount per celebration */
 .manage-warn{margin:10px 0 0;font:700 21px/1.25 var(--hand);color:#b9721a}
 .manage-picker{padding:0;margin:0 0 16px;border:0;min-width:0}

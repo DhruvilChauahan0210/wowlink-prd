@@ -68,10 +68,10 @@ test("the studio points at a schedule entry that needs fixing", async ({ page })
 
 test("the API enforces schedule rules", async ({ request }) => {
   const post = (events: object[]) => request.post("/api/experiences", { headers: { "x-forwarded-for": freshIp() }, data: { templateId: "wedding", draft: { ...sampleDraft(), events } } });
-  const nine = Array.from({ length: 9 }, (_, i) => ({ id: `e${i}`, name: `Day ${i}`, date: "2026-11-06", time: "", venue: "" }));
-  const tooMany = await post(nine);
+  const eleven = Array.from({ length: 11 }, (_, i) => ({ id: `e${i}`, name: `Day ${i}`, date: "2026-11-06", time: "", venue: "" }));
+  const tooMany = await post(eleven);
   expect(tooMany.status()).toBe(422);
-  expect((await tooMany.json()).fields.events).toBe("A schedule can have up to 8 events.");
+  expect((await tooMany.json()).fields.events).toBe("A schedule can have up to 10 events.");
   expect((await post([{ id: "x", name: "Mehndi", date: "2026-02-30", time: "", venue: "" }])).status()).toBe(422);
-  expect((await post(nine.slice(0, 8))).status()).toBe(201);
+  expect((await post(eleven.slice(0, 10))).status()).toBe(201);
 });
