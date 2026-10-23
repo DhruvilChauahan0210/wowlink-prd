@@ -394,7 +394,7 @@ const en = {
   // ---------- My invitations ----------
   newInvitation: "New invitation",
   mineHeading: ["My", "invitations"] as readonly [string, string],
-  mineIntro: "Everything you can manage from this device. There are no accounts yet: an invitation is yours through its private manage link, which is saved here when you publish or open it.",
+  mineIntro: "Everything you can manage. Signed in with Google, your invitations are here on every phone; this device also keeps the private manage links it has opened.",
   finding: "Finding your invitations…",
   nothingYet: "Nothing here yet",
   nothingYetBody: "Invitations you publish on this device show up here. Made one somewhere else? Add it below with its manage link.",
@@ -790,7 +790,7 @@ const gu: HostText = {
 
   newInvitation: "નવું આમંત્રણ",
   mineHeading: ["મારાં", "આમંત્રણો"],
-  mineIntro: "આ ઉપકરણ પરથી આપ જે સંભાળી શકો છો તે બધું. હજી એકાઉન્ટ નથી: આમંત્રણ આપનું છે તેની ખાનગી મેનેજ લિંકથી, જે પ્રકાશિત કરતાં કે ખોલતાં અહીં સચવાય છે.",
+  mineIntro: "આપ જે સંભાળી શકો છો તે બધું. Google થી સાઇન ઇન હો તો આપનાં આમંત્રણો દરેક ફોન પર અહીં દેખાય; આ ઉપકરણ તેણે ખોલેલી ખાનગી મેનેજ લિંક પણ સાચવે છે.",
   finding: "આપનાં આમંત્રણો શોધી રહ્યા છીએ…",
   nothingYet: "હજી અહીં કંઈ નથી",
   nothingYetBody: "આ ઉપકરણ પર પ્રકાશિત કરેલાં આમંત્રણો અહીં દેખાશે. બીજે ક્યાંક બનાવ્યું છે? તેની મેનેજ લિંકથી નીચે ઉમેરો.",
@@ -1194,7 +1194,7 @@ const hi: HostText = {
   // ---------- My invitations ----------
   newInvitation: "नया निमंत्रण",
   mineHeading: ["मेरे", "निमंत्रण"],
-  mineIntro: "इस डिवाइस से आप जो कुछ संभाल सकते हैं, सब यहाँ है। अभी अकाउंट नहीं हैं: निमंत्रण अपने निजी मैनेज लिंक से आपका है, जो पब्लिश करने या खोलने पर यहाँ सेव हो जाता है।",
+  mineIntro: "आप जो कुछ संभाल सकते हैं, सब यहाँ है। Google से साइन इन हों तो आपके निमंत्रण हर फ़ोन पर यहाँ दिखते हैं; यह डिवाइस अपनी खोली हुई निजी मैनेज लिंक भी सहेजता है।",
   finding: "आपके निमंत्रण ढूँढ रहे हैं…",
   nothingYet: "अभी यहाँ कुछ नहीं",
   nothingYetBody: "इस डिवाइस पर पब्लिश किए गए निमंत्रण यहाँ दिखेंगे। कहीं और बनाया है? उसके मैनेज लिंक से नीचे जोड़ें।",
