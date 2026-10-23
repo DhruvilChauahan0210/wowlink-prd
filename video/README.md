@@ -22,10 +22,11 @@ npm run render    # out/wowlink-launch-vertical.mp4 and out/wowlink-launch-wide.
   a little faster for Reels energy (`RATE`, `PITCH`, `VOLUME`), then trimmed, brightened and compressed so it sits up
   front, with just a breath (`BREATH`) between lines. `VOICE` swaps it (and `SAY=roman` reads the Roman captions, for
   an Indian-English voice like `en-IN-NeerjaNeural`).
-- **The edit** lands on the words: voice.py keeps the moment each word is said, and every slam, stamp, sticker,
-  shake and confetti burst in `src/scenes.tsx` is timed to a spoken word (`useWord`). Each scene has its own colour
-  (`src/Launch.tsx`), slams in with a flash and a zoom, and pulses on the beat; the captions pop on a few words at
-  a time, key words in a marigold box. The effects are in `src/kit.tsx`.
+- **The edit** lands on the words: voice.py keeps the moment each word is said, and every stamp, sticker, push and
+  confetti burst in `src/scenes.tsx` is timed to a spoken word (`useWord`). The motion is calm and eased, with no
+  shakes or wobbles: each scene has its own colour (`src/Launch.tsx`), the cuts zoom through a blur from one scene
+  into the next, the camera pushes in slowly, and the captions rise in a few words at a time, key words on a
+  marigold box. The effects are in `src/kit.tsx`.
 - **The music** is made in code (`scripts/music.py`): a tanpura drone, a ticking wait, a riser into the drop, a dhol
   groove at 118 bpm with kicks, claps and a sitar-like melody, and a final hit, plus the sound effects (whooshes,
   stamps, a record scratch, sparkles, booms). No samples, so nothing can be claimed on Instagram or YouTube.

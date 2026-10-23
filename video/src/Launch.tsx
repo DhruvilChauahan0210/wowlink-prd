@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AbsoluteFill, Audio, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Easing, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import lines from "../public/voice/lines.json";
 import { C, F, Ground, SceneWords, useShape, type Word } from "./kit";
 import { Cta, Guest, Hook, Host, Languages, Reveal, Rsvp, Studio } from "./scenes";
@@ -7,8 +7,9 @@ import { Cta, Guest, Hook, Host, Languages, Reveal, Rsvp, Studio } from "./scene
 /*
  * WowLink's launch video: eight lines of Hinglish voiceover (scripts/voice.py), each with its scene and caption, over an
  * original track (scripts/music.py), then an end card. Timings come from the voice files, so changing the script and
- * re-running `npm run voice` and `npm run music` re-times everything. Cut like a Reel: every scene has its own colour,
- * slams in with a flash and a zoom, and pulses on the beat; the captions pop on a few words at a time as they're said.
+ * re-running `npm run voice` and `npm run music` re-times everything. Cut like a Reel, with calm, eased motion: every
+ * scene has its own colour, the cuts zoom through a blur from one scene into the next, the camera pushes in slowly
+ * through each scene, and the captions rise in a few words at a time as they're said.
  */
 
 export const FPS = 30;
@@ -27,11 +28,6 @@ const length = (id: string) => {
   return (i + 1 < LINES.length ? START[LINES[i + 1].id] : VOICE_END) - START[id];
 };
 
-// The beat, as music.py plays it: the groove starts on "WowLink" at 118 bpm, softer (no kick) for languages and host.
-const DROP = START.reveal;
-const BEAT = (60 / 118) * FPS;
-const SOFT = [START.languages, START.host] as const;
-
 const SCENES = { hook: Hook, reveal: Reveal, studio: Studio, guest: Guest, rsvp: Rsvp, languages: Languages, host: Host, cta: Cta } as const;
 const GROUND: Record<string, Ground> = { hook: "paper", reveal: "marigold", studio: "paper", guest: "red", rsvp: "marigold", languages: "paper", host: "dark", cta: "dark" };
 
@@ -44,7 +40,7 @@ export function Launch() {
       const frames = line.id === "cta" ? TOTAL - START.cta : length(line.id);
       return <Sequence key={line.id} from={START[line.id]} durationInFrames={frames}>
         <SceneWords.Provider value={line.words}>
-          <Cut id={line.id}><Scene/></Cut>
+          <Cut id={line.id} frames={frames}><Scene/></Cut>
         </SceneWords.Provider>
       </Sequence>;
     })}
@@ -52,47 +48,43 @@ export function Launch() {
   </AbsoluteFill>;
 }
 
-/** A scene's frame: its ground, a zoom-and-blur slam in with a flash on the cut, and a little pulse on every beat. */
-function Cut({ id, children }: { id: string; children: ReactNode }) {
+const CLAMP = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
+
+/**
+ * A scene's frame: its ground and a slow camera push-in, joined to its neighbours by a zoom-through: the scene eases
+ * into a zoomed blur over its last frames, and the next one eases out of the same blur, so the cut hides inside it.
+ */
+function Cut({ id, frames, children }: { id: string; frames: number; children: ReactNode }) {
   const frame = useCurrentFrame();
-  const enter = interpolate(frame, [0, 9], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: (t) => 1 - Math.pow(1 - t, 3) });
-  const flash = id === "hook" ? 0 : interpolate(frame, [0, 6], [0.85, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const now = START[id] + frame;
-  let pulse = 1;
-  if (now >= DROP && now < VOICE_END) {
-    const beats = (now - DROP) / BEAT;
-    const since = (beats - Math.floor(beats)) * BEAT;
-    const kick = Math.floor(beats) % 2 === 0 && !(now >= SOFT[0] && now < SOFT[1]);
-    pulse = 1 + (kick ? 0.035 : 0.018) * Math.exp(-since / 3);
-  }
-  return <AbsoluteFill style={{ transform: `scale(${1.22 - 0.22 * enter})`, filter: enter < 1 ? `blur(${(1 - enter) * 14}px)` : undefined }}>
+  const into = id === "hook" ? 1 : interpolate(frame, [0, 8], [0, 1], { ...CLAMP, easing: Easing.out(Easing.cubic) });
+  const away = id === "cta" ? 0 : interpolate(frame, [frames - 5, frames], [0, 1], { ...CLAMP, easing: Easing.in(Easing.cubic) });
+  const zoom = (1 + 0.16 * (1 - into)) * (1 + 0.16 * away);
+  const blur = 10 * (1 - into) + 10 * away;
+  const push = 1 + 0.035 * interpolate(frame, [0, frames], [0, 1], { ...CLAMP, easing: Easing.inOut(Easing.sin) });
+  return <AbsoluteFill style={{ transform: `scale(${zoom})`, filter: blur > 0.05 ? `blur(${blur}px)` : undefined }}>
     <Ground kind={GROUND[id]}/>
-    <AbsoluteFill style={{ transform: `scale(${pulse})` }}>{children}</AbsoluteFill>
-    {flash > 0 && <AbsoluteFill style={{ background: C.cream, opacity: flash }}/>}
+    <AbsoluteFill style={{ transform: `scale(${push})` }}>{children}</AbsoluteFill>
   </AbsoluteFill>;
 }
 
 /**
- * The line on screen, the way Reels caption it: a few words at a time, popping on as they're said, big and bold with
- * a dark outline, the key words in a marigold box. Above the phone in the Reel; on the left in the wide version. The
- * last line's caption stops where the end card takes over ("Apna pehla invitation...").
+ * The line on screen, the way Reels caption it: a few words at a time, each rising in as it's said, bold with a dark
+ * outline and a soft shadow, the key words on a marigold box that wipes in behind them. Above the phone in the Reel;
+ * on the left in the wide version. The last line's caption stops where the end card takes over ("Apna pehla...").
  */
 function Caption({ line, frames }: { line: Line; frames: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { wide, height } = useShape();
+  const { wide } = useShape();
   const chunks = chunk(line);
   const until = line.id === "cta" ? Math.round((line.words.find((w) => w.w === "Apna")?.s ?? 1.7) * fps) : frames;
   const index = chunks.filter((c) => frame >= Math.round(c.start * fps)).length - 1;
   if (index < 0 || frame >= until) return null;
   const current = chunks[index];
-  const since = frame - Math.round(current.start * fps);
   const end = index + 1 < chunks.length ? Math.min(until, Math.round(chunks[index + 1].start * fps)) : until;
-  const out = interpolate(frame, [end - 3, end], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const pop = spring({ frame: since, fps, config: { damping: 10, stiffness: 260, mass: 0.6 } });
+  const out = interpolate(frame, [end - 3, end], [1, 0], CLAMP);
   const big = line.id === "cta";
-  const size = (wide ? 112 : 104) * (big ? 1.25 : 1);
-  const tilt = (index % 2 ? 1 : -1) * 2 * (1 - pop);
+  const size = (wide ? 104 : 96) * (big ? 1.25 : 1);
   const place = big
     ? { left: 60, right: 60, top: 0, bottom: 0, alignItems: "center", justifyContent: "center" }
     : wide
@@ -100,14 +92,15 @@ function Caption({ line, frames }: { line: Line; frames: number }) {
       : { left: 50, right: 50, top: 330 - size * 1.15, height: size * 2.3, alignItems: "center", justifyContent: "center" };
   const key = (word: string) => line.highlight.some((h) => word.replace(/[^\w]/g, "").toLowerCase() === h.toLowerCase());
   return <div style={{ position: "absolute", display: "flex", ...place, opacity: out }}>
-    <div style={{ font: `900 ${size}px/1.08 ${F.sans}`, letterSpacing: "-0.03em", display: "flex", flexWrap: "wrap", justifyContent: big || !wide ? "center" : "flex-start", columnGap: "0.24em", rowGap: "0.06em", transform: `scale(${1.5 - 0.5 * pop}) rotate(${tilt}deg)`, transformOrigin: wide && !big ? "left center" : "center", maxHeight: height }}>
+    <div style={{ font: `900 ${size}px/1.1 ${F.sans}`, letterSpacing: "-0.025em", display: "flex", flexWrap: "wrap", justifyContent: big || !wide ? "center" : "flex-start", columnGap: "0.24em", rowGap: "0.08em" }}>
       {current.words.map((word, i) => {
-        const said = frame >= Math.round(word.s * fps);
+        const at = Math.round(word.s * fps);
         const marked = key(word.text);
-        const p = spring({ frame: frame - Math.round(word.s * fps), fps, config: { damping: 9, stiffness: 300, mass: 0.5 } });
-        return <span key={i} style={{ display: "inline-block", position: "relative", color: marked ? C.dark : "#fff6e6", WebkitTextStroke: marked ? undefined : `${size * 0.12}px ${C.dark}`, paintOrder: "stroke fill", textShadow: marked ? undefined : `0 ${size * 0.08}px 0 ${C.dark}`, opacity: said ? 1 : 0.0, transform: `scale(${said ? 0.7 + 0.3 * p : 0.7})`, padding: marked ? "0 0.14em" : undefined }}>
-          {marked && <span style={{ position: "absolute", inset: "0.02em -0.02em -0.02em", background: C.marigold, border: `${size * 0.05}px solid ${C.dark}`, borderRadius: size * 0.14, transform: "rotate(-3deg)", boxShadow: `0 ${size * 0.08}px 0 ${C.dark}`, zIndex: -1 }}/>}
-          <span style={{ position: "relative" }}>{word.text}</span>
+        const p = spring({ frame: frame - at, fps, config: { damping: 18, stiffness: 240, mass: 0.6 } });
+        const wipe = spring({ frame: frame - at - 2, fps, config: { damping: 20, stiffness: 200 } });
+        return <span key={i} style={{ display: "inline-block", position: "relative", opacity: frame >= at ? Math.min(1, p * 1.6) : 0, transform: `translateY(${(1 - p) * size * 0.28}px)`, padding: marked ? "0 0.14em" : undefined }}>
+          {marked && <span style={{ position: "absolute", inset: "0.04em 0 -0.02em", background: C.marigold, border: `${size * 0.04}px solid ${C.dark}`, borderRadius: size * 0.14, transform: `rotate(-2deg) scaleX(${wipe})`, transformOrigin: "left center", boxShadow: `0 ${size * 0.06}px 0 ${C.dark}` }}/>}
+          <span style={{ position: "relative", color: marked ? C.dark : "#fff8ec", WebkitTextStroke: marked ? undefined : `${size * 0.09}px ${C.dark}`, paintOrder: "stroke fill", textShadow: marked ? undefined : `0 ${size * 0.05}px ${size * 0.14}px rgba(20,14,10,.35)` }}>{word.text}</span>
         </span>;
       })}
     </div>

@@ -1,5 +1,5 @@
 import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
-import { AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { loadFont } from "@remotion/fonts";
 
 /*
@@ -141,11 +141,11 @@ export function Pop({ delay = 0, children, style, from = 0.6 }: { delay?: number
 export function Sparkle({ x, y, size = 50, delay = 0, color = C.marigold, kind = "star" }: { x: number; y: number; size?: number; delay?: number; color?: string; kind?: "star" | "flower" }) {
   const frame = useCurrentFrame();
   const p = useIn(delay, { damping: 8, stiffness: 120 });
-  const twinkle = 1 + 0.12 * Math.sin((frame - delay) / 6);
+  const twinkle = 1 + 0.06 * Math.sin((frame - delay) / 14);
   const path = kind === "star"
     ? "M25 3L31 19L48 19L34 29L40 46L25 36L10 46L16 29L2 19L19 19Z"
     : "M25 25m-6 0a6 6 0 1 0 12 0a6 6 0 1 0-12 0M25 4c5 7 5 11 0 15c-5-4-5-8 0-15M46 25c-7 5-11 5-15 0c4-5 8-5 15 0M25 46c-5-7-5-11 0-15c5 4 5 8 0 15M4 25c7-5 11-5 15 0c-4 5-8 5-15 0";
-  return <svg width={size} height={size} viewBox="0 0 50 50" style={{ position: "absolute", left: x - size / 2, top: y - size / 2, transform: `scale(${p * twinkle}) rotate(${(1 - p) * -90 + (frame - delay) * 0.6}deg)`, opacity: p }}>
+  return <svg width={size} height={size} viewBox="0 0 50 50" style={{ position: "absolute", left: x - size / 2, top: y - size / 2, transform: `scale(${p * twinkle}) rotate(${(1 - p) * -90 + (frame - delay) * 0.3}deg)`, opacity: p }}>
     <path d={path} fill="none" stroke={color} strokeWidth={3.2} strokeLinejoin="round" strokeLinecap="round"/>
   </svg>;
 }
@@ -180,39 +180,30 @@ export function Ground({ kind, rays = kind !== "paper" }: { kind: Ground; rays?:
   </AbsoluteFill>;
 }
 
-/** A quick shake after each of `at` (frames): an offset to add to a transform. */
-export function shake(frame: number, at: number[], amp = 22, frames = 12) {
-  let x = 0;
-  let y = 0;
-  for (const a of at) {
-    const t = frame - a;
-    if (t < 0 || t > frames) continue;
-    const k = amp * Math.pow(1 - t / frames, 2);
-    x += k * Math.sin(t * 2.7);
-    y += k * Math.cos(t * 3.3) * 0.6;
-  }
-  return { x, y };
+/** A smooth push at each of `at` (frames): a scale to multiply in, easing up over 3 frames and back over 12. */
+export function bump(frame: number, at: number[], amount = 0.03) {
+  return 1 + at.reduce((sum, a) => sum + amount * interpolate(frame - a, [0, 3, 15], [0, 1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.inOut(Easing.sin) }), 0);
 }
 
-/** A rubber stamp slamming down: big, tilted, in a thick box. */
+/** A rubber stamp landing: big, tilted, in a thick box, settling firmly into place. */
 export function Stamp({ at, children, color = C.red, ink = C.cream, rotate = -10, size = 120, style }: { at: number; children: ReactNode; color?: string; ink?: string; rotate?: number; size?: number; style?: CSSProperties }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   if (frame < at) return null;
-  const p = spring({ frame: frame - at, fps, config: { damping: 11, stiffness: 320, mass: 0.7 } });
-  return <div style={{ position: "absolute", ...style, transform: `translate(-50%, -50%) rotate(${rotate}deg) scale(${2.6 - 1.6 * p})`, opacity: Math.min(1, p * 3) }}>
+  const p = spring({ frame: frame - at, fps, config: { damping: 16, stiffness: 260, mass: 0.6 } });
+  return <div style={{ position: "absolute", ...style, transform: `translate(-50%, -50%) rotate(${rotate}deg) scale(${1.6 - 0.6 * p})`, opacity: Math.min(1, p * 2.5) }}>
     <div style={{ background: color, color: ink, border: `${size * 0.07}px solid ${C.dark}`, borderRadius: size * 0.16, padding: `${size * 0.12}px ${size * 0.32}px`, font: `900 ${size}px/1 ${F.sans}`, letterSpacing: "-0.02em", whiteSpace: "nowrap", boxShadow: `0 ${size * 0.12}px 0 ${C.dark}` }}>{children}</div>
   </div>;
 }
 
-/** An emoji sticker that pops on and wobbles. */
+/** An emoji sticker that pops on, then holds, drifting gently. */
 export function Sticker({ at, emoji, size = 130, x, y, rotate = 0 }: { at: number; emoji: string; size?: number; x: number; y: number; rotate?: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   if (frame < at) return null;
-  const p = spring({ frame: frame - at, fps, config: { damping: 7, stiffness: 220 } });
-  const wobble = Math.sin((frame - at) / 5) * 6;
-  return <div style={{ position: "absolute", left: x, top: y, fontSize: size, lineHeight: 1, transform: `translate(-50%, -50%) scale(${p}) rotate(${rotate + wobble}deg)`, filter: "drop-shadow(0 10px 0 rgba(31,24,19,.25))" }}>{emoji}</div>;
+  const p = spring({ frame: frame - at, fps, config: { damping: 13, stiffness: 200 } });
+  const drift = Math.sin((frame - at) / 26) * 5;
+  return <div style={{ position: "absolute", left: x, top: y, fontSize: size, lineHeight: 1, transform: `translate(-50%, calc(-50% + ${drift}px)) scale(${p}) rotate(${rotate}deg)`, filter: "drop-shadow(0 12px 18px rgba(31,24,19,.28))" }}>{emoji}</div>;
 }
 
 const hash = (n: number) => {
