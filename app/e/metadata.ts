@@ -11,7 +11,7 @@ export function invitationMetadata(experience: PublicExperience | null, addresse
   if (!experience) return { title: "Invitation not found — WowLink", robots };
   const lang = experience.language ?? "en";
   const t = GUEST_TEXT[lang];
-  const title = `${experience.title} — ${lang === "gu" ? "આપને આમંત્રણ છે" : "you’re invited"}`;
+  const title = `${experience.title} — ${t.invitedTitle}`;
   const details = experience.pending ? [t.detailsToFollow] : [formatInvitationDate(experience.date, true, lang), experience.venue];
   const description = [addressee && t.addressedTo(addressee), ...details].filter(Boolean).join(" · ");
   return { title, description, robots, openGraph: { title, description } };

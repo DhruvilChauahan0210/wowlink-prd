@@ -84,6 +84,6 @@ export default async function OccasionPage({ params }: Props) {
         </li>)}</ul>
       </section>
     </main>
-    <footer className="cin-catalog-footer"><span>Made with love, shared with one link.</span><span className="cin-catalog-footer-links"><Link href="/privacy">Privacy</Link><Link href="/">© 2026 WowLink</Link></span></footer>
+    <footer className="cin-catalog-footer"><span>Made with love, shared with one link.</span><span className="cin-catalog-footer-links"><Link href="/help">Help</Link><Link href="/pricing">Pricing</Link><Link href="/privacy">Privacy</Link><Link href="/">© 2026 WowLink</Link></span></footer>
   </div>;
 }

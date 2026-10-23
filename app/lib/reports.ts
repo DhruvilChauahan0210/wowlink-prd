@@ -39,6 +39,13 @@ export const REASON_TEXT: Record<Lang, Record<ReportReason, string>> = {
     private: "કોઈની અંગત માહિતી જાહેર કરે છે",
     other: "બીજું કંઈ",
   },
+  hi: {
+    fake: "यह नकली है, या किसी और के नाम से बना है",
+    scam: "स्पैम, धोखाधड़ी या ख़तरनाक लिंक",
+    hateful: "नफ़रत, हिंसा या अश्लील सामग्री",
+    private: "यह किसी की निजी जानकारी शेयर करता है",
+    other: "कुछ और",
+  },
 };
 
 export const REPORT_TEXT = {
@@ -59,7 +66,6 @@ export const REPORT_TEXT = {
     thanksTitle: "Thank you",
     thanks: "We’ll look at it. If it breaks the rules, we’ll take it down.",
     back: "Back to the invitation",
-    other: "ગુજરાતીમાં",
     privacy: "Privacy",
   },
   gu: {
@@ -79,7 +85,25 @@ export const REPORT_TEXT = {
     thanksTitle: "આભાર",
     thanks: "અમે તે જોઈશું. જો તે નિયમો તોડતું હશે, તો અમે તેને દૂર કરીશું.",
     back: "આમંત્રણ પર પાછા જાઓ",
-    other: "English",
     privacy: "ગોપનીયતા",
+  },
+  hi: {
+    title: "इस निमंत्रण की शिकायत करें",
+    reporting: (title: string) => `आप “${title}” की शिकायत कर रहे हैं।`,
+    gone: "यह निमंत्रण अब उपलब्ध नहीं है, इसलिए शिकायत करने को कुछ नहीं है।",
+    why: "इसमें क्या गलत है?",
+    details: "कुछ और बताना है?",
+    optional: "वैकल्पिक",
+    detailsHint: "अपना नाम या नंबर न लिखें: उनकी ज़रूरत नहीं है।",
+    send: "शिकायत भेजें",
+    sending: "भेजी जा रही है…",
+    pickReason: "चुनें कि इसमें क्या गलत है।",
+    failed: "भेजी नहीं जा सकी। अपना इंटरनेट देखें और फिर से कोशिश करें।",
+    tooMany: "आपने बहुत सारी शिकायतें भेजी हैं। थोड़ी देर बाद फिर कोशिश करें।",
+    promise: "WowLink हर शिकायत वाले निमंत्रण को देखता है। मेज़बानों को नहीं बताया जाता कि शिकायत किसने की, और हम जवाब नहीं दे सकते, क्योंकि हम आपकी पहचान नहीं पूछते।",
+    thanksTitle: "धन्यवाद",
+    thanks: "हम इसे देखेंगे। अगर यह नियम तोड़ता है, तो हम इस पर रोक लगा देंगे।",
+    back: "निमंत्रण पर वापस जाएँ",
+    privacy: "गोपनीयता",
   },
 } satisfies Record<Lang, Record<string, string | ((title: string) => string)>>;

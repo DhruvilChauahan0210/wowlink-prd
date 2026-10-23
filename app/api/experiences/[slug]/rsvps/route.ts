@@ -29,6 +29,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   if (result.ok) return Response.json({ ok: true, updated: result.updated }, { status: result.updated ? 200 : 201 });
   switch (result.reason) {
     case "invalid": return Response.json({ error: result.error }, { status: 422 });
+    case "closed": return Response.json({ error: "The hosts aren’t asking for replies to this invitation." }, { status: 409 });
     case "full": return Response.json({ error: "This invitation isn’t taking more replies. Please contact the hosts directly." }, { status: 409 });
     case "guest": return Response.json({ error: "This personal link isn’t active any more. Please ask the hosts for a new one." }, { status: 404 });
     default: return Response.json({ error: "This invitation isn’t available any more." }, { status: 404 });

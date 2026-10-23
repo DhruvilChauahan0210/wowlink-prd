@@ -66,9 +66,11 @@ export const missingEvents = (filter: EventFilter, schedule: ScheduleItem[]) => 
 export function viewFor(draft: InvitationDraft, filter: EventFilter): AudienceView {
   const events = draft.events.filter(e => invitedTo(filter, e.id));
   if (events.length === draft.events.length) return { ...draft, events };
-  if (!events.length) return { ...draft, date: "", time: "", venue: "", events: [], pending: true };
+  if (!events.length) return { ...draft, date: "", time: "", venue: "", mapUrl: "", events: [], pending: true };
   const first = sortSchedule(events)[0];
-  return { ...draft, events, date: first.date, time: first.time, venue: first.venue || draft.venue, mainEventId: first.id };
+  // The map link is for the main venue: a celebration somewhere else is found by its own name.
+  const elsewhere = !!first.venue && first.venue !== draft.venue;
+  return { ...draft, events, date: first.date, time: first.time, venue: first.venue || draft.venue, mainEventId: first.id, ...(elsewhere && { mapUrl: "" }) };
 }
 
 /** The reply's answer for one celebration, or null if it was never asked about that one. */

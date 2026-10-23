@@ -20,8 +20,8 @@ export type OccasionPage = {
 
 export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   wedding: {
-    title: "Wedding invitation website in Gujarati or English, hand-drawn",
-    description: "A hand-drawn wedding invitation website that opens like a kankotri. Mehndi, sangeet, wedding and reception on one link, in Gujarati or English, with RSVPs. Free to make.",
+    title: "Wedding invitation website in Gujarati, Hindi or English, hand-drawn",
+    description: "A hand-drawn wedding invitation website that opens like a kankotri. Mehndi, sangeet, wedding and reception on one link, in Gujarati, Hindi or English, with RSVPs. Free to make.",
     noun: "wedding",
     heading: ["A wedding invitation that opens like a", "kankotri"],
     intro: "Your guests untie the knot on a hand-drawn scroll and the invitation unrolls: your names, the day, the place and every function. Share one link on WhatsApp, and the replies come back to you.",
@@ -33,7 +33,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   engagement: {
     title: "Engagement and sagai invitation online, hand-drawn",
-    description: "An online engagement invitation that opens like a ring box. Hand-drawn, in Gujarati or English, with RSVPs and a link for each family. Free to make.",
+    description: "An online engagement invitation that opens like a ring box. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and a link for each family. Free to make.",
     noun: "engagement",
     heading: ["An engagement invitation in a", "ring box"],
     intro: "Guests press the clasp, the ring box opens, and your sagai invitation comes up in its place. Two families, one link, and every reply in one list.",
@@ -57,7 +57,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   garba: {
     title: "Garba and Navratri invitation maker online",
-    description: "Make a Garba or Navratri invitation online: guests light a diya and the rangoli blooms. Add every night, in Gujarati or English, with RSVPs. Free and hand-drawn.",
+    description: "Make a Garba or Navratri invitation online: guests light a diya and the rangoli blooms. Add every night, in Gujarati, Hindi or English, with RSVPs. Free and hand-drawn.",
     noun: "Garba night",
     heading: ["A Garba invitation that lights a", "diya"],
     intro: "Guests light the diya, the rangoli blooms, and your invitation to raas under the stars appears. Make it for one night or for all nine.",
@@ -69,7 +69,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   babyshower: {
     title: "Seemant and baby shower invitation online, hand-drawn",
-    description: "A baby shower or seemant invitation guests open by shaking a rattle to rock the cradle. Hand-drawn, in Gujarati or English, with RSVPs and blessings. Free to make.",
+    description: "A baby shower or seemant invitation guests open by shaking a rattle to rock the cradle. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and blessings. Free to make.",
     noun: "seemant",
     heading: ["A seemant invitation that rocks the", "cradle"],
     intro: "Guests shake the rattle, the cradle rocks, and your invitation to shower the parents-to-be with love appears. One link for family near and far.",
@@ -123,7 +123,7 @@ export const GUEST_GETS = [
   "A countdown, and the day in Google or Apple Calendar",
   "Directions to the place on the map",
   "A reply in a few taps: coming, maybe or can’t make it",
-  "Gujarati or English, and a switch between them",
+  "English, Gujarati or Hindi, and a switch between them",
   "A thank-you from you once the day is over",
 ] as const;
 
@@ -136,7 +136,7 @@ export const STEPS = [
 export const FAQ = [
   { q: "Is it free?", a: "Yes. Making and sharing an invitation for your own occasion is free, with up to 100 replies." },
   { q: "Do guests need an app or an account?", a: "No. They tap the link and it opens in their phone’s browser. Replying takes a few taps, with no sign-up." },
-  { q: "Can guests read it in Gujarati?", a: "Yes. You choose the language guests see first, Gujarati or English, and each guest can switch. Dates and times are written the Gujarati way." },
+  { q: "Can guests read it in Gujarati or Hindi?", a: "Yes. You choose the language guests see first (English, Gujarati or Hindi), and each guest can switch. Dates and times are written the way an invitation says them in each language." },
   { q: "Can I send each family its own link?", a: "Yes. Add households to your list and each gets a link that opens with their name on it. You’ll see who has opened theirs and who hasn’t replied yet." },
   { q: "Can I change the details after sending it?", a: "Yes. Edit it any time and the same link shows the latest details. You can also unpublish it, or delete it with everything in it." },
 ] as const;

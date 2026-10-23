@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { HOST_LANG_KEY, HOST_TEXT, hostMessage, type HostText } from "../lib/host-i18n";
-import { isLang, type Lang } from "../lib/invitations";
+import { LANGS, LANG_NAMES, isLang, type Lang } from "../lib/invitations";
 
 /**
  * The host's language: English until they choose, then remembered on this device. Starts in English on the server
@@ -16,18 +16,18 @@ export function useHostLang() {
       if (isLang(saved)) setLang(saved);
     } catch { /* storage blocked: English */ }
   }, []);
-  function toggle() {
-    const next: Lang = lang === "en" ? "gu" : "en";
+  function choose(next: Lang) {
     setLang(next);
     try { localStorage.setItem(HOST_LANG_KEY, next); } catch { /* this visit only */ }
   }
   const h = HOST_TEXT[lang];
-  return { lang, h, toggle, message: (text: string) => hostMessage(text, lang) };
+  return { lang, h, choose, message: (text: string) => hostMessage(text, lang) };
 }
 
-/** The switch in a host screen's header, named in the language it switches to. */
-export function HostLangSwitch({ h, toggle }: { h: HostText; toggle: () => void }) {
-  return <button type="button" className="inv-lang" aria-label={h.switchLabel} onClick={toggle}><span lang={h.lang === "en" ? "gu" : "en"}>{h.switchTo}</span></button>;
+/** The switches in a host screen's header: one for each other language, each named in its own language. */
+export function HostLangSwitch({ h, choose }: { h: HostText; choose: (lang: Lang) => void }) {
+  return <span className="inv-langs">{LANGS.filter(other => other !== h.lang).map(other =>
+    <button key={other} type="button" className="inv-lang" aria-label={h.useIn[other]} onClick={() => choose(other)}><span lang={other}>{LANG_NAMES[other]}</span></button>)}</span>;
 }
 
 /** The host's wording, for components deep in a host screen. */

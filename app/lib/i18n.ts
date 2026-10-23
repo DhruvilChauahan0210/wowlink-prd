@@ -11,7 +11,8 @@ import type { Attendance, Lang, TemplateId } from "./invitations";
 export const LANG_KEY = "wowlink:lang";
 
 /** Each occasion's opening words, button and hint ("untie the knot") in Gujarati. English comes from the templates. */
-export const OCCASION_GU: Record<TemplateId, { eyebrow: string; action: string; hint: string }> = {
+export type OccasionWords = { eyebrow: string; action: string; hint: string };
+export const OCCASION_GU: Record<TemplateId, OccasionWords> = {
   wedding: { eyebrow: "બંને પરિવારો તરફથી સ્નેહભર્યું આમંત્રણ", action: "આમંત્રણ ખોલો", hint: "ગાંઠ છોડો" },
   birthday: { eyebrow: "વધુ એક વર્ષ, થોડો વધુ જાદુ", action: "સરપ્રાઇઝ ખોલો", hint: "ફીત ખેંચો" },
   garba: { eyebrow: "નવ રાત, અઢળક યાદો", action: "રાતની શરૂઆત કરો", hint: "દીવો પ્રગટાવો" },
@@ -21,12 +22,23 @@ export const OCCASION_GU: Record<TemplateId, { eyebrow: string; action: string; 
   housewarming: { eyebrow: "નવું ઘર, નવી શરૂઆત", action: "દરવાજો ખોલો", hint: "સાંકળ ખોલો" },
   anniversary: { eyebrow: "પ્રેમનાં વર્ષો, હજી ઘણાં બાકી", action: "પત્ર ખોલો", hint: "મહોર તોડો" },
 };
+export const OCCASION_HI: Record<TemplateId, OccasionWords> = {
+  wedding: { eyebrow: "दोनों परिवारों की ओर से सप्रेम निमंत्रण", action: "निमंत्रण खोलें", hint: "गाँठ खोलें" },
+  birthday: { eyebrow: "एक और साल, थोड़ा और जादू", action: "सरप्राइज़ खोलें", hint: "फ़ीता खींचें" },
+  garba: { eyebrow: "नौ रातें, अनगिनत यादें", action: "रात की शुरुआत करें", hint: "दीया जलाएँ" },
+  opening: { eyebrow: "एक सुंदर शुरुआत", action: "रिबन काटें", hint: "रिबन काटें" },
+  engagement: { eyebrow: "परिवार के आशीर्वाद के साथ", action: "अंगूठी की डिब्बी खोलें", hint: "खटका दबाएँ" },
+  babyshower: { eyebrow: "नन्हे मेहमान के आने की ख़ुशी", action: "झुनझुना बजाएँ", hint: "झुनझुना बजाएँ" },
+  housewarming: { eyebrow: "नया घर, नई शुरुआत", action: "दरवाज़ा खोलें", hint: "कुंडी खोलें" },
+  anniversary: { eyebrow: "प्यार के इतने साल, और आगे भी", action: "चिट्ठी खोलें", hint: "मोहर तोड़ें" },
+};
 
 /** Plain words, then the word that gets the hand-drawn underline. */
 type Pair = readonly [string, string];
 
 const listEn = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`);
 const listGu = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} અને ${names.at(-1)}`);
+const listHi = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} और ${names.at(-1)}`);
 
 const en = {
   lang: "en" as Lang,
@@ -120,6 +132,7 @@ const en = {
   privacyLink: "How it’s kept",
   privacy: "Privacy",
   report: "Report",
+  noRsvp: "No need to reply. Just come and celebrate with us.",
   // footer
   madeWith: "Made with WowLink",
   createYours: "Create yours free",
@@ -134,10 +147,13 @@ const en = {
     passed: "This day has passed. Thank you for being part of it.",
   },
   // the language switch: its name includes the visible label (the language it switches to)
-  switchTo: "Read this in Gujarati (ગુજરાતી)",
+  readIn: { gu: "Read this in Gujarati (ગુજરાતી)", hi: "Read this in Hindi (हिन्दी)" } as Record<string, string>,
+  invitedTitle: "you’re invited",
 };
 
 export type GuestText = typeof en;
+/** Each occasion's words (eyebrow, the opening's name, its hint) in languages other than English. */
+export const OCCASION_WORDS: Partial<Record<Lang, Record<TemplateId, OccasionWords>>> = { gu: OCCASION_GU, hi: OCCASION_HI };
 
 const gu: GuestText = {
   lang: "gu",
@@ -223,6 +239,7 @@ const gu: GuestText = {
   privacyLink: "તે કેવી રીતે સચવાય છે",
   privacy: "ગોપનીયતા",
   report: "ફરિયાદ કરો",
+  noRsvp: "જવાબ આપવાની જરૂર નથી. બસ આવીને અમારી સાથે ઉજવણી કરજો.",
   madeWith: "WowLink થી બનાવેલું",
   createYours: "આપનું મફત બનાવો",
   countdown: {
@@ -234,10 +251,111 @@ const gu: GuestText = {
     today: (what: string) => (what ? `આજે: ${what}!` : "આજે જ છે!"),
     passed: "આ દિવસ વીતી ગયો. સાથે રહેવા બદલ આભાર.",
   },
-  switchTo: "આ અંગ્રેજીમાં વાંચો (English)",
+  readIn: { en: "આ અંગ્રેજીમાં વાંચો (English)", hi: "આ હિન્દીમાં વાંચો (हिन्दी)" },
+  invitedTitle: "આપને આમંત્રણ છે",
 };
 
-export const GUEST_TEXT: Record<Lang, GuestText> = { en, gu };
+const hi: GuestText = {
+  lang: "hi",
+  list: listHi,
+  people: (n: number) => (n === 1 ? "1 व्यक्ति" : `${n} लोग`),
+  makeYourOwn: "अपना भी बनाएँ",
+  addressedTo: (name: string) => `${name} के लिए`,
+  momentComplete: "आपके आने से ही यह पल पूरा होगा",
+  celebrationsSpan: (n: number, from: string, to: string) => `${n} कार्यक्रम · ${from} से ${to} तक`,
+  seeDetails: "विवरण देखें",
+  watchAgain: "फिर से देखें",
+  detailsToFollow: "विवरण जल्द ही",
+  occasionFallback: "आपका आयोजन",
+  venueFallback: "आपका स्थान",
+  saveThe: ["तारीख़", "याद रखिएगा"],
+  pendingHeading: ["विवरण", "जल्द ही"],
+  pendingBody: "मेज़बान आपके निमंत्रण का विवरण अपडेट कर रहे हैं। कृपया थोड़ी देर बाद फिर देखें।",
+  replay: "निमंत्रण फिर से देखें",
+  when: "कब",
+  where: "कहाँ",
+  addToCalendar: "कैलेंडर में जोड़ें",
+  openInMaps: "मैप में देखें",
+  somewhere: "एक यादगार जगह",
+  celebrationsHeading: (personal: boolean): Pair => [personal ? "आपके" : "सभी", "कार्यक्रम"],
+  addAll: "सभी कार्यक्रम कैलेंडर में जोड़ें",
+  allDay: "पूरा दिन",
+  map: "मैप",
+  addGoogle: (name: string) => `${name} Google Calendar में जोड़ें`,
+  addApple: (name: string) => `${name} Apple या Outlook कैलेंडर में जोड़ें`,
+  mapFor: (name: string) => `${name} का मैप`,
+  defaultMessage: "यह ख़ास पल आपके साथ मनाकर हमें बहुत ख़ुशी होगी।",
+  withLove: (title: string) => `स्नेह सहित, ${title}`,
+  rsvpHeading: "क्या आप पधारेंगे?",
+  rsvpIntro: (many: boolean) => (many ? "आपका जवाब हमारे लिए बहुत मायने रखता है। बताइए, आप किन कार्यक्रमों में शामिल हो पाएँगे।" : "आपका जवाब हमारे लिए बहुत मायने रखता है। बताइए, आप आ पाएँगे या नहीं।"),
+  attendance: { Attending: "आएँगे", Maybe: "शायद", "Not attending": "नहीं आ पाएँगे" },
+  joining: "क्या आप पधारेंगे?",
+  which: (maybe: boolean) => (maybe ? "किन कार्यक्रमों में शायद आ पाएँगे?" : "किन कार्यक्रमों में आएँगे?"),
+  perCelebration: (maybe: boolean) => (maybe ? "हर कार्यक्रम में शायद कितने लोग?" : "हर कार्यक्रम में कितने लोग?"),
+  countLabel: (attendance: Attendance, personal: boolean, many: boolean) => (attendance === "Maybe" ? "शायद कितने लोग आएँगे?" : personal ? "कुल कितने लोग आएँगे?" : many ? "कितने लोग आएँगे?" : "कितने मेहमान?"),
+  everyoneFrom: (name: string) => `${name} के सभी लोग, आपको मिलाकर।`,
+  splitToggle: (split: boolean) => (split ? "हर कार्यक्रम के लिए एक ही संख्या" : "सभी लोग हर कार्यक्रम में नहीं आ रहे?"),
+  yourName: "आपका नाम",
+  optional: "वैकल्पिक",
+  namePlaceholder: (personal: boolean) => (personal ? "कौन जवाब दे रहा है?" : "जिस नाम से हम आपको जानते हैं"),
+  tickOne: "कम से कम एक कार्यक्रम चुनें, या “नहीं आ पाएँगे” चुनें।",
+  offline: "आपका जवाब नहीं पहुँचा। इंटरनेट जाँचकर फिर से कोशिश करें।",
+  sending: "भेज रहे हैं…",
+  send: "जवाब भेजें",
+  update: "बदला हुआ जवाब भेजें",
+  previewSubmit: "जवाब आज़माकर देखें",
+  previewNote: "प्रीव्यू · जवाब भेजे नहीं जाएँगे।",
+  labelPreview: "जवाब का प्रीव्यू",
+  labelSent: "जवाब भेज दिया गया",
+  labelUpdated: "जवाब बदल दिया गया",
+  labelYours: "आपका जवाब",
+  labelFrom: (name: string) => `${name} का जवाब`,
+  replyTitle: { Attending: "ख़ुशी से, हाँ!", Maybe: "शायद आएँगे।", "Not attending": "मन से आपके साथ।" },
+  describe: (attendance: Attendance, names: string[], size: string) => {
+    if (attendance === "Not attending") return "इस बार नहीं आ पाएँगे।";
+    const which = names.length ? listHi(names) : "";
+    if (attendance === "Maybe") return which ? `${which} के लिए शायद${size}।` : `शायद${size}।`;
+    return which ? `${which} में आएँगे${size}।` : `आएँगे${size}।`;
+  },
+  sentBy: (name: string, on: string) => `${name ? `${name} ने ` : ""}${on ? `${on} को ` : ""}${name ? "भेजा" : "भेजा गया"}। इस निमंत्रण में शामिल सभी लोगों के लिए यह एक ही जवाब है।`,
+  fresh: (names: string[]) => `नया कार्यक्रम: ${listHi(names)}। बताइए, आप आ पाएँगे या नहीं।`,
+  thanks: (title: string) => `आपका जवाब ${title} तक पहुँचाया जा रहा है। धन्यवाद!`,
+  canChange: "योजना बदले तो आप कभी भी जवाब बदल सकते हैं।",
+  notSent: "यह प्रीव्यू है। आपका जवाब भेजा नहीं गया है।",
+  again: { preview: "दूसरा जवाब आज़माएँ", personal: "जवाब बदलें", general: "किसी और की ओर से जवाब दें" },
+  today: "आज",
+  happeningNow: "अभी चल रहा है",
+  directions: "रास्ता देखें",
+  afterBanner: "सब कुछ बहुत सुंदर रहा। साथ देने के लिए धन्यवाद।",
+  rememberThe: ["एक", "यादगार दिन"],
+  thanksHeading: ["आपका", "धन्यवाद"],
+  thanksDefault: "आपके प्यार, आशीर्वाद और साथ के लिए दिल से धन्यवाद। हमारे लिए यह बहुत मायने रखता है।",
+  wishLabel: "आपकी शुभकामना या आशीर्वाद",
+  wishHint: (shown: boolean) => (shown ? "मेज़बान इसे आपके नाम के साथ इस पेज पर दिखा सकते हैं।" : "इसे सिर्फ़ मेज़बान ही देखेंगे।"),
+  wishPlaceholder: "जीवन भर ख़ुश रहें…",
+  wishesHeading: ["आशीर्वाद और", "शुभकामनाएँ"],
+  aGuest: "एक मेहमान",
+  privacyNote: (wishesShown: boolean) => (wishesShown ? "आपका जवाब सिर्फ़ मेज़बान ही देखेंगे। शुभकामना आपके नाम के साथ इस पेज पर दिख सकती है।" : "आपका जवाब सिर्फ़ मेज़बान ही देखेंगे।"),
+  privacyLink: "इसे कैसे रखा जाता है",
+  privacy: "गोपनीयता",
+  report: "शिकायत करें",
+  noRsvp: "जवाब देने की ज़रूरत नहीं। बस आइए और हमारे साथ जश्न मनाइए।",
+  madeWith: "WowLink से बनाया गया",
+  createYours: "अपना मुफ़्त बनाएँ",
+  countdown: {
+    days: (what: string) => (what ? `दिन बाक़ी · ${what}` : "दिन बाक़ी"),
+    tomorrow: (what: string) => (what ? `कल: ${what}!` : "कल!"),
+    inHours: (what: string, hours: number) => `${what ? `आज: ${what}` : "आज"}, ${hours} घंटे में`,
+    withinHour: (what: string) => `${what ? `आज: ${what}` : "आज"}, एक घंटे के अंदर!`,
+    now: (what: string) => (what ? `अभी चल रहा है: ${what}!` : "अभी चल रहा है!"),
+    today: (what: string) => (what ? `आज: ${what}!` : "आज ही है!"),
+    passed: "यह दिन बीत गया। साथ देने के लिए धन्यवाद।",
+  },
+  readIn: { en: "इसे अंग्रेज़ी में पढ़ें (English)", gu: "इसे गुजराती में पढ़ें (ગુજરાતી)" },
+  invitedTitle: "आप आमंत्रित हैं",
+};
+
+export const GUEST_TEXT: Record<Lang, GuestText> = { en, gu, hi };
 
 /** What the host sends (WhatsApp, the share sheet): written for the guest, so in the invitation's language. */
 export const MESSAGES: Record<Lang, {
@@ -255,5 +373,10 @@ export const MESSAGES: Record<Lang, {
     invited: (title) => `આપને આમંત્રણ છે: ${title}`,
     personal: (name, title, url) => `${name} માટે\nઆપને આમંત્રણ છે: ${title}\n${url}`,
     reminder: (name, title, celebrations, url) => `નમસ્તે ${name}! ${title} તરફથી એક નમ્ર યાદ: આપ ${celebrations ? `${listGu(celebrations)} માં ` : ""}પધારી શકશો કે નહીં તે જણાવશો. અહીં જવાબ આપો:\n${url}`,
+  },
+  hi: {
+    invited: (title) => `आप आमंत्रित हैं: ${title}`,
+    personal: (name, title, url) => `${name} के लिए\nआप आमंत्रित हैं: ${title}\n${url}`,
+    reminder: (name, title, celebrations, url) => `नमस्ते ${name}! ${title} की ओर से एक छोटा-सा रिमाइंडर: कृपया बताइए कि आप ${celebrations ? `${listHi(celebrations)} में ` : ""}आ पाएँगे या नहीं। यहाँ जवाब दें:\n${url}`,
   },
 };

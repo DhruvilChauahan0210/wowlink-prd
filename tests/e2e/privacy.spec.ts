@@ -11,13 +11,13 @@ test("the privacy page, in English and in Gujarati", async ({ page }) => {
   await expect(page.locator("link[rel=alternate][hreflang=gu]")).toHaveAttribute("href", /\/privacy\?lang=gu$/);
   await expect(page.getByRole("heading", { name: "A link isn’t a lock" })).toBeVisible();
 
-  await page.getByRole("link", { name: "ગુજરાતીમાં વાંચો" }).click();
+  await page.locator(".page-langs").getByRole("link", { name: "ગુજરાતી" }).click();
   await expect(page).toHaveURL(/\/privacy\?lang=gu$/);
   await expect(page.locator("h1")).toHaveText("અમે શું સાચવીએ છીએ, અને કોણ જુએ છે");
   await expect(page.locator(".privacy-page")).toHaveAttribute("lang", "gu");
   await expect(page.locator("link[rel=canonical]")).toHaveAttribute("href", /\/privacy\?lang=gu$/);
   await expect(page.locator(".privacy-updated")).toContainText("23 ઑક્ટોબર 2026");
-  await page.getByRole("link", { name: "Read in English" }).click();
+  await page.locator(".page-langs").getByRole("link", { name: "English" }).click();
   await expect(page.locator("h1")).toHaveText("What we keep, and who sees it");
 });
 

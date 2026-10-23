@@ -130,7 +130,7 @@ function newSlug(taken: Set<string>, length = 7) {
   }
 }
 
-const draftOf = ({ title, date, time, venue, message, events, language, thanks, palette }: Experience): InvitationDraft => ({ title, date, time, venue, message, events, language, thanks, palette });
+const draftOf = ({ title, date, time, venue, message, events, language, thanks, palette, rsvp, countdown, mapUrl }: Experience): InvitationDraft => ({ title, date, time, venue, message, events, language, thanks, palette, rsvp, countdown, mapUrl });
 /** The most wishes an invitation shows (the latest ones). */
 const SHOWN_WISHES = 30;
 /**
@@ -360,7 +360,7 @@ export function removeGuest(slug: string, key: string, guestId: string) {
 // ---------- RSVPs ----------
 
 type RsvpInput = { name: string; attendance: Attendance; guestCount: number; events?: unknown; shown?: unknown; counts?: unknown; guestId?: string; wish?: string };
-type RsvpResult = { ok: true; updated: boolean } | { ok: false; reason: "missing" | "full" | "guest" } | { ok: false; reason: "invalid"; error: string };
+type RsvpResult = { ok: true; updated: boolean } | { ok: false; reason: "missing" | "full" | "guest" | "closed" } | { ok: false; reason: "invalid"; error: string };
 
 /**
  * Save a reply, checked against what the guest's link shows. A personal link has one reply for the household:
@@ -370,6 +370,7 @@ export function addRsvp(slug: string, input: RsvpInput) {
   return write((db): RsvpResult => {
     const found = db.experiences.find((e) => e.slug === slug && isLive(e));
     if (!found) return { ok: false, reason: "missing" };
+    if (found.rsvp === false) return { ok: false, reason: "closed" };
     const guest = isGuestId(input.guestId) ? found.guests.find((g) => g.id === input.guestId) : undefined;
     if (input.guestId !== undefined && !guest) return { ok: false, reason: "guest" };
     const view = viewFor(draftOf(found), guest ? guest.events : found.publicEvents);

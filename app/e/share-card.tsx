@@ -21,11 +21,11 @@ const font = (file: string) => readFile(path.join(process.cwd(), "app/fonts/og",
 const svgData = (svg: string) => `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
 /*
- * The image renderer draws characters in the order they're stored and doesn't reorder Indic vowel signs. Gujarati's
- * "i" sign (િ) is stored after its consonant but written before it, so move it in front of its consonant (cluster);
- * otherwise "પરિવાર" comes out as "પરવિાર".
+ * The image renderer draws characters in the order they're stored and doesn't reorder Indic vowel signs. The "i" sign
+ * in Gujarati (િ) and Hindi (ि) is stored after its consonant but written before it, so move it in front of its
+ * consonant (cluster); otherwise "પરિવાર" comes out as "પરવિાર", and "परिवार" as "परवािर".
  */
-const drawable = (text: string) => text.replace(/((?:[ક-હ]઼?્)*[ક-હ]઼?)િ/g, "િ$1");
+const drawable = (text: string) => text.replace(/((?:[ક-હ]઼?્)*[ક-હ]઼?)િ/g, "િ$1").replace(/((?:[क-ह]़?्)*[क-ह]़?)ि/g, "ि$1");
 
 const TONE: Record<ArtName, string> = { wedding: "#a8341f", birthday: "#c9506d", garba: "#b8552c", opening: "#4f7a3c", engagement: "#9c2f55", babyshower: "#3d7f79", housewarming: "#a24a24", anniversary: "#b8405f" };
 const INK = "#241a13";
@@ -54,13 +54,14 @@ type CardWords = { name: ArtName; tone: string; eyebrow: string; title: string; 
 
 /** The card itself: the drawing as a taped print on the left, the words on the right. */
 async function card({ name, tone, eyebrow, title, lines, small, cta }: CardWords) {
-  const [serif, hand, sans, gujarati] = await Promise.all([font("fraunces.ttf"), font("caveat.ttf"), font("figtree.ttf"), font("noto-serif-gujarati.ttf")]);
+  const [serif, hand, sans, gujarati, devanagari] = await Promise.all([font("fraunces.ttf"), font("caveat.ttf"), font("figtree.ttf"), font("noto-serif-gujarati.ttf"), font("noto-serif-devanagari.ttf")]);
   // Gujarati comes last: it's only reached for characters the others don't have (a household's name, a title).
   const fonts = [
     { name: "Fraunces", data: serif, weight: 400 as const, style: "normal" as const },
     { name: "Caveat", data: hand, weight: 700 as const, style: "normal" as const },
     { name: "Figtree", data: sans, weight: 500 as const, style: "normal" as const },
     { name: "Noto Serif Gujarati", data: gujarati, weight: 500 as const, style: "normal" as const },
+    { name: "Noto Serif Devanagari", data: devanagari, weight: 500 as const, style: "normal" as const },
   ];
   const titleSize = title.length > 34 ? 54 : title.length > 22 ? 66 : 80;
 
@@ -122,7 +123,7 @@ export function occasionCard(id: TemplateId) {
     tone: TONE[template.id],
     eyebrow: template.category,
     title: `${heading[0]} ${heading[1]}`,
-    lines: ["Hand-drawn, in Gujarati or English", "One link for WhatsApp, with replies"],
+    lines: ["Hand-drawn, in Gujarati, Hindi or English", "One link for WhatsApp, with replies"],
     cta: "make yours free →",
   });
 }

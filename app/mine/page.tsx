@@ -57,7 +57,7 @@ export default function MyInvitations() {
   // Kept as a function of the wording, so it follows the host's language if they switch.
   const [status, setStatus] = useState<(h: HostText) => string>(() => () => "");
   const pasteId = useId();
-  const { lang, h, toggle } = useHostLang();
+  const { lang, h, choose } = useHostLang();
 
   const load = useCallback(async () => {
     const keys = savedKeys();
@@ -135,7 +135,7 @@ export default function MyInvitations() {
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
       <span className="studio-header-label">{h.myInvitations}</span>
-      <div className="studio-header-actions"><HostLangSwitch h={h} toggle={toggle}/><Link className="cin-cta cin-cta-light studio-save" href="/templates">{h.newInvitation}</Link></div>
+      <div className="studio-header-actions"><HostLangSwitch h={h} choose={choose}/><Link className="cin-cta cin-cta-light studio-save" href="/templates">{h.newInvitation}</Link></div>
     </header>
     <main className="manage theme-paper">
       <section className="mine-intro">
@@ -163,6 +163,7 @@ export default function MyInvitations() {
               <Link className="share-chip" href={`/manage/${o.slug}`}>{h.repliesAndGuests}</Link>
               {o.experience.status === "published" && !o.experience.removed && <a className="share-chip" href={`/e/${o.slug}`} target="_blank" rel="noreferrer">{h.open}</a>}
               {!o.experience.removed && <Link className="share-chip" href={`/create?edit=${o.slug}`}>{h.edit}</Link>}
+              <Link className="share-chip" href={`/create?copy=${o.slug}`} aria-label={h.copyFor(o.experience.title)}>{h.copyShort}</Link>
             </div>
           </>}
           {o.state === "gone" && <>

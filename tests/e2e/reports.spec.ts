@@ -191,7 +191,7 @@ test("from a personal link, the report page leads back to it", async ({ browser,
   await expect(page).toHaveURL(new RegExp(`/report/${slug}\\?from=${patel.id}$`));
   await expect(page.getByRole("link", { name: "Back to the invitation" })).toHaveAttribute("href", `/e/${slug}/${patel.id}`);
   // Switching language keeps it.
-  await expect(page.getByRole("link", { name: "ગુજરાતીમાં" })).toHaveAttribute("href", `/report/${slug}?lang=gu&from=${patel.id}`);
+  await expect(page.locator(".page-langs").getByRole("link", { name: "ગુજરાતી" })).toHaveAttribute("href", `/report/${slug}?lang=gu&from=${patel.id}`);
   // Anything that isn't a personal link's id is ignored.
   await page.goto(`/report/${slug}?from=../../evil`);
   await expect(page.getByRole("link", { name: "Back to the invitation" })).toHaveAttribute("href", `/e/${slug}`);

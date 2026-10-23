@@ -4,9 +4,15 @@ import { isPaletteValue } from "./palette";
 export type ScheduleItem = { id: string; name: string; date: string; time: string; venue: string };
 
 /** The languages a guest can read their invitation in. */
-export const LANGS = ["en", "gu"] as const;
+export const LANGS = ["en", "gu", "hi"] as const;
 export type Lang = (typeof LANGS)[number];
 export const isLang = (value: unknown): value is Lang => LANGS.includes(value as Lang);
+/** Each language's name, in itself (for language switches). */
+export const LANG_NAMES: Record<Lang, string> = { en: "English", gu: "ગુજરાતી", hi: "हिन्दी" };
+/** The language a public page was asked for (?lang=), English otherwise. */
+export const pageLang = (value: unknown): Lang => (isLang(value) ? value : "en");
+/** A public page's address in a language: English has none. */
+export const langHref = (path: string, lang: Lang) => (lang === "en" ? path : `${path}?lang=${lang}`);
 
 export type InvitationDraft = {
   title: string;
@@ -22,7 +28,16 @@ export type InvitationDraft = {
   thanks?: string;
   /** The host's colours: a palette id, "#rrggbb", or "" for the occasion's own (see palette.ts). */
   palette?: string;
+  /** Whether guests are asked to reply. Missing means yes; off makes it an announcement. */
+  rsvp?: boolean;
+  /** Whether the invitation counts down to the day. Missing means yes. */
+  countdown?: boolean;
+  /** A Google Maps link to the exact place (a gate, a lawn), for directions. Without one, guests search the venue's name. */
+  mapUrl?: string;
 };
+
+/** Google Maps share links only (maps.app.goo.gl, goo.gl/maps, google.*\/maps, maps.google.*): nowhere else. */
+export const isMapUrl = (value: string) => /^https:\/\/(maps\.app\.goo\.gl\/|goo\.gl\/maps\/|(www\.)?google\.[a-z]{2,3}(\.[a-z]{2})?\/maps[/?]|maps\.google\.[a-z]{2,3}(\.[a-z]{2})?\/)[^\s<>"']*$/i.test(value);
 
 export const invitationTemplates = [
   { id: "wedding", name: "The Wedding Edit", category: "Wedding", action: "Open the invitation", eyebrow: "Together with their families", title: "Aarav & Meera", date: "2026-11-08", time: "18:00", venue: "The Garden House, Surat", message: "Some days are made more beautiful by the people who share them. We would love to celebrate ours with you." },
@@ -83,7 +98,7 @@ const SAMPLE_SCHEDULE: Partial<Record<InvitationTemplate["id"], ScheduleItem[]>>
 };
 
 export function initialDraft(template: InvitationTemplate): InvitationDraft {
-  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })), language: "en", thanks: "", palette: "" };
+  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })), language: "en", thanks: "", palette: "", rsvp: true, countdown: true, mapUrl: "" };
 }
 export const draftKey = (id: string) => `wowlink:draft:${id}`;
 
@@ -97,22 +112,30 @@ export function readDraft(id: string): InvitationDraft | null {
     if (!["title", "date", "time", "venue", "message"].every(key => typeof data[key] === "string")) return null;
     // Drafts saved before schedules existed simply have none.
     const events = Array.isArray(data.events) ? data.events.filter(isScheduleItem) : [];
-    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events, language: isLang(data.language) ? data.language : "en", thanks: typeof data.thanks === "string" ? data.thanks : "", palette: isPaletteValue(data.palette) ? data.palette : "" };
+    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events, language: isLang(data.language) ? data.language : "en", thanks: typeof data.thanks === "string" ? data.thanks : "", palette: isPaletteValue(data.palette) ? data.palette : "", rsvp: data.rsvp !== false, countdown: data.countdown !== false, mapUrl: typeof data.mapUrl === "string" ? data.mapUrl : "" };
   } catch { return null; }
 }
 
-// ---------- dates and times, in English or Gujarati ----------
+// ---------- dates and times, in English, Gujarati or Hindi ----------
 // Written out from fixed tables (not the browser's or server's locale data), so a page renders the same everywhere.
 
 const MONTHS = {
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   gu: ["જાન્યુઆરી", "ફેબ્રુઆરી", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઑગસ્ટ", "સપ્ટેમ્બર", "ઑક્ટોબર", "નવેમ્બર", "ડિસેમ્બર"],
+  hi: ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्तूबर", "नवंबर", "दिसंबर"],
 };
 const MONTHS_SHORT = {
   en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   gu: ["જાન્યુ", "ફેબ્રુ", "માર્ચ", "એપ્રિલ", "મે", "જૂન", "જુલાઈ", "ઑગસ્ટ", "સપ્ટે", "ઑક્ટો", "નવે", "ડિસે"],
+  hi: ["जन", "फ़र", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अग", "सित", "अक्तू", "नव", "दिस"],
 };
-const WEEKDAYS = { en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], gu: ["રવિ", "સોમ", "મંગળ", "બુધ", "ગુરુ", "શુક્ર", "શનિ"] };
+const WEEKDAYS = { en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], gu: ["રવિ", "સોમ", "મંગળ", "બુધ", "ગુરુ", "શુક્ર", "શનિ"], hi: ["रवि", "सोम", "मंगल", "बुध", "गुरु", "शुक्र", "शनि"] };
+/** Words around dates and times: an undecided date, and a time written the way an invitation says it. */
+const DATE_WORDS = {
+  en: { someday: "A date to remember", toCome: "Date to come" },
+  gu: { someday: "યાદગાર દિવસ", toCome: "તારીખ હવે પછી", morning: "સવારે", afternoon: "બપોરે", evening: "સાંજે", night: "રાત્રે", oclock: "વાગ્યે" },
+  hi: { someday: "यादगार दिन", toCome: "तारीख़ बाद में", morning: "सुबह", afternoon: "दोपहर", evening: "शाम", night: "रात", oclock: "बजे" },
+};
 const dateParts = (value: string) => {
   const d = new Date(`${value}T12:00:00Z`);
   return { day: d.getUTCDate(), month: d.getUTCMonth(), year: d.getUTCFullYear(), weekday: d.getUTCDay() };
@@ -120,13 +143,13 @@ const dateParts = (value: string) => {
 
 /** "8 November 2026" / "8 Nov 2026"; in Gujarati "8 નવેમ્બર 2026" / "8 નવે 2026". */
 export function formatInvitationDate(value: string, long = false, lang: Lang = "en") {
-  if (!isRealDate(value)) return lang === "gu" ? "યાદગાર દિવસ" : "A date to remember";
+  if (!isRealDate(value)) return DATE_WORDS[lang].someday;
   const { day, month, year } = dateParts(value);
   return `${day} ${(long ? MONTHS : MONTHS_SHORT)[lang][month]} ${year}`;
 }
 /** "Fri, 6 Nov": for schedule entries, where the year is already obvious. */
 export function formatEventDay(value: string, lang: Lang = "en") {
-  if (!isRealDate(value)) return lang === "gu" ? "તારીખ હવે પછી" : "Date to come";
+  if (!isRealDate(value)) return DATE_WORDS[lang].toCome;
   const { day, month, weekday } = dateParts(value);
   return `${WEEKDAYS[lang][weekday]}, ${day} ${MONTHS_SHORT[lang][month]}`;
 }
@@ -135,15 +158,16 @@ export function formatShortDay(iso: string, lang: Lang = "en") {
   const d = new Date(Date.parse(iso) + 5.5 * 3600_000);
   return Number.isNaN(d.getTime()) ? "" : `${d.getUTCDate()} ${MONTHS_SHORT[lang][d.getUTCMonth()]}`;
 }
-/** "6:00 PM"; in Gujarati the way an invitation says it, with the part of the day: "સાંજે 6:00 વાગ્યે". */
+/** "6:00 PM"; in Gujarati and Hindi the way an invitation says it, with the part of the day: "સાંજે 6:00 વાગ્યે", "शाम 6:00 बजे". */
 export function formatInvitationTime(value: string, lang: Lang = "en") {
   if (!/^\d{2}:\d{2}$/.test(value)) return "";
   const [hours, minutes] = value.split(":").map(Number);
   if (hours > 23 || minutes > 59) return "";
   const clock = `${hours % 12 || 12}:${String(minutes).padStart(2, "0")}`;
   if (lang === "en") return `${clock} ${hours >= 12 ? "PM" : "AM"}`;
-  const part = hours >= 4 && hours < 12 ? "સવારે" : hours >= 12 && hours < 16 ? "બપોરે" : hours >= 16 && hours < 20 ? "સાંજે" : "રાત્રે";
-  return `${part} ${clock} વાગ્યે`;
+  const w = DATE_WORDS[lang];
+  const part = hours >= 4 && hours < 12 ? w.morning : hours >= 12 && hours < 16 ? w.afternoon : hours >= 16 && hours < 20 ? w.evening : w.night;
+  return `${part} ${clock} ${w.oclock}`;
 }
 
 // ---------- publishing: shared by the studio (to show errors) and the server (to enforce them) ----------
@@ -154,7 +178,7 @@ export const isTemplateId = (value: unknown): value is TemplateId => invitationT
 export const ATTENDANCE = ["Attending", "Maybe", "Not attending"] as const;
 export type Attendance = (typeof ATTENDANCE)[number];
 
-export const LIMITS = { title: 80, venue: 140, message: 500, guestName: 100, guests: 20, rsvpsPerEvent: 100, events: 10, eventName: 40, guestList: 100, guestLabel: 80, wish: 300 } as const;
+export const LIMITS = { title: 80, venue: 140, message: 500, guestName: 100, guests: 20, rsvpsPerEvent: 100, events: 10, eventName: 40, guestList: 100, guestLabel: 80, wish: 300, mapUrl: 400 } as const;
 
 export type DraftErrors = Partial<Record<keyof InvitationDraft, string>>;
 
@@ -186,7 +210,7 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
     // "main" is reserved: calendar links use ?event=main for the main occasion.
     return { id: /^[\w-]{1,40}$/.test(id) && id !== "main" ? id : newEventId(), name: text("name", item), date: text("date", item), time: text("time", item), venue: text("venue", item) };
   });
-  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events, language: isLang(data.language) ? data.language : "en", thanks: text("thanks"), palette: isPaletteValue(text("palette")) ? text("palette").toLowerCase() : "" };
+  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events, language: isLang(data.language) ? data.language : "en", thanks: text("thanks"), palette: isPaletteValue(text("palette")) ? text("palette").toLowerCase() : "", rsvp: data.rsvp !== false, countdown: data.countdown !== false, mapUrl: text("mapUrl") };
   const errors: DraftErrors = {};
   if (!value.title) errors.title = "Add the names or a title for the occasion.";
   else if (value.title.length > LIMITS.title) errors.title = `Keep the title under ${LIMITS.title} characters.`;
@@ -196,6 +220,7 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
   else if (value.venue.length > LIMITS.venue) errors.venue = `Keep the venue under ${LIMITS.venue} characters.`;
   if (value.message.length > LIMITS.message) errors.message = `Keep the message under ${LIMITS.message} characters.`;
   if (value.thanks!.length > LIMITS.message) errors.thanks = `Keep the note under ${LIMITS.message} characters.`;
+  if (value.mapUrl && (value.mapUrl.length > LIMITS.mapUrl || !isMapUrl(value.mapUrl))) errors.mapUrl = "Paste a Google Maps link, like https://maps.app.goo.gl/…";
   if (events.length > LIMITS.events) errors.events = `A schedule can have up to ${LIMITS.events} events.`;
   else if (events.some(scheduleItemError)) errors.events = "One of the events in the schedule needs a look.";
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value };

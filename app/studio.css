@@ -44,7 +44,7 @@
 .studio-field label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;font:700 25px/1.1 var(--hand);color:var(--muted)}
 .studio-field label>span{font-size:21px;color:var(--faint)}
 .studio-field input,.studio-field textarea{display:block;min-width:0;max-width:100%;width:100%;min-height:48px;padding:12px 14px;background:var(--surface) var(--in-rough) 0 0/100% 100% no-repeat;border:0;border-radius:0;outline:none;color:var(--text);font:400 16px/1.5 var(--sans);color-scheme:light}
-.studio-field input::placeholder,.studio-field textarea::placeholder{color:var(--faint);opacity:.8}
+.studio-field input::placeholder,.studio-field textarea::placeholder{color:var(--muted);opacity:.85}
 .studio-field input:focus,.studio-field textarea:focus{background-image:var(--in-rough-focus)}
 .studio-field textarea{resize:vertical;min-height:132px;padding-bottom:32px}
 .studio-field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
@@ -70,7 +70,7 @@
 .studio-mobile-tabs{display:none}
 
 /* ---------- Invitation scene: a sealed envelope, then the drawn card (editor + guest preview) ---------- */
-.inv-scene{--tone:#c2412d;--tone-2:#f0a03a;--text:#241a13;--muted:#5d5044;--faint:#7b6d5a;--accent:#a8341f;--accent-soft:#a8341f;--surface:#fbf6ec;--btn-bg:#241a13;--btn-fg:#f6efe3;--line:#2a1d1426;--line-strong:#2a1d1459;height:calc(100svh - 72px);min-height:660px;position:relative;isolation:isolate;overflow:hidden;display:grid;place-items:center;padding:28px 20px;background-color:#ece2cf;background-image:var(--grain);color:var(--text)}
+.inv-scene{--tone:#c2412d;--tone-2:#f0a03a;--text:#241a13;--muted:#5d5044;--faint:#716350;--accent:#a8341f;--accent-soft:#a8341f;--surface:#fbf6ec;--btn-bg:#241a13;--btn-fg:#f6efe3;--line:#2a1d1426;--line-strong:#2a1d1459;height:calc(100svh - 72px);min-height:660px;position:relative;isolation:isolate;overflow:hidden;display:grid;place-items:center;padding:28px 20px;background-color:#ece2cf;background-image:var(--grain);color:var(--text)}
 .inv-birthday{--tone:#c9506d;--tone-2:#4f9a94}
 .inv-garba{--tone:#b8552c;--tone-2:#9c2f55}
 .inv-opening{--tone:#4f7a3c;--tone-2:#c2412d}
@@ -467,7 +467,7 @@
 .publish-dialog::backdrop{background:#241a138c;backdrop-filter:blur(2px)}
 .publish-dialog[open]{animation:dialog-in .35s cubic-bezier(.2,.7,.1,1)}
 @keyframes dialog-in{from{opacity:0;transform:translateY(16px) rotate(-1deg)}}
-.publish-card{--surface:#fbf6ec;--text:#241a13;--muted:#5d5044;--faint:#7b6d5a;--accent:#a8341f;--accent-soft:#a8341f;--btn-bg:#241a13;--btn-fg:#f6efe3;--line:#2a1d1426;--line-strong:#2a1d1459;color:var(--text);padding:32px clamp(20px,4vw,40px);max-height:calc(100svh - 44px);overflow:auto}
+.publish-card{--surface:#fbf6ec;--text:#241a13;--muted:#5d5044;--faint:#716350;--accent:#a8341f;--accent-soft:#a8341f;--btn-bg:#241a13;--btn-fg:#f6efe3;--line:#2a1d1426;--line-strong:#2a1d1459;color:var(--text);padding:32px clamp(20px,4vw,40px);max-height:calc(100svh - 44px);overflow:auto}
 .publish-card .cin-note{display:block;font-size:34px;rotate:-3deg;margin-bottom:2px}
 .publish-card h2{font-size:clamp(28px,3vw,38px);line-height:1.08;margin:0 0 20px}
 .publish-private{margin-top:24px;padding-top:20px;border-top:1.5px dashed var(--line-strong)}
@@ -560,6 +560,7 @@
 .manage-row-confirm .manage-confirm{margin-top:0}
 .manage-confirm .studio-error{font:700 20px/1.15 var(--hand);color:var(--accent)}
 .manage-privacy-link{display:inline-flex;margin-top:22px}
+.manage-privacy-link+.manage-privacy-link{margin-left:28px}
 .manage-delete h2{color:#a8341f}
 .manage-delete .cin-cta-outline{color:#a8341f}
 .manage-delete .cin-cta-outline::before{background:#a8341f}
@@ -617,6 +618,12 @@
 .manage-answers .is-not-attending{color:var(--faint);text-decoration:line-through}
 .manage-wishes-toggle{display:flex;align-items:center;gap:12px;min-height:44px;cursor:pointer;font:700 23px/1.2 var(--hand);color:var(--text)}
 .manage-wishes-toggle input{width:22px;height:22px;accent-color:#a8341f;cursor:pointer}
+.studio-switch{display:flex;align-items:center;gap:12px;min-height:44px;cursor:pointer;font:700 23px/1.2 var(--hand);color:var(--text)}
+.studio-switch input{width:22px;height:22px;margin:0;flex:none;accent-color:#a8341f;cursor:pointer}
+.studio-fieldset .studio-switch-help{margin:-4px 0 10px 34px}
+.inv-no-rsvp{text-align:center}
+.inv-card:focus{outline:none}
+.inv-langs{display:inline-flex;align-items:center;gap:14px}
 .manage-wishes{list-style:none;margin:14px 0 0;padding:0}
 .manage-wish{padding:14px 0;border-top:1px dashed var(--line-strong)}
 .manage-wish blockquote{margin:0;font:400 italic 18px/1.45 var(--serif);color:var(--text);white-space:pre-line;overflow-wrap:anywhere}

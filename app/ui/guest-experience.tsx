@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ATTENDANCE, LIMITS, formatEventDay, formatInvitationDate, formatInvitationTime, formatShortDay, isLang, sortSchedule, type Attendance, type InvitationTemplate, type Lang, type ScheduleItem } from "../lib/invitations";
+import { ATTENDANCE, LANGS, LANG_NAMES, LIMITS, langHref, formatEventDay, formatInvitationDate, formatInvitationTime, formatShortDay, isLang, sortSchedule, type Attendance, type InvitationTemplate, type Lang, type ScheduleItem } from "../lib/invitations";
 import { calendarEvents, dayPhase, daysUntil, eventStartMs, googleCalendarUrl, toIcs, type DayPhase } from "../lib/calendar";
 import { answerFor, type AudienceView, type ByEvent } from "../lib/guests";
 import { paletteFor, paletteStyle } from "../lib/palette";
@@ -94,7 +94,7 @@ function Countdown({ date, time, events, t }: { date: string; time: string; even
 
 /** The report page, in the guest's language, knowing which link to send them back to. */
 const reportHref = (slug: string, lang: Lang, guestId?: string) => {
-  const query = new URLSearchParams({ ...(lang === "gu" && { lang: "gu" }), ...(guestId && { from: guestId }) }).toString();
+  const query = new URLSearchParams({ ...(lang !== "en" && { lang }), ...(guestId && { from: guestId }) }).toString();
   return `/report/${slug}${query ? `?${query}` : ""}`;
 };
 
@@ -110,7 +110,9 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   // The host's language first; on a live link, a guest's own choice (kept on their device) wins once the page is up.
   const [lang, setLang] = useState<Lang>(draft.language ?? "en");
   const t = GUEST_TEXT[lang];
-  const privacyHref = lang === "gu" ? "/privacy?lang=gu" : "/privacy";
+  const privacyHref = langHref("/privacy", lang);
+  // The host's exact pin for the main venue; anywhere else is found by its name.
+  const placeLink = (place: string) => (place === draft.venue && draft.mapUrl ? draft.mapUrl : maps(place));
   useEffect(() => {
     if (!live) return setLang(draft.language ?? "en");
     try {
@@ -118,8 +120,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
       if (isLang(saved)) setLang(saved);
     } catch { /* storage blocked: keep the host's choice */ }
   }, [live, draft.language]);
-  function switchLanguage() {
-    const next = lang === "en" ? "gu" : "en";
+  function switchLanguage(next: Lang) {
     setLang(next);
     if (live) try { localStorage.setItem(LANG_KEY, next); } catch { /* fine: this visit only */ }
   }
@@ -270,10 +271,10 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   return <div className={`cinema invitation-page${palette ? " has-palette" : ""}`} style={palette ? paletteStyle(palette) : undefined} lang={lang}>
     <header className="invitation-header theme-paper">
       <WowLinkBrand/>
-      {!live && <span className="invitation-context">{mode === "draft" ? "Draft preview" : "Template preview"}<i aria-hidden="true">·</i>{template.category}</span>}
-      {previewOnly && <span className="invitation-context">Host preview</span>}
+      {!live && <span className="invitation-context" lang="en">{mode === "draft" ? "Draft preview" : "Template preview"}<i aria-hidden="true">·</i>{template.category}</span>}
+      {previewOnly && <span className="invitation-context" lang="en">Host preview</span>}
       <div className="invitation-header-actions">
-        <button type="button" className="inv-lang" aria-label={t.switchTo} onClick={switchLanguage}><span lang={lang === "en" ? "gu" : "en"}>{lang === "en" ? "ગુજરાતી" : "English"}</span></button>
+        <span className="inv-langs">{LANGS.filter(other => other !== lang).map(other => <button key={other} type="button" className="inv-lang" aria-label={t.readIn[other]} onClick={() => switchLanguage(other)}><span lang={other}>{LANG_NAMES[other]}</span></button>)}</span>
         <Link className="cin-cta cin-cta-outline" href={`/create?template=${template.id}`}>{mode === "draft" ? "Back to editor" : live ? t.makeYourOwn : "Make it yours"}</Link>
       </div>
     </header>
@@ -285,7 +286,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
           <strong>{item.name || draft.title}</strong>
           <span>{item.now ? t.happeningNow : formatInvitationTime(item.time, lang) || t.allDay}</span>
           {item.venue && <span>{item.venue}</span>}
-          {item.venue && <a href={maps(item.venue)} target="_blank" rel="noreferrer">{t.directions} <span aria-hidden="true">→</span></a>}
+          {item.venue && <a href={placeLink(item.venue)} target="_blank" rel="noreferrer">{t.directions} <span aria-hidden="true">→</span></a>}
         </li>)}</ul>
       </section>}
       {!draft.pending && over && <p className="inv-after theme-paper" role="note">{t.afterBanner}</p>}
@@ -295,12 +296,12 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         <p>{t.pendingBody}</p>
       </section> : <>
         <section className="inv-details-section theme-paper" id="occasion-details">
-          <div className="inv-details-heading"><h2>{over ? t.rememberThe[0] : saveThe} <span className="scribble">{over ? t.rememberThe[1] : saveWord}</span></h2>{!over && <Countdown date={draft.date} time={draft.time} events={schedule} t={t}/>}<button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); }}>{t.replay}</button></div>
+          <div className="inv-details-heading"><h2>{over ? t.rememberThe[0] : saveThe} <span className="scribble">{over ? t.rememberThe[1] : saveWord}</span></h2>{!over && draft.countdown !== false && <Countdown date={draft.date} time={draft.time} events={schedule} t={t}/>}<button className="inv-replay-link" onClick={() => { setOpened(false); window.scrollTo({ top: 0, behavior: smooth() }); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(".inv-scene .inv-trigger")?.focus({ preventScroll: true })); }}>{t.replay}</button></div>
           <div className="inv-details-grid">
             <div><span className="inv-detail-label">{t.when}</span><h3>{formatInvitationDate(draft.date, true, lang)}</h3><p>{[mainItem?.name, formatInvitationTime(draft.time, lang)].filter(Boolean).join(" · ")}</p>
               {hasDate(draft.date) && !over && <div className="inv-calendar"><span>{t.addToCalendar}</span><a href={googleCalendarUrl(mainEntry)} target="_blank" rel="noreferrer">Google</a>{base ? <a href={`${base}/invite.ics${schedule.length ? "?event=main" : ""}`}>Apple / Outlook</a> : <button type="button" onClick={() => downloadIcs([mainEntry])}>Apple / Outlook</button>}</div>}
             </div>
-            <div><span className="inv-detail-label">{t.where}</span><h3>{draft.venue || t.somewhere}</h3>{draft.venue && <a href={maps(draft.venue)} target="_blank" rel="noreferrer">{t.openInMaps} <span aria-hidden="true">→</span></a>}</div>
+            <div><span className="inv-detail-label">{t.where}</span><h3>{draft.venue || t.somewhere}</h3>{draft.venue && <a href={placeLink(draft.venue)} target="_blank" rel="noreferrer">{t.openInMaps} <span aria-hidden="true">→</span></a>}</div>
           </div>
         </section>
         {showSchedule && <section className="inv-schedule-section theme-paper" aria-labelledby="schedule-heading">
@@ -337,7 +338,8 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         <p>{draft.thanks || t.thanksDefault}</p>
         <span className="inv-message-sign">{t.withLove(draft.title)}</span>
       </section>}
-      {!draft.pending && !over && <section className="inv-rsvp-section theme-paper" aria-labelledby="rsvp-heading">
+      {!draft.pending && !over && draft.rsvp === false && <p className="inv-after theme-paper inv-no-rsvp" role="note">{t.noRsvp}</p>}
+      {!draft.pending && !over && draft.rsvp !== false && <section className="inv-rsvp-section theme-paper" aria-labelledby="rsvp-heading">
         <div><h2 id="rsvp-heading">{t.rsvpHeading}</h2><p>{t.rsvpIntro(schedule.length > 1)}</p></div>
         <div className="inv-rsvp-card">
           {state === "done" ? <div className="inv-rsvp-confirmation" role="status">
@@ -398,6 +400,6 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         <ul className="inv-wishes">{wishes.map((w, i) => <li key={i} className="inv-wish"><p>{w.text}</p><span>— {w.name || t.aGuest}</span></li>)}</ul>
       </section>}
     </main>
-    <footer className="invitation-footer"><WowLinkBrand/><span>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}<Link href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link></footer>
+    <footer className="invitation-footer"><WowLinkBrand/><span lang={live ? undefined : "en"}>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}<Link href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link></footer>
   </div>;
 }

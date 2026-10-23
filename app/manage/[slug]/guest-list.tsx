@@ -242,7 +242,8 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   const words = MESSAGES[experience.language ?? "en"];
   const message = words.personal(guest.name, experience.title, url);
   // A nudge for households that haven't answered (or haven't answered for a celebration added since).
-  const reminder = !seesNothing && (!reply || unanswered.length > 0)
+  // No reminders for an announcement: there's nothing to reply to.
+  const reminder = experience.rsvp !== false && !seesNothing && (!reply || unanswered.length > 0)
     ? words.reminder(guest.name, experience.title, reply ? unanswered.map(e => e.name) : null, url)
     : "";
 

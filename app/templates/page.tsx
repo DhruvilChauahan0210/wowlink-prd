@@ -6,7 +6,7 @@ import { Flower } from "../ui/doodles";
 
 export const metadata = {
   title: "Hand-drawn invitation templates — WowLink",
-  description: "Interactive, hand-drawn invitations for weddings, engagements, birthdays, Garba, seemant and baby showers, housewarmings, anniversaries and grand openings. In Gujarati or English, free to make.",
+  description: "Interactive, hand-drawn invitations for weddings, engagements, birthdays, Garba, seemant and baby showers, housewarmings, anniversaries and grand openings. In Gujarati, Hindi or English, free to make.",
   alternates: { canonical: "/templates" },
 };
 const collection: Record<TemplateId, { title: string; detail: string }> = {
@@ -30,6 +30,6 @@ export default function TemplatesPage() {
         <div className="cin-card-bottom"><p>{collection[item.id].detail}</p><Link href={`/create?template=${item.id}`}>Make it yours <span aria-hidden="true">→</span></Link></div>
       </article>)}</div>
     </main>
-    <footer className="cin-catalog-footer"><span>Made with love, shared with one link.</span><span className="cin-catalog-footer-links"><Link href="/privacy">Privacy</Link><Link href="/">© 2026 WowLink</Link></span></footer>
+    <footer className="cin-catalog-footer"><span>Made with love, shared with one link.</span><span className="cin-catalog-footer-links"><Link href="/help">Help</Link><Link href="/pricing">Pricing</Link><Link href="/privacy">Privacy</Link><Link href="/">© 2026 WowLink</Link></span></footer>
   </div>;
 }

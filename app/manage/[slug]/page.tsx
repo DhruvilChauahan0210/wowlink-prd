@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { formatInvitationDate, formatInvitationTime, formatShortDay, ownerKey, sortSchedule } from "../../lib/invitations";
+import { formatInvitationDate, formatInvitationTime, formatShortDay, langHref, ownerKey, sortSchedule } from "../../lib/invitations";
 import type { HostText } from "../../lib/host-i18n";
 import { HostLangSwitch, HostTextContext, useHostLang } from "../../ui/host-lang";
 import { answerFor } from "../../lib/guests";
@@ -152,16 +152,16 @@ export default function ManagePage() {
   const owner = key ? { slug, ownerKey: key } : null;
   const reload = useCallback(async () => { if (key) await load(key); }, [key, load]);
   const guestName = (id?: string) => experience?.guests.find(g => g.id === id)?.name;
-  const { lang, h, toggle } = useHostLang();
-  const when = (iso: string) => lang === "gu"
-    ? `${formatShortDay(iso, "gu")}, ${new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}`
+  const { lang, h, choose } = useHostLang();
+  const when = (iso: string) => lang !== "en"
+    ? `${formatShortDay(iso, lang)}, ${new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}`
     : new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
   return <HostTextContext.Provider value={h}><div className="cinema manage-page" lang={lang}>
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
       <span className="studio-header-label">{h.yourInvitation}</span>
-      <div className="studio-header-actions"><HostLangSwitch h={h} toggle={toggle}/><Link className="studio-fullscreen" href="/mine">{h.myInvitations}</Link>{experience && !removed && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>{h.editInStudio}</Link>}</div>
+      <div className="studio-header-actions"><HostLangSwitch h={h} choose={choose}/><Link className="studio-fullscreen" href="/mine">{h.myInvitations}</Link>{experience && !removed && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>{h.editInStudio}</Link>}</div>
     </header>
     <main className="manage theme-paper">
       {problem === "no-key" && <Notice h={h} title={h.noKeyTitle}>{h.noKeyBody[0]} <b>#</b> {h.noKeyBody[1]}</Notice>}
@@ -207,6 +207,7 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="replies-heading">
           <div className="manage-card-head"><h2 id="replies-heading" ref={repliesHeadingRef} tabIndex={-1}>{h.repliesHeading}</h2><button className="inv-replay-link" onClick={() => key && void load(key)}>{h.refresh}</button></div>
+          {experience.rsvp === false && <p className="manage-warn">{h.repliesOff}</p>}
           <dl className="manage-totals">
             <div><dt>{h.coming}</dt><dd>{totals.Attending}</dd><span>{h.guestsInAll(totals.guests)}</span></div>
             <div><dt>{h.maybe}</dt><dd>{totals.Maybe}</dd>{totals.maybeGuests > 0 && <span>{h.people(totals.maybeGuests)}</span>}</div>
@@ -262,7 +263,8 @@ export default function ManagePage() {
               : <button className="cin-cta cin-cta-light" disabled={busy} onClick={() => void setStatus("published")}>{h.publishAgain}</button>}
             <span className="manage-muted">{h.unpublishNote(live)}</span>
           </div>}
-          <Link className="cin-text-link manage-privacy-link" href={lang === "gu" ? "/privacy?lang=gu" : "/privacy"}>{h.privacyLink} <span aria-hidden="true">→</span></Link>
+          <Link className="cin-text-link manage-privacy-link" href={`/create?copy=${slug}`}>{h.makeAnother} <span aria-hidden="true">→</span></Link>
+          <Link className="cin-text-link manage-privacy-link" href={langHref("/privacy", lang)}>{h.privacyLink} <span aria-hidden="true">→</span></Link>
         </section>
 
         <section className="sketch-card manage-card manage-delete" aria-labelledby="delete-heading">

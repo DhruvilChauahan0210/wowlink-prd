@@ -13,7 +13,8 @@ test("the sitemap lists the public pages and nothing private", async ({ request 
   expect(response.status()).toBe(200);
   const xml = await response.text();
   const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => new URL(m[1]).pathname + new URL(m[1]).search);
-  expect(urls).toEqual(["/", "/templates", ...OCCASIONS.map(id => `/templates/${id}`), "/privacy", "/privacy?lang=gu"]);
+  const everyLanguage = (path: string) => [path, `${path}?lang=gu`, `${path}?lang=hi`];
+  expect(urls).toEqual(["/", "/templates", ...OCCASIONS.map(id => `/templates/${id}`), ...everyLanguage("/pricing"), ...everyLanguage("/help"), ...everyLanguage("/privacy")]);
   expect(xml).toContain('hreflang="gu"');
 });
 

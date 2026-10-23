@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { EVENT_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
+import { EVENT_NAMES, LANGS, LANG_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
 import { WowLinkBrand } from "../ui/brand";
 import { ArtImage } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
@@ -13,7 +13,7 @@ import { hostMessage, type HostText } from "../lib/host-i18n";
 import { OCCASION_TONES, PALETTES, PALETTE_IDS, type PaletteId } from "../lib/palette";
 import type { Experience, Rsvp } from "../lib/store";
 
-const LANGUAGE_CHOICES = [["en", "English"], ["gu", "ગુજરાતી"]] as const;
+const LANGUAGE_CHOICES = LANGS.map(lang => [lang, LANG_NAMES[lang]] as const);
 
 /** A published invitation this browser can edit: its public slug and private manage key. */
 type Owned = { slug: string; key: string };
@@ -24,7 +24,7 @@ export default function CreatePage() {
   const [opened, setOpened] = useState(false);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const { lang, h, toggle, message } = useHostLang();
+  const { lang, h, choose, message } = useHostLang();
   // Kept as a function of the wording, so it follows the host's language if they switch.
   const [status, setStatus] = useState<(h: HostText) => string>(() => (t: HostText) => t.canvasReady);
   const [mobilePanel, setMobilePanel] = useState<"edit" | "preview">("edit");
@@ -54,6 +54,11 @@ export default function CreatePage() {
       void openPublished(edit);
       return;
     }
+    const copy = params.get("copy");
+    if (copy) {
+      void copyPublished(copy);
+      return;
+    }
     const selected = getInvitationTemplate(params.get("template"));
     const saved = readDraft(selected.id);
     setTemplateId(selected.id);
@@ -61,6 +66,28 @@ export default function CreatePage() {
     setStatus(() => (t: HostText) => (saved ? t.draftRestored : t.canvasReady));
     setReady(true);
   }, []);
+
+  /** "Make another like this": a new invitation starting from one of yours (its drawing, colours, words and schedule; not its guests or replies). */
+  async function copyPublished(slug: string) {
+    let key: string | null = null;
+    try { key = localStorage.getItem(ownerKey(slug)); } catch { /* storage blocked */ }
+    try {
+      if (!key) throw new Error();
+      const response = await fetch(`/api/experiences/${slug}`, { headers: { authorization: `Bearer ${key}` }, cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const { experience } = (await response.json()) as { experience: Experience };
+      setTemplateId(experience.templateId);
+      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: (experience.events ?? []).map(e => ({ ...e, id: newEventId() })), language: experience.language ?? "en", thanks: experience.thanks ?? "", palette: experience.palette ?? "", rsvp: experience.rsvp !== false, countdown: experience.countdown !== false, mapUrl: experience.mapUrl ?? "" });
+      setDirty(true);
+      setStatus(() => (t: HostText) => t.copiedFrom(experience.title));
+      history.replaceState(null, "", `/create?template=${experience.templateId}`);
+    } catch {
+      const fallback = getInvitationTemplate(null);
+      setDraft(readDraft(fallback.id) ?? initialDraft(fallback));
+      setStatus(() => (t: HostText) => t.couldntCopy);
+    }
+    setReady(true);
+  }
 
   async function openPublished(slug: string) {
     let key: string | null = null;
@@ -75,7 +102,7 @@ export default function CreatePage() {
       if (!response.ok) throw new Error();
       const { experience, rsvps } = (await response.json()) as { experience: Experience; rsvps: Rsvp[] };
       setTemplateId(experience.templateId);
-      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en", thanks: experience.thanks ?? "", palette: experience.palette ?? "" });
+      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en", thanks: experience.thanks ?? "", palette: experience.palette ?? "", rsvp: experience.rsvp !== false, countdown: experience.countdown !== false, mapUrl: experience.mapUrl ?? "" });
       published.current = experience.events ?? [];
       usage.current = Object.fromEntries(published.current.map(e => [e.id, {
         replies: rsvps.filter(r => r.byEvent && Object.hasOwn(r.byEvent, e.id)).length,
@@ -211,7 +238,7 @@ export default function CreatePage() {
       <WowLinkBrand/>
       <span className="studio-header-label">{takenDown ? h.takenDown : h.studioLabel(!!owned)}</span>
       <div className="studio-header-actions">
-        <HostLangSwitch h={h} toggle={toggle}/>
+        <HostLangSwitch h={h} choose={choose}/>
         {owned
           ? <Link className="studio-fullscreen" href={`/manage/${owned.slug}`}>{h.repliesLink}</Link>
           : <Link className="studio-fullscreen" href={`/e/preview?template=${templateId}&draft=1`} target="_blank" rel="noreferrer" onClick={event => { if (!saveDraft()) event.preventDefault(); }}>{h.fullPreview}</Link>}
@@ -232,6 +259,13 @@ export default function CreatePage() {
             <div className="studio-field"><label htmlFor="time">{h.time}</label><input id="time" type="time" value={draft.time} onChange={event => update("time", event.target.value)} {...described("time")}/>{fieldError("time")}</div>
           </div>
           <div className="studio-field"><label htmlFor="venue">{h.venue}</label><input id="venue" value={draft.venue} maxLength={140} placeholder={h.venuePlaceholder} onChange={event => update("venue", event.target.value)} {...described("venue")}/>{fieldError("venue")}</div>
+          <div className="studio-field"><label htmlFor="mapUrl">{h.mapLabel} <span>{h.optional}</span></label><p className="studio-help" id="mapUrl-help">{h.mapHelp}</p><input id="mapUrl" type="url" inputMode="url" value={draft.mapUrl ?? ""} maxLength={400} placeholder="https://maps.app.goo.gl/…" onChange={event => update("mapUrl", event.target.value)} {...described("mapUrl")}/>{fieldError("mapUrl")}</div>
+        </fieldset>
+        <fieldset className="studio-fieldset">
+          <legend>{h.onInvitation}</legend>
+          <label className="studio-switch"><input type="checkbox" checked={draft.rsvp !== false} onChange={event => update("rsvp", event.target.checked)} aria-describedby="rsvp-help"/><span>{h.askToReply}</span></label>
+          <p className="studio-help studio-switch-help" id="rsvp-help">{h.askToReplyHelp(draft.rsvp !== false)}</p>
+          <label className="studio-switch"><input type="checkbox" checked={draft.countdown !== false} onChange={event => update("countdown", event.target.checked)}/><span>{h.showCountdown}</span></label>
         </fieldset>
         <fieldset className="studio-fieldset studio-schedule" id="events">
           <legend>{h.schedule} <span className="studio-legend-note">{h.scheduleNote}</span></legend>

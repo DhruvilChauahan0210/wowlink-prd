@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { formatInvitationDate, type Lang } from "../lib/invitations";
-import { WowLinkBrand } from "../ui/brand";
+import { LANGS, formatInvitationDate, langHref, pageLang, type Lang } from "../lib/invitations";
+import { PublicPage } from "../ui/public-page";
 
 /*
  * What WowLink keeps, who sees it, and how it's deleted, in plain words, in English and Gujarati (?lang=gu). Guests
@@ -12,9 +11,9 @@ import { WowLinkBrand } from "../ui/brand";
 const UPDATED = "2026-10-23";
 
 type Section = { heading: string; items: string[] };
-type Content = { title: string; description: string; heading: readonly [string, string]; intro: string; early: string; earlyLabel: string; updated: string; sections: Section[]; other: string; back: string; footer: string; templates: string };
+type Content = { title: string; description: string; heading: readonly [string, string]; intro: string; early: string; earlyLabel: string; updated: string; sections: Section[] };
 
-const CONTENT: Record<Lang, Content> = {
+export const PRIVACY: Record<Lang, Content> = {
   en: {
     title: "Privacy — WowLink",
     description: "What WowLink keeps when you make an invitation or reply to one, who can see it, and how it’s deleted.",
@@ -92,10 +91,6 @@ const CONTENT: Record<Lang, Content> = {
         items: ["Nothing here is shared with advertisers or other companies. There are no ads and no outside trackers on any page."],
       },
     ],
-    other: "ગુજરાતીમાં વાંચો",
-    back: "← Back to home",
-    footer: "Made with love, shared with one link.",
-    templates: "Templates",
   },
   gu: {
     title: "ગોપનીયતા — WowLink",
@@ -174,30 +169,100 @@ const CONTENT: Record<Lang, Content> = {
         items: ["અહીંની કોઈ માહિતી જાહેરાતકારો કે બીજી કંપનીઓને અપાતી નથી. કોઈ પાના પર જાહેરાતો કે બહારના ટ્રેકર નથી."],
       },
     ],
-    other: "Read in English",
-    back: "← મુખ્ય પાના પર",
-    footer: "પ્રેમથી બનાવેલું, એક લિંકથી મોકલેલું.",
-    templates: "આમંત્રણના નમૂના",
+  },
+  hi: {
+    title: "गोपनीयता — WowLink",
+    description: "निमंत्रण बनाते या उसका जवाब देते समय WowLink क्या सहेजता है, उसे कौन देख सकता है, और वह कैसे हटाया जाता है।",
+    heading: ["हम क्या सहेजते हैं, और", "कौन देखता है"],
+    intro: "WowLink निमंत्रण के पेज बनाता है। इसके लिए वह मेज़बान जो लिखते हैं और मेहमान जो जवाब देते हैं, विज़िट की सीधी-सादी गिनती, और शिकायतें सहेजता है। सब कुछ यहाँ आसान शब्दों में है।",
+    earlyLabel: "अभी शुरुआत है",
+    early: "WowLink अभी आज़माया जा रहा है। यह पेज बताता है कि यह आज कैसे काम करता है। सबके लिए शुरू होने से पहले इसकी समीक्षा होगी और इसे अपडेट किया जाएगा, जिसमें यह भी शामिल है कि जानकारी कहाँ और कितने समय तक रखी जाती है।",
+    updated: "पिछला अपडेट",
+    sections: [
+      {
+        heading: "मेज़बान के निमंत्रण में क्या सहेजा जाता है",
+        items: [
+          "निमंत्रण, जैसा मेज़बान ने लिखा: नाम, तारीख़ें, जगहें, कार्यक्रम-सूची, संदेश, रंग और भाषा।",
+          "व्यक्तिगत निमंत्रण: हर परिवार का नाम, और अगर मेज़बान जोड़ें तो WhatsApp नंबर।",
+          "हर व्यक्तिगत लिंक पहली और आख़िरी बार कब खोला गया। यह पेज खुद बताता है, इसलिए WhatsApp में लिंक का प्रीव्यू नहीं गिना जाता।",
+          "निजी मैनेज कुंजी, सिर्फ़ उलझे हुए रूप में (hash), ताकि उसे न वापस पढ़ा जा सके, न वापस पाया जा सके।",
+          "दिन-ब-दिन की सीधी गिनती: विज़िट, कितने लोगों ने खोला, कितनों ने खुलने का दृश्य देखा, QR कोड से कितनी विज़िट, और मेज़बान ने कैसे शेयर किया। इनसे किसी की पहचान नहीं होती।",
+        ],
+      },
+      {
+        heading: "मेहमान के जवाब में क्या सहेजा जाता है",
+        items: [
+          "आप आ रहे हैं या नहीं, किन कार्यक्रमों में, और कितने लोग।",
+          "आपका नाम, अगर आप लिखें, और आपकी शुभकामना या आशीर्वाद, अगर आप दें।",
+          "आपने कब जवाब दिया।",
+          "बस इतना ही। मेहमानों को कभी अकाउंट की ज़रूरत नहीं होती, और WowLink उनसे कभी ईमेल पता, फ़ोन नंबर या उनके कॉन्टैक्ट नहीं माँगता।",
+        ],
+      },
+      {
+        heading: "क्या नहीं सहेजा जाता",
+        items: [
+          "किसी भी पेज पर कोई ट्रैकिंग कुकी, विज्ञापन या बाहरी एनालिटिक्स सेवा नहीं है।",
+          "आपका इंटरनेट पता (IP) स्पैम रोकने के लिए इस्तेमाल होता है। वह सिर्फ़ सर्वर की मेमोरी में रहता है, और आपके जवाब के साथ या कहीं और कभी सहेजा नहीं जाता।",
+          "आपकी चुनी हुई भाषा, और मेज़बान के मैनेज लिंक, आपके अपने ब्राउज़र में याद रहते हैं, WowLink के पास नहीं।",
+          "आपका ब्राउज़र यह भी याद रखता है कि उसने निमंत्रण खोला है (और उसके खुलने का दृश्य देखा है), इसलिए आप चाहे जितनी बार लौटें, आपको एक ही बार गिना जाता है। जिस ब्राउज़र में मेज़बान ने अपना मैनेज पेज खोला हो, वहाँ से उनकी विज़िट नहीं गिनी जातीं।",
+          "Google Maps, Google Calendar और WhatsApp के लिंक ये सेवाएँ तभी खोलते हैं जब आप उन पर टैप करें।",
+        ],
+      },
+      {
+        heading: "कौन क्या देखता है",
+        items: [
+          "मेज़बान (यानी जिसके पास भी निमंत्रण का मैनेज लिंक हो) हर जवाब, हर शुभकामना, और जोड़े गए नंबरों के साथ अपने परिवारों की सूची देखते हैं।",
+          "मेहमान निमंत्रण वैसा ही देखते हैं जैसा उनका अपना लिंक दिखाता है। वे मेहमानों की सूची, दूसरों के जवाब या किसी का नंबर कभी नहीं देखते।",
+          "शुभकामनाएँ निमंत्रण पर तभी दिखती हैं जब मेज़बान इसे चालू करें, और सिर्फ़ उसी नाम के साथ जो लिखने वाले ने लिखा। मेज़बान इनमें से किसी को भी छिपा सकते हैं।",
+          "सर्च इंजनों से कहा जाता है कि वे निमंत्रणों को अपनी सूची में न दिखाएँ।",
+          "WowLink पूरे ऐप के कुल आँकड़े देखता है: कितने निमंत्रण बने, खोले गए और उनके जवाब आए, उसके अपने पेजों पर विज़िट (जैसे स्टूडियो और नमूने), और “अपना मुफ़्त बनाएँ” पर क्लिक। किसने जवाब दिया, यह कभी नहीं।",
+        ],
+      },
+      {
+        heading: "शिकायतें",
+        items: [
+          "कोई भी व्यक्ति निमंत्रण के नीचे दिए लिंक से उसकी शिकायत कर सकता है। शिकायत में कारण और आपका लिखा हुआ ही सहेजा जाता है, भेजने वाले के बारे में कुछ नहीं, इसलिए मेज़बान पता नहीं लगा सकते कि शिकायत किसने की।",
+          "WowLink शिकायत वाले निमंत्रण को खोलकर देखता है। अगर वह नियम तोड़ता है, तो उस पर रोक लगा दी जाती है: मेहमान उसे खोल नहीं सकते और उसे दोबारा पब्लिश नहीं किया जा सकता। उसके मेज़बान के जवाब उनके पास रहते हैं, और वे उसे हटा भी सकते हैं।",
+        ],
+      },
+      {
+        heading: "लिंक ताला नहीं है",
+        items: [
+          "जिसके पास भी निमंत्रण का लिंक है, वह उसे खोल सकता है, जिन्हें यह आगे भेजा गया वे भी। निमंत्रण पर ऐसा कुछ न डालें जिसके आगे भेजे जाने से आपको आपत्ति हो।",
+          "व्यक्तिगत लिंक का अंदाज़ा लगाना मुश्किल है, पर वे भी लिंक ही हैं। अगर कोई लिंक सोचे से ज़्यादा आगे चला जाए, तो मेज़बान उसकी जगह नया लिंक बना सकते हैं, और पुराना काम करना बंद कर देता है।",
+          "मैनेज लिंक को निजी रखें: जिसके पास भी यह हो, वह निमंत्रण में बदलाव कर सकता है और हर जवाब पढ़ सकता है।",
+        ],
+      },
+      {
+        heading: "बदलना और हटाना",
+        items: [
+          "व्यक्तिगत लिंक वाले मेहमान उसी लिंक से अपना जवाब बदल सकते हैं। कोई जवाब हटवाना हो, तो मेज़बान से कहें।",
+          "मैनेज पेज से मेज़बान एक जवाब उसकी शुभकामना के साथ हटा सकते हैं, कोई व्यक्तिगत निमंत्रण हटा सकते हैं (उसका जवाब भी साथ में हट जाता है), या पूरा निमंत्रण उसके हर जवाब, शुभकामना, परिवार और नंबर के साथ हटा सकते हैं।",
+          "हटाना तुरंत होता है और इसे वापस नहीं लाया जा सकता। सिर्फ़ लिंक का छोटा कोड रखा जाता है, ताकि वह कभी किसी दूसरे निमंत्रण को न मिले।",
+          "बंद करने से निमंत्रण मेहमानों से छिप जाता है पर उसके जवाब सहेजे रहते हैं, ताकि उसे दोबारा पब्लिश किया जा सके।",
+        ],
+      },
+      {
+        heading: "किसी को कुछ नहीं दिया जाता",
+        items: ["यहाँ की कोई भी जानकारी विज्ञापनदाताओं या दूसरी कंपनियों के साथ शेयर नहीं की जाती। किसी भी पेज पर कोई विज्ञापन या बाहरी ट्रैकर नहीं है।"],
+      },
+    ],
   },
 };
 
 type Props = { searchParams: Promise<{ lang?: string | string[] }> };
-const langOf = async ({ searchParams }: Props): Promise<Lang> => ((await searchParams).lang === "gu" ? "gu" : "en");
 
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const lang = await langOf(props);
-  const { title, description } = CONTENT[lang];
-  return { title, description, alternates: { canonical: lang === "gu" ? "/privacy?lang=gu" : "/privacy", languages: { en: "/privacy", gu: "/privacy?lang=gu" } } };
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const lang = pageLang((await searchParams).lang);
+  const { title, description } = PRIVACY[lang];
+  return { title, description, alternates: { canonical: langHref("/privacy", lang), languages: Object.fromEntries(LANGS.map(l => [l, langHref("/privacy", l)])) } };
 }
 
-export default async function PrivacyPage(props: Props) {
-  const lang = await langOf(props);
-  const c = CONTENT[lang];
-  const other: Lang = lang === "en" ? "gu" : "en";
-  return <div className="cinema cin-catalog theme-paper privacy-page" lang={lang}>
-    <header className="cin-catalog-nav"><WowLinkBrand/><Link href="/" className="cin-catalog-back">{c.back}</Link></header>
+export default async function PrivacyPage({ searchParams }: Props) {
+  const lang = pageLang((await searchParams).lang);
+  const c = PRIVACY[lang];
+  return <PublicPage lang={lang} path="/privacy" className="privacy-page">
     <main className="privacy">
-      <Link className="privacy-lang" href={other === "gu" ? "/privacy?lang=gu" : "/privacy"} hrefLang={other} lang={other}>{c.other}</Link>
       <h1>{c.heading[0]} <span className="scribble">{c.heading[1]}</span></h1>
       <p className="privacy-intro">{c.intro}</p>
       <aside className="privacy-early"><span>{c.earlyLabel}</span><p>{c.early}</p></aside>
@@ -207,6 +272,5 @@ export default async function PrivacyPage(props: Props) {
       </section>)}
       <p className="privacy-updated">{c.updated}: <time dateTime={UPDATED}>{formatInvitationDate(UPDATED, true, lang)}</time></p>
     </main>
-    <footer className="cin-catalog-footer"><span>{c.footer}</span><span className="cin-catalog-footer-links"><Link href="/templates">{c.templates}</Link><Link href="/">© 2026 WowLink</Link></span></footer>
-  </div>;
+  </PublicPage>;
 }
