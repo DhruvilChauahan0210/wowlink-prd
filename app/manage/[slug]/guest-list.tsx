@@ -5,6 +5,8 @@ import { LIMITS, formatEventDay, formatShortDay, sortSchedule, type ScheduleItem
 import { answerFor, invitedTo, missingEvents, repliesUsed, tallyByEvent, type EventFilter, type Guest } from "../../lib/guests";
 import { csvName, invitationsCsv } from "../../lib/export";
 import { MESSAGES } from "../../lib/i18n";
+import { hostMessage, type HostText } from "../../lib/host-i18n";
+import { useHostText } from "../../ui/host-lang";
 import type { Experience, Rsvp } from "../../lib/store";
 
 /*
@@ -27,12 +29,13 @@ async function ownerCall<T = unknown>(owner: Owner, path: string, method: string
   return data as T;
 }
 const errorsFrom = (failure: unknown): Errors => ({ ...(failure as { fields?: Errors }).fields, form: (failure as Error).message });
+/** Field and server messages arrive in English; show them in the host's language. */
+const useTranslate = () => { const h = useHostText(); return (message?: string) => (message ? hostMessage(message, h.lang) : ""); };
 
 /** "+91 98250 12345" for an Indian mobile, "+447700900123" otherwise. */
 export const showPhone = (phone: string) => (/^91\d{10}$/.test(phone) ? `+91 ${phone.slice(2, 7)} ${phone.slice(7)}` : `+${phone}`);
 /** A WhatsApp message link: straight to their chat when there's a number, otherwise WhatsApp asks who to send it to. */
 const whatsApp = (text: string, phone?: string) => `https://wa.me/${phone ?? ""}?text=${encodeURIComponent(text)}`;
-const listOf = (names: string[]) => (names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`);
 
 /** Hand a spreadsheet to the browser as a download. */
 export function saveCsv(fileName: string, csv: string) {
@@ -42,37 +45,41 @@ export function saveCsv(fileName: string, csv: string) {
 }
 
 /** "Every celebration", or the chosen ones by name. */
-export function celebrationsLabel(filter: EventFilter, schedule: ScheduleItem[]) {
-  if (filter === "all") return "Every celebration";
+export function celebrationsLabel(filter: EventFilter, schedule: ScheduleItem[], h: HostText) {
+  if (filter === "all") return h.everyCelebration;
   const names = sortSchedule(schedule).filter(e => filter.includes(e.id)).map(e => e.name);
-  return names.length ? names.join(" · ") : "No celebrations yet";
+  return names.length ? names.join(" · ") : h.noCelebrationsYet;
 }
 
 /** Every celebration (including any added later), or only the ticked ones. */
 export function CelebrationPicker({ schedule, value, onChange, legend, error }: { schedule: ScheduleItem[]; value: EventFilter; onChange: (next: EventFilter) => void; legend: string; error?: string }) {
   const id = useId();
+  const h = useHostText();
+  const tr = useTranslate();
   const sorted = sortSchedule(schedule);
   const some = value !== "all";
   return <fieldset className="manage-picker" aria-describedby={error ? `${id}-error` : undefined}>
     <legend>{legend}</legend>
     <div className="manage-picker-modes">
-      <label className={!some ? "is-selected" : ""}><input type="radio" name={`${id}-mode`} checked={!some} onChange={() => onChange("all")}/><span>Every celebration</span></label>
-      <label className={some ? "is-selected" : ""}><input type="radio" name={`${id}-mode`} checked={some} onChange={() => onChange(sorted.map(e => e.id))}/><span>Only some</span></label>
+      <label className={!some ? "is-selected" : ""}><input type="radio" name={`${id}-mode`} checked={!some} onChange={() => onChange("all")}/><span>{h.everyCelebration}</span></label>
+      <label className={some ? "is-selected" : ""}><input type="radio" name={`${id}-mode`} checked={some} onChange={() => onChange(sorted.map(e => e.id))}/><span>{h.onlySome}</span></label>
     </div>
-    {!some && <p className="manage-muted manage-picker-note">Including any you add to the schedule later.</p>}
+    {!some && <p className="manage-muted manage-picker-note">{h.includingLater}</p>}
     {some && <ul className="manage-picker-list">{sorted.map(item => {
       const on = value.includes(item.id);
       return <li key={item.id}><label className={on ? "is-ticked" : ""}>
         <input type="checkbox" checked={on} onChange={() => onChange(on ? value.filter(x => x !== item.id) : [...value, item.id])}/>
-        <span>{item.name}</span> <small>{formatEventDay(item.date)}</small>
+        <span>{item.name}</span> <small>{formatEventDay(item.date, h.lang)}</small>
       </label></li>;
     })}</ul>}
-    {error && <p className="studio-error" id={`${id}-error`}>{error}</p>}
+    {error && <p className="studio-error" id={`${id}-error`}>{tr(error)}</p>}
   </fieldset>;
 }
 
 /** What the general link (the one shared in groups) shows. */
 export function GeneralLinkAudience({ owner, experience, onSaved }: { owner: Owner; experience: Experience; onSaved: () => Promise<void> }) {
+  const h = useHostText();
+  const tr = useTranslate();
   const [value, setValue] = useState<EventFilter>(experience.publicEvents);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -81,13 +88,13 @@ export function GeneralLinkAudience({ owner, experience, onSaved }: { owner: Own
   const changed = JSON.stringify(value) !== JSON.stringify(experience.publicEvents);
 
   async function save() {
-    if (value !== "all" && !value.length) return setError("Pick at least one celebration for the general link.");
+    if (value !== "all" && !value.length) return setError(h.pickOneForGeneral);
     setBusy(true);
     setError("");
     try {
       await ownerCall(owner, "", "PATCH", { publicEvents: value });
       await onSaved();
-      setMessage("Saved. The general link shows this now.");
+      setMessage(h.generalSaved);
     } catch (failure) {
       setError((failure as Error).message);
     }
@@ -95,10 +102,10 @@ export function GeneralLinkAudience({ owner, experience, onSaved }: { owner: Own
   }
 
   return <div className="manage-audience">
-    <CelebrationPicker schedule={experience.events} value={value} onChange={next => { setValue(next); setMessage(""); setError(""); }} legend="The general link shows" error={error}/>
-    {missing.length > 0 && <p className="manage-warn">{missing.length === 1 ? "One celebration it showed was" : `${missing.length} celebrations it showed were`} removed from the schedule. Check what it shows.</p>}
+    <CelebrationPicker schedule={experience.events} value={value} onChange={next => { setValue(next); setMessage(""); setError(""); }} legend={h.generalLinkShows} error={tr(error)}/>
+    {missing.length > 0 && <p className="manage-warn">{h.generalMissing(missing.length)}</p>}
     <div className="manage-audience-actions">
-      {changed && <button type="button" className="cin-cta cin-cta-light" disabled={busy} onClick={() => void save()}>Save</button>}
+      {changed && <button type="button" className="cin-cta cin-cta-light" disabled={busy} onClick={() => void save()}>{h.save}</button>}
       <span className="share-status" role="status">{message}</span>
     </div>
   </div>;
@@ -106,23 +113,26 @@ export function GeneralLinkAudience({ owner, experience, onSaved }: { owner: Own
 
 /** The numbers a caterer needs: for each celebration, who's coming, who might, who can't, and who hasn't said. */
 export function Headcount({ experience, rsvps }: { experience: Experience; rsvps: Rsvp[] }) {
+  const h = useHostText();
   const rows = tallyByEvent(experience.events, rsvps, experience.guests);
-  const replies = (n: number) => `${n} ${n === 1 ? "reply" : "replies"}`;
+  const people = (n: number) => h.people(n).replace(/^\d+ /, "");
   return <div className="manage-table-wrap"><table className="manage-table manage-headcount">
-    <caption className="manage-caption">Headcount by celebration</caption>
-    <thead><tr><th scope="col">Celebration</th><th scope="col">Coming</th><th scope="col">Maybe</th><th scope="col">Can’t make it</th>{experience.guests.length > 0 && <th scope="col">Yet to reply</th>}</tr></thead>
+    <caption className="manage-caption">{h.headcountCaption}</caption>
+    <thead><tr><th scope="col">{h.colCelebration}</th><th scope="col">{h.coming}</th><th scope="col">{h.maybe}</th><th scope="col">{h.cantMakeIt}</th>{experience.guests.length > 0 && <th scope="col">{h.colYetToReply}</th>}</tr></thead>
     <tbody>{rows.map(row => <tr key={row.event.id}>
-      <th scope="row"><span className="manage-headcount-name">{row.event.name}</span><span className="manage-muted">{formatEventDay(row.event.date)}</span></th>
-      <td><b className="manage-big">{row.coming}</b> {row.coming === 1 ? "person" : "people"}<span className="manage-muted">{replies(row.comingReplies)}</span></td>
-      <td>{row.maybeReplies ? <>{row.maybe} {row.maybe === 1 ? "person" : "people"}<span className="manage-muted">{replies(row.maybeReplies)}</span></> : "–"}</td>
-      <td>{row.cant ? replies(row.cant) : "–"}</td>
-      {experience.guests.length > 0 && <td>{row.waiting ? `${row.waiting} ${row.waiting === 1 ? "invitation" : "invitations"}` : "–"}</td>}
+      <th scope="row"><span className="manage-headcount-name">{row.event.name}</span><span className="manage-muted">{formatEventDay(row.event.date, h.lang)}</span></th>
+      <td><b className="manage-big">{row.coming}</b> {people(row.coming)}<span className="manage-muted">{h.replies(row.comingReplies)}</span></td>
+      <td>{row.maybeReplies ? <>{h.people(row.maybe)}<span className="manage-muted">{h.replies(row.maybeReplies)}</span></> : "–"}</td>
+      <td>{row.cant ? h.replies(row.cant) : "–"}</td>
+      {experience.guests.length > 0 && <td>{row.waiting ? h.invitations(row.waiting) : "–"}</td>}
     </tr>)}</tbody>
   </table></div>;
 }
 
 /** Personal invitations: add one, then copy or send its link. */
 export function GuestList({ owner, origin, experience, rsvps, onChanged }: { owner: Owner; origin: string; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void> }) {
+  const h = useHostText();
+  const tr = useTranslate();
   const schedule = experience.events;
   const [many, setMany] = useState(false);
   const [name, setName] = useState("");
@@ -145,12 +155,12 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
       if (many) {
         const { guests, skipped } = await ownerCall<{ guests: Guest[]; skipped: string[] }>(owner, "/guests", "POST", { list, events });
         await onChanged();
-        setStatus(`Added ${guests.length} ${guests.length === 1 ? "invitation" : "invitations"}.${skipped.length ? ` ${listOf(skipped)} ${skipped.length === 1 ? "was" : "were"} already on your list.` : ""}`);
+        setStatus(h.addedMany(guests.length, skipped));
         setList("");
       } else {
         await ownerCall(owner, "/guests", "POST", { name, events, phone });
         await onChanged();
-        setStatus(`Added ${name.trim()}. Copy their link or send it on WhatsApp.`);
+        setStatus(h.addedOne(name.trim()));
         setName("");
         setPhone("");
       }
@@ -162,53 +172,55 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
   }
 
   return <>
-    <p className="manage-muted">Send each household its own link. It opens with their name on it{schedule.length > 1 ? " and shows only the celebrations you pick for them" : ""}, and you’ll see who hasn’t replied yet.</p>
+    <p className="manage-muted">{h.guestsIntro(schedule.length > 1)}</p>
     {!full ? <form className="manage-guest-add" onSubmit={add}>
-      <div className="manage-picker-modes manage-add-modes" role="radiogroup" aria-label="How to add">
-        <label className={!many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={!many} onChange={() => { setMany(false); setErrors({}); }}/><span>One household</span></label>
-        <label className={many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={many} onChange={() => { setMany(true); setErrors({}); }}/><span>Paste a list</span></label>
+      <div className="manage-picker-modes manage-add-modes" role="radiogroup" aria-label={h.howToAdd}>
+        <label className={!many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={!many} onChange={() => { setMany(false); setErrors({}); }}/><span>{h.oneHousehold}</span></label>
+        <label className={many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={many} onChange={() => { setMany(true); setErrors({}); }}/><span>{h.pasteList}</span></label>
       </div>
       {many ? <div className="studio-field">
-        <label htmlFor="new-guest-list">Households, one per line</label>
-        <p className="inv-field-hint" id="new-guest-list-hint">Put a WhatsApp number after a name to send their link straight to their chat, like “the Patel family, 98250 12345”. Anyone already on your list is skipped.</p>
+        <label htmlFor="new-guest-list">{h.listLabel}</label>
+        <p className="inv-field-hint" id="new-guest-list-hint">{h.listHint}</p>
         <textarea id="new-guest-list" rows={7} value={list} placeholder={"the Patel family, 98250 12345\nKakaji & Kaki\nરમેશભાઈ પટેલ પરિવાર"} onChange={e => edit(setList)(e.target.value)} aria-describedby={errors.list ? "new-guest-list-error new-guest-list-hint" : "new-guest-list-hint"} aria-invalid={errors.list ? true : undefined}/>
-        {errors.list && <p className="studio-error" id="new-guest-list-error">{errors.list}</p>}
+        {errors.list && <p className="studio-error" id="new-guest-list-error">{tr(errors.list)}</p>}
       </div> : <>
         <div className="studio-field">
-          <label htmlFor="new-guest-name">Who’s it for?</label>
-          <p className="inv-field-hint" id="new-guest-hint">Write it as you’d address the envelope, like “the Patel family”.</p>
-          <input id="new-guest-name" value={name} maxLength={LIMITS.guestLabel} placeholder="the Patel family" onChange={e => edit(setName)(e.target.value)} aria-describedby={errors.name ? "new-guest-error new-guest-hint" : "new-guest-hint"} aria-invalid={errors.name ? true : undefined}/>
-          {errors.name && <p className="studio-error" id="new-guest-error">{errors.name}</p>}
+          <label htmlFor="new-guest-name">{h.whoFor}</label>
+          <p className="inv-field-hint" id="new-guest-hint">{h.whoForHint}</p>
+          <input id="new-guest-name" value={name} maxLength={LIMITS.guestLabel} placeholder={h.householdPlaceholder} onChange={e => edit(setName)(e.target.value)} aria-describedby={errors.name ? "new-guest-error new-guest-hint" : "new-guest-hint"} aria-invalid={errors.name ? true : undefined}/>
+          {errors.name && <p className="studio-error" id="new-guest-error">{tr(errors.name)}</p>}
         </div>
         <div className="studio-field">
-          <label htmlFor="new-guest-phone">WhatsApp number <span>Optional</span></label>
+          <label htmlFor="new-guest-phone">{h.whatsAppNumber} <span>{h.optional}</span></label>
           <input id="new-guest-phone" type="tel" inputMode="tel" autoComplete="off" value={phone} placeholder="98250 12345" onChange={e => edit(setPhone)(e.target.value)} aria-describedby={errors.phone ? "new-guest-phone-error" : undefined} aria-invalid={errors.phone ? true : undefined}/>
-          {errors.phone && <p className="studio-error" id="new-guest-phone-error">{errors.phone}</p>}
+          {errors.phone && <p className="studio-error" id="new-guest-phone-error">{tr(errors.phone)}</p>}
         </div>
       </>}
-      {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={edit(setEvents)} legend={many ? "Which celebrations, for everyone on this list?" : "Which celebrations?"} error={errors.events}/>}
-      {errors.form && !errors.name && !errors.events && !errors.phone && !errors.list && <p className="studio-error" role="alert">{errors.form}</p>}
-      <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{!many ? "Add invitation" : lines ? `Add ${lines} ${lines === 1 ? "invitation" : "invitations"}` : "Add invitations"}</button>
-    </form> : <p className="manage-warn">All {LIMITS.rsvpsPerEvent} replies on the free plan are in use, so there’s no room for another personal invitation.</p>}
+      {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={edit(setEvents)} legend={h.whichCelebrations(many)} error={errors.events}/>}
+      {errors.form && !errors.name && !errors.events && !errors.phone && !errors.list && <p className="studio-error" role="alert">{tr(errors.form)}</p>}
+      <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{h.addInvitation(lines, many)}</button>
+    </form> : <p className="manage-warn">{h.noRoom(LIMITS.rsvpsPerEvent)}</p>}
     <p className="share-status" role="status">{status}</p>
-    {experience.guests.length > 0 && <p className="manage-guest-summary">{experience.guests.filter(g => g.openedAt).length} of {experience.guests.length} opened · {experience.guests.filter(g => rsvps.some(r => r.guestId === g.id)).length} replied</p>}
+    {experience.guests.length > 0 && <p className="manage-guest-summary">{h.openedSummary(experience.guests.filter(g => g.openedAt).length, experience.guests.length, experience.guests.filter(g => rsvps.some(r => r.guestId === g.id)).length)}</p>}
     {experience.guests.length > 0 && <ul className="manage-guests">{[...experience.guests].reverse().map(guest => <GuestRow key={guest.id} owner={owner} origin={origin} guest={guest} experience={experience} reply={rsvps.find(r => r.guestId === guest.id)} onChanged={onChanged}/>)}</ul>}
-    {experience.guests.length > 0 && <div className="manage-downloads"><span>Download</span><button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "invitations"), invitationsCsv({ experience, rsvps }, origin))}>The list, with links (CSV)</button></div>}
-    <p className="manage-limit">{used} of {LIMITS.rsvpsPerEvent} replies on the free plan{experience.guests.length ? ", counting one kept for each personal invitation" : ""}.</p>
+    {experience.guests.length > 0 && <div className="manage-downloads"><span>{h.download}</span><button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "invitations"), invitationsCsv({ experience, rsvps }, origin))}>{h.listCsv}</button></div>}
+    <p className="manage-limit">{h.planLimit(used, LIMITS.rsvpsPerEvent, experience.guests.length > 0)}</p>
   </>;
 }
 
 /** Celebrations on their invitation that they haven't answered for (all of them, if they haven't replied). */
 const unansweredBy = (reply: Rsvp | undefined, guest: Guest, schedule: ScheduleItem[]) => sortSchedule(schedule).filter(e => invitedTo(guest.events, e.id) && (!reply || !answerFor(reply, e.id)));
 
-function replyStatus(reply: Rsvp | undefined, unanswered: ScheduleItem[], guest: Guest) {
+function replyStatus(reply: Rsvp | undefined, unanswered: ScheduleItem[], guest: Guest, h: HostText) {
   // Before a reply, whether they've opened it is what tells the host to wait or to nudge.
-  if (!reply) return guest.lastOpenedAt ? { tone: "opened", text: `Opened ${formatShortDay(guest.lastOpenedAt)} · no reply yet` } : { tone: "waiting", text: "Not opened yet" };
-  const base = reply.attendance === "Attending" ? `Coming · ${reply.guestCount} ${reply.guestCount === 1 ? "person" : "people"}` : reply.attendance === "Maybe" ? "Maybe" : "Can’t make it";
-  return { tone: reply.attendance.replace(" ", "-").toLowerCase(), text: unanswered.length ? `${base} · not yet answered for the ${listOf(unanswered.map(e => e.name))}` : base };
+  if (!reply) return guest.lastOpenedAt ? { tone: "opened", text: h.openedNoReply(formatShortDay(guest.lastOpenedAt, h.lang)) } : { tone: "waiting", text: h.notOpened };
+  const base = reply.attendance === "Attending" ? h.comingPeople(reply.guestCount) : reply.attendance === "Maybe" ? h.maybe : h.cantMakeIt;
+  return { tone: reply.attendance.replace(" ", "-").toLowerCase(), text: unanswered.length ? `${base}${h.notAnsweredFor(unanswered.map(e => e.name))}` : base };
 }
 
 function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owner: Owner; origin: string; guest: Guest; experience: Experience; reply?: Rsvp; onChanged: () => Promise<void> }) {
+  const h = useHostText();
+  const tr = useTranslate();
   const [mode, setMode] = useState<"view" | "edit" | "remove" | "relink">("view");
   const [name, setName] = useState(guest.name);
   const [phone, setPhone] = useState(guest.phone ? showPhone(guest.phone) : "");
@@ -223,7 +235,7 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   const missing = missingEvents(guest.events, schedule);
   const seesNothing = guest.events !== "all" && schedule.length > 0 && !schedule.some(e => invitedTo(guest.events, e.id));
   const unanswered = seesNothing ? [] : unansweredBy(reply, guest, schedule);
-  const status = replyStatus(reply, unanswered, guest);
+  const status = replyStatus(reply, unanswered, guest, h);
   const words = MESSAGES[experience.language ?? "en"];
   const message = words.personal(guest.name, experience.title, url);
   // A nudge for households that haven't answered (or haven't answered for a celebration added since).
@@ -257,18 +269,18 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
   if (mode === "edit") return <li className="manage-guest is-editing">
     <form onSubmit={event => { event.preventDefault(); void run(() => ownerCall(owner, `/guests/${guest.id}`, "PATCH", { name, events, phone })); }}>
       <div className="studio-field">
-        <label htmlFor={`${id}-name`}>Who’s it for?</label>
+        <label htmlFor={`${id}-name`}>{h.whoFor}</label>
         <input id={`${id}-name`} value={name} maxLength={LIMITS.guestLabel} onChange={e => setName(e.target.value)} aria-invalid={errors.name ? true : undefined} aria-describedby={errors.name ? `${id}-error` : undefined}/>
-        {errors.name && <p className="studio-error" id={`${id}-error`}>{errors.name}</p>}
+        {errors.name && <p className="studio-error" id={`${id}-error`}>{tr(errors.name)}</p>}
       </div>
       <div className="studio-field">
-        <label htmlFor={`${id}-phone`}>WhatsApp number <span>Optional</span></label>
+        <label htmlFor={`${id}-phone`}>{h.whatsAppNumber} <span>{h.optional}</span></label>
         <input id={`${id}-phone`} type="tel" inputMode="tel" autoComplete="off" value={phone} placeholder="98250 12345" onChange={e => setPhone(e.target.value)} aria-invalid={errors.phone ? true : undefined} aria-describedby={errors.phone ? `${id}-phone-error` : undefined}/>
-        {errors.phone && <p className="studio-error" id={`${id}-phone-error`}>{errors.phone}</p>}
+        {errors.phone && <p className="studio-error" id={`${id}-phone-error`}>{tr(errors.phone)}</p>}
       </div>
-      {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={setEvents} legend="Which celebrations?" error={errors.events}/>}
-      {errors.form && !errors.name && !errors.events && !errors.phone && <p className="studio-error" role="alert">{errors.form}</p>}
-      <div className="manage-guest-buttons"><button type="submit" className="cin-cta cin-cta-light" disabled={busy}>Save</button><button type="button" className="share-chip" onClick={() => { setMode("view"); setName(guest.name); setPhone(guest.phone ? showPhone(guest.phone) : ""); setEvents(guest.events); setErrors({}); }}>Cancel</button></div>
+      {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={setEvents} legend={h.whichCelebrations(false)} error={errors.events}/>}
+      {errors.form && !errors.name && !errors.events && !errors.phone && <p className="studio-error" role="alert">{tr(errors.form)}</p>}
+      <div className="manage-guest-buttons"><button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{h.save}</button><button type="button" className="share-chip" onClick={() => { setMode("view"); setName(guest.name); setPhone(guest.phone ? showPhone(guest.phone) : ""); setEvents(guest.events); setErrors({}); }}>{h.cancel}</button></div>
     </form>
   </li>;
 
@@ -277,32 +289,34 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
       <h3>{guest.name}</h3>
       <span className={`manage-guest-status is-${status.tone}`}>{status.text}</span>
     </div>
-    {(schedule.length > 1 || guest.phone) && <p className="manage-guest-events">{[schedule.length > 1 && celebrationsLabel(guest.events, schedule), guest.phone && showPhone(guest.phone)].filter(Boolean).join(" · ")}</p>}
-    {(missing.length > 0 || seesNothing) && <p className="manage-warn">{seesNothing ? "Every celebration picked for them was removed from the schedule, so their link says “details to follow”. Edit to pick again." : "A celebration picked for them was removed from the schedule. Edit to check theirs."}</p>}
-    {mode === "remove" ? <div className="manage-confirm" role="group" aria-label={`Remove ${guest.name}`}>
-      <p>Remove this invitation? Their link stops working{reply ? " and their reply is removed from your counts" : ""}.</p>
-      <button type="button" className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/guests/${guest.id}`, "DELETE"))}>Remove</button>
-      <button type="button" className="share-chip" onClick={() => setMode("view")}>Keep it</button>
-    </div> : mode === "relink" ? <div className="manage-confirm" role="group" aria-label={`New link for ${guest.name}`}>
-      <p>Make a new link? The old one stops working. Use this if their link was forwarded further than you meant. {reply ? "Their reply moves to the new link." : ""}</p>
-      <button type="button" className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/guests/${guest.id}`, "PATCH", { newLink: true }))}>Make a new link</button>
-      <button type="button" className="share-chip" onClick={() => setMode("view")}>Cancel</button>
+    {(schedule.length > 1 || guest.phone) && <p className="manage-guest-events">{[schedule.length > 1 && celebrationsLabel(guest.events, schedule, h), guest.phone && showPhone(guest.phone)].filter(Boolean).join(" · ")}</p>}
+    {(missing.length > 0 || seesNothing) && <p className="manage-warn">{seesNothing ? h.seesNothing : h.someMissing}</p>}
+    {mode === "remove" ? <div className="manage-confirm" role="group" aria-label={h.removeGroup(guest.name)}>
+      <p>{h.removeConfirm(!!reply)}</p>
+      <button type="button" className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/guests/${guest.id}`, "DELETE"))}>{h.remove}</button>
+      <button type="button" className="share-chip" onClick={() => setMode("view")}>{h.keepIt}</button>
+    </div> : mode === "relink" ? <div className="manage-confirm" role="group" aria-label={h.relinkGroup(guest.name)}>
+      <p>{h.relinkConfirm(!!reply)}</p>
+      <button type="button" className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/guests/${guest.id}`, "PATCH", { newLink: true }))}>{h.makeNewLink}</button>
+      <button type="button" className="share-chip" onClick={() => setMode("view")}>{h.cancel}</button>
     </div> : <div className="manage-guest-actions">
-      <button type="button" className="share-chip" onClick={() => void copy()} aria-label={`Copy link for ${guest.name}`}>{copied ? "Copied!" : "Copy link"}</button>
-      <a className="share-chip" href={whatsApp(message, guest.phone)} target="_blank" rel="noreferrer" aria-label={`Send ${guest.name} their link on WhatsApp`}>WhatsApp</a>
-      {reminder && <a className="share-chip" href={whatsApp(reminder, guest.phone)} target="_blank" rel="noreferrer" aria-label={`Remind ${guest.name} on WhatsApp`}>Remind</a>}
-      <a className="share-chip" href={`/e/${experience.slug}/${guest.id}?preview=1`} target="_blank" rel="noreferrer" aria-label={`Preview the invitation for ${guest.name}`}>Preview</a>
-      <button type="button" className="share-chip" onClick={() => setMode("edit")} aria-label={`Edit the invitation for ${guest.name}`}>Edit</button>
-      <button type="button" className="share-chip" onClick={() => setMode("relink")} aria-label={`Make a new link for ${guest.name}`}>New link</button>
-      <button type="button" className="share-chip" onClick={() => setMode("remove")} aria-label={`Remove the invitation for ${guest.name}`}>Remove</button>
+      <button type="button" className="share-chip" onClick={() => void copy()} aria-label={h.copyLinkFor(guest.name)}>{copied ? h.copied : h.copyLink}</button>
+      <a className="share-chip" href={whatsApp(message, guest.phone)} target="_blank" rel="noreferrer" aria-label={h.sendOnWhatsApp(guest.name)}>{h.whatsApp}</a>
+      {reminder && <a className="share-chip" href={whatsApp(reminder, guest.phone)} target="_blank" rel="noreferrer" aria-label={h.remindOnWhatsApp(guest.name)}>{h.remind}</a>}
+      <a className="share-chip" href={`/e/${experience.slug}/${guest.id}?preview=1`} target="_blank" rel="noreferrer" aria-label={h.previewFor(guest.name)}>{h.preview}</a>
+      <button type="button" className="share-chip" onClick={() => setMode("edit")} aria-label={h.editFor(guest.name)}>{h.edit}</button>
+      <button type="button" className="share-chip" onClick={() => setMode("relink")} aria-label={h.newLinkFor(guest.name)}>{h.newLink}</button>
+      <button type="button" className="share-chip" onClick={() => setMode("remove")} aria-label={h.removeFor(guest.name)}>{h.remove}</button>
     </div>}
-    {showUrl && <div className="share-url"><label className="studio-sr-only" htmlFor={`${id}-url`}>Link for {guest.name}</label><input id={`${id}-url`} readOnly value={url} autoFocus onFocus={e => e.currentTarget.select()}/></div>}
-    {errors.form && <p className="studio-error" role="alert">{errors.form}</p>}
+    {showUrl && <div className="share-url"><label className="studio-sr-only" htmlFor={`${id}-url`}>{h.linkFor(guest.name)}</label><input id={`${id}-url`} readOnly value={url} autoFocus onFocus={e => e.currentTarget.select()}/></div>}
+    {errors.form && <p className="studio-error" role="alert">{tr(errors.form)}</p>}
   </li>;
 }
 
 /** Guests' wishes: all of them for the host, and a choice of which (if any) the invitation shows. */
 export function WishesCard({ owner, experience, rsvps, onChanged }: { owner: Owner; experience: Experience; rsvps: Rsvp[]; onChanged: () => Promise<void> }) {
+  const h = useHostText();
+  const tr = useTranslate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   // The switch moves as soon as it's pressed, and moves back if saving fails.
@@ -330,20 +344,20 @@ export function WishesCard({ owner, experience, rsvps, onChanged }: { owner: Own
         setShow(next);
         void run(() => ownerCall(owner, "", "PATCH", { showWishes: next }).catch(failure => { setShow(!next); throw failure; }));
       }}/>
-      Show them on the invitation
+      {h.showWishes}
     </label>
-    <p className="manage-muted">{show ? "Guests see the latest 30 as notes under the reply form, with the name each writer typed. Hide any you’d rather keep to yourself." : "Only you can see them. Guests are told so when they write one."}</p>
-    {error && <p className="studio-error" role="alert">{error}</p>}
+    <p className="manage-muted">{h.wishesNote(show)}</p>
+    {error && <p className="studio-error" role="alert">{tr(error)}</p>}
     {withWishes.length ? <ul className="manage-wishes">{withWishes.map(r => {
-      const from = [r.name, household(r.guestId) && `for ${household(r.guestId)}`].filter(Boolean).join(" ") || "No name given";
+      const from = [r.name, household(r.guestId) && h.forHousehold(household(r.guestId)!)].filter(Boolean).join(" ") || h.noName;
       return <li key={r.id} className={`manage-wish${r.wishHidden ? " is-hidden" : ""}`}>
         <blockquote>{r.wish}</blockquote>
         <div className="manage-wish-meta">
           <span>— {from}</span>
-          {r.wishHidden && <span className="manage-wish-hidden">Hidden from the invitation</span>}
-          <button type="button" className="share-chip" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/rsvps/${r.id}`, "PATCH", { hidden: !r.wishHidden }))} aria-label={`${r.wishHidden ? "Show" : "Hide"} the wish from ${from}${r.wishHidden ? " on" : " from"} the invitation`}>{r.wishHidden ? "Show on the invitation" : "Hide from the invitation"}</button>
+          {r.wishHidden && <span className="manage-wish-hidden">{h.wishHidden}</span>}
+          <button type="button" className="share-chip" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/rsvps/${r.id}`, "PATCH", { hidden: !r.wishHidden }))} aria-label={h.wishToggleLabel(!!r.wishHidden, from)}>{r.wishHidden ? h.showWish : h.hideWish}</button>
         </div>
       </li>;
-    })}</ul> : <p className="manage-muted">No wishes yet. Guests can leave one when they reply.</p>}
+    })}</ul> : <p className="manage-muted">{h.noWishes}</p>}
   </>;
 }

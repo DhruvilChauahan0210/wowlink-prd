@@ -6,6 +6,8 @@ import { draftKey, formatInvitationDate, getInvitationTemplate, invitationTempla
 import type { Experience, Rsvp } from "../lib/store";
 import { ArtImage, type ArtName } from "../ui/art";
 import { WowLinkBrand } from "../ui/brand";
+import type { HostText } from "../lib/host-i18n";
+import { HostLangSwitch, useHostLang } from "../ui/host-lang";
 
 /*
  * Every invitation this device can manage: the ones whose private manage key is saved here (the studio saves it on
@@ -52,8 +54,10 @@ export default function MyInvitations() {
   const [drafts, setDrafts] = useState<{ templateId: TemplateId; draft: InvitationDraft }[]>([]);
   const [origin, setOrigin] = useState("");
   const [paste, setPaste] = useState("");
-  const [status, setStatus] = useState("");
+  // Kept as a function of the wording, so it follows the host's language if they switch.
+  const [status, setStatus] = useState<(h: HostText) => string>(() => () => "");
   const pasteId = useId();
+  const { lang, h, toggle } = useHostLang();
 
   const load = useCallback(async () => {
     const keys = savedKeys();
@@ -89,7 +93,7 @@ export default function MyInvitations() {
 
   function addFromText(text: string) {
     const links = [...text.matchAll(MANAGE_LINK)];
-    if (!links.length) return setStatus("There’s no manage link in that. A manage link has /manage/ and #k= in it.");
+    if (!links.length) return setStatus(() => (t: HostText) => t.noLinkFound);
     const known = new Set(savedKeys().map(k => k.slug));
     let added = 0;
     try {
@@ -98,10 +102,10 @@ export default function MyInvitations() {
         localStorage.setItem(ownerKey(slug), key);
       }
     } catch {
-      return setStatus("This browser won’t save them (private browsing?). Open each manage link instead.");
+      return setStatus(() => (t: HostText) => t.browserWontSave);
     }
     setPaste("");
-    setStatus(added ? `Added ${added} ${added === 1 ? "invitation" : "invitations"}.` : "Those are already here.");
+    setStatus(() => (t: HostText) => (added ? t.addedInvitations(added) : t.alreadyHere));
     void load();
   }
 
@@ -112,99 +116,99 @@ export default function MyInvitations() {
   function saveBackup() {
     const list = (owned ?? []).filter(o => o.state === "ok" || o.state === "offline");
     const lines = [
-      "WowLink: your invitations",
-      "Keep this file private. Anyone with these links can edit your invitations and see every reply.",
-      "To use them on another phone or computer, open a link, or paste this whole file at " + `${origin}/mine` + ".",
+      ...h.backupLines(origin),
       "",
-      ...list.flatMap(o => [`${o.experience ? `${o.experience.title} (${formatInvitationDate(o.experience.date, true)})` : o.slug}`, `${origin}/manage/${o.slug}#k=${o.key}`, ""]),
+      ...list.flatMap(o => [`${o.experience ? `${o.experience.title} (${formatInvitationDate(o.experience.date, true, lang)})` : o.slug}`, `${origin}/manage/${o.slug}#k=${o.key}`, ""]),
     ];
     const link = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" })), download: "wowlink-manage-links.txt" });
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-    setStatus("Saved. Keep the file somewhere safe and private.");
+    setStatus(() => (t: HostText) => t.backupSaved);
   }
 
   const ready = owned !== null;
   const usable = (owned ?? []).filter(o => o.state !== "gone");
 
-  return <div className="cinema manage-page mine-page">
+  const kind = (id: TemplateId) => h.occasionNames[id] ?? getInvitationTemplate(id).category;
+
+  return <div className="cinema manage-page mine-page" lang={lang}>
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
-      <span className="studio-header-label">My invitations</span>
-      <div className="studio-header-actions"><Link className="cin-cta cin-cta-light studio-save" href="/templates">New invitation</Link></div>
+      <span className="studio-header-label">{h.myInvitations}</span>
+      <div className="studio-header-actions"><HostLangSwitch h={h} toggle={toggle}/><Link className="cin-cta cin-cta-light studio-save" href="/templates">{h.newInvitation}</Link></div>
     </header>
     <main className="manage theme-paper">
       <section className="mine-intro">
-        <h1>My <span className="scribble">invitations</span></h1>
-        <p className="manage-muted">Everything you can manage from this device. There are no accounts yet: an invitation is yours through its private manage link, which is saved here when you publish or open it.</p>
+        <h1>{h.mineHeading[0]} <span className="scribble">{h.mineHeading[1]}</span></h1>
+        <p className="manage-muted">{h.mineIntro}</p>
       </section>
 
-      {!ready && <p className="manage-loading">Finding your invitations…</p>}
+      {!ready && <p className="manage-loading">{h.finding}</p>}
       {ready && !owned.length && !drafts.length && <section className="sketch-card manage-card mine-empty">
-        <h2>Nothing here yet</h2>
-        <p className="manage-muted">Invitations you publish on this device show up here. Made one somewhere else? Add it below with its manage link.</p>
-        <Link className="cin-cta cin-cta-light" href="/templates">Make your first invitation</Link>
+        <h2>{h.nothingYet}</h2>
+        <p className="manage-muted">{h.nothingYetBody}</p>
+        <Link className="cin-cta cin-cta-light" href="/templates">{h.makeFirst}</Link>
       </section>}
 
       {ready && owned.length > 0 && <ul className="mine-list">{owned.map(o => <li key={o.slug} className="sketch-card mine-item">
         {o.experience && <Link className="cin-print mine-print" href={`/manage/${o.slug}`} tabIndex={-1} aria-hidden="true"><span className="cin-photo"><ArtImage name={o.experience.templateId as ArtName} fit="slice"/></span></Link>}
         <div className="mine-body">
-          {o.state === "loading" && <p className="manage-muted">Loading…</p>}
+          {o.state === "loading" && <p className="manage-muted">{h.loading}</p>}
           {o.state === "ok" && o.experience && <>
-            <span className="mine-kind">{getInvitationTemplate(o.experience.templateId).category}</span>
+            <span className="mine-kind">{kind(o.experience.templateId)}</span>
             <h2><Link href={`/manage/${o.slug}`}>{o.experience.title}</Link></h2>
-            <p className="manage-muted">{formatInvitationDate(o.experience.date, true)} · <span className={`manage-status is-${o.experience.status}`}>{o.experience.status === "published" ? "Live" : "Unpublished"}</span></p>
-            <p className="mine-counts">{summary(o.rsvps ?? [], o.experience)}</p>
+            <p className="manage-muted">{formatInvitationDate(o.experience.date, true, lang)} · <span className={`manage-status is-${o.experience.status}`}>{o.experience.status === "published" ? h.live : h.unpublished}</span></p>
+            <p className="mine-counts">{summary(o.rsvps ?? [], o.experience, h)}</p>
             <div className="mine-actions">
-              <Link className="share-chip" href={`/manage/${o.slug}`}>Replies &amp; guests</Link>
-              {o.experience.status === "published" && <a className="share-chip" href={`/e/${o.slug}`} target="_blank" rel="noreferrer">Open</a>}
-              <Link className="share-chip" href={`/create?edit=${o.slug}`}>Edit</Link>
+              <Link className="share-chip" href={`/manage/${o.slug}`}>{h.repliesAndGuests}</Link>
+              {o.experience.status === "published" && <a className="share-chip" href={`/e/${o.slug}`} target="_blank" rel="noreferrer">{h.open}</a>}
+              <Link className="share-chip" href={`/create?edit=${o.slug}`}>{h.edit}</Link>
             </div>
           </>}
           {o.state === "gone" && <>
-            <h2 className="mine-gone-title">An invitation that’s no longer here</h2>
-            <p className="manage-muted">The link saved on this device doesn’t open anything any more ({o.slug}).</p>
-            <button type="button" className="share-chip" onClick={() => forget(o.slug)}>Forget it on this device</button>
+            <h2 className="mine-gone-title">{h.goneTitle}</h2>
+            <p className="manage-muted">{h.goneBody(o.slug)}</p>
+            <button type="button" className="share-chip" onClick={() => forget(o.slug)}>{h.forget}</button>
           </>}
           {o.state === "offline" && <>
-            <h2 className="mine-gone-title">Couldn’t load {o.slug}</h2>
-            <p className="manage-muted">Check your connection and try again.</p>
-            <button type="button" className="share-chip" onClick={() => void load()}>Try again</button>
+            <h2 className="mine-gone-title">{h.couldntLoad(o.slug)}</h2>
+            <p className="manage-muted">{h.offlineBody}</p>
+            <button type="button" className="share-chip" onClick={() => void load()}>{h.tryAgain}</button>
           </>}
         </div>
       </li>)}</ul>}
 
       {drafts.length > 0 && <section className="sketch-card manage-card" aria-labelledby="drafts-heading">
-        <h2 id="drafts-heading">Drafts on this device</h2>
+        <h2 id="drafts-heading">{h.draftsHeading}</h2>
         <ul className="mine-drafts">{drafts.map(({ templateId, draft }) => <li key={templateId}>
-          <div><strong>{draft.title || "Untitled"}</strong><span className="manage-muted">{getInvitationTemplate(templateId).category} · not published yet</span></div>
-          <Link className="share-chip" href={`/create?template=${templateId}`}>Keep editing</Link>
-          <button type="button" className="share-chip" onClick={() => discardDraft(templateId)} aria-label={`Discard the ${getInvitationTemplate(templateId).category.toLowerCase()} draft`}>Discard</button>
+          <div><strong>{draft.title || h.untitled}</strong><span className="manage-muted">{kind(templateId)} · {h.notPublishedYet}</span></div>
+          <Link className="share-chip" href={`/create?template=${templateId}`}>{h.keepEditing}</Link>
+          <button type="button" className="share-chip" onClick={() => discardDraft(templateId)} aria-label={h.discardDraft(kind(templateId))}>{h.discard}</button>
         </li>)}</ul>
       </section>}
 
       <section className="sketch-card manage-card" aria-labelledby="backup-heading">
-        <h2 id="backup-heading">Keep them safe</h2>
-        <p className="manage-muted">Your manage links are only saved in this browser. Save a copy, or add an invitation you made somewhere else.</p>
-        {usable.length > 0 && <div className="mine-backup"><button type="button" className="cin-cta cin-cta-outline" onClick={saveBackup}>Save my manage links</button><span className="manage-muted">A small text file. Keep it private: anyone with it can edit your invitations.</span></div>}
+        <h2 id="backup-heading">{h.keepSafe}</h2>
+        <p className="manage-muted">{h.keepSafeBody}</p>
+        {usable.length > 0 && <div className="mine-backup"><button type="button" className="cin-cta cin-cta-outline" onClick={saveBackup}>{h.saveLinks}</button><span className="manage-muted">{h.saveLinksNote}</span></div>}
         <div className="studio-field mine-add">
-          <label htmlFor={pasteId}>Add from a manage link or a backup</label>
-          <textarea id={pasteId} rows={3} value={paste} placeholder={`${origin || "https://…"}/manage/…#k=…`} onChange={e => { setPaste(e.target.value); setStatus(""); }}/>
+          <label htmlFor={pasteId}>{h.addFrom}</label>
+          <textarea id={pasteId} rows={3} value={paste} placeholder={`${origin || "https://…"}/manage/…#k=…`} onChange={e => { setPaste(e.target.value); setStatus(() => () => ""); }}/>
           <div className="mine-add-actions">
-            <button type="button" className="cin-cta cin-cta-light" onClick={() => addFromText(paste)} disabled={!paste.trim()}>Add</button>
-            <label className="share-chip mine-file">Or choose the backup file<input type="file" accept=".txt,text/plain" onChange={e => { void addFromFile(e.target.files?.[0]); e.target.value = ""; }}/></label>
+            <button type="button" className="cin-cta cin-cta-light" onClick={() => addFromText(paste)} disabled={!paste.trim()}>{h.add}</button>
+            <label className="share-chip mine-file">{h.chooseFile}<input type="file" accept=".txt,text/plain" onChange={e => { void addFromFile(e.target.files?.[0]); e.target.value = ""; }}/></label>
           </div>
         </div>
-        <p className="share-status" role="status">{status}</p>
+        <p className="share-status" role="status">{status(h)}</p>
       </section>
     </main>
   </div>;
 }
 
 /** "12 replies · 38 coming", or how many households have a personal invitation and no reply yet. */
-function summary(rsvps: Rsvp[], experience: Experience) {
-  if (!rsvps.length) return experience.guests.length ? `No replies yet · ${experience.guests.length} personal ${experience.guests.length === 1 ? "invitation" : "invitations"} sent` : "No replies yet";
+function summary(rsvps: Rsvp[], experience: Experience, h: HostText) {
+  if (!rsvps.length) return experience.guests.length ? `${h.noRepliesShort} · ${h.sentInvitations(experience.guests.length)}` : h.noRepliesShort;
   const coming = rsvps.filter(r => r.attendance === "Attending").reduce((n, r) => n + r.guestCount, 0);
   const waiting = experience.guests.filter(g => !rsvps.some(r => r.guestId === g.id)).length;
-  return [`${rsvps.length} ${rsvps.length === 1 ? "reply" : "replies"}`, `${coming} coming`, waiting && `${waiting} yet to reply`].filter(Boolean).join(" · ");
+  return [h.replies(rsvps.length), h.comingN(coming), waiting && h.waitingN(waiting)].filter(Boolean).join(" · ");
 }

@@ -7,6 +7,8 @@ import { WowLinkBrand } from "../ui/brand";
 import { ArtImage } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
 import { CopyField, ShareTools } from "../ui/share-tools";
+import { HostLangSwitch, useHostLang } from "../ui/host-lang";
+import { hostMessage, type HostText } from "../lib/host-i18n";
 import type { Experience, Rsvp } from "../lib/store";
 
 const LANGUAGE_CHOICES = [["en", "English"], ["gu", "ગુજરાતી"]] as const;
@@ -20,7 +22,9 @@ export default function CreatePage() {
   const [opened, setOpened] = useState(false);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [status, setStatus] = useState("Your canvas is ready");
+  const { lang, h, toggle, message } = useHostLang();
+  // Kept as a function of the wording, so it follows the host's language if they switch.
+  const [status, setStatus] = useState<(h: HostText) => string>(() => (t: HostText) => t.canvasReady);
   const [mobilePanel, setMobilePanel] = useState<"edit" | "preview">("edit");
   const [owned, setOwned] = useState<Owned | null>(null);
   const [errors, setErrors] = useState<DraftErrors>({});
@@ -49,7 +53,7 @@ export default function CreatePage() {
     const saved = readDraft(selected.id);
     setTemplateId(selected.id);
     setDraft(saved ?? initialDraft(selected));
-    setStatus(saved ? "Saved draft restored from this device" : "Your canvas is ready");
+    setStatus(() => (t: HostText) => (saved ? t.draftRestored : t.canvasReady));
     setReady(true);
   }, []);
 
@@ -57,7 +61,7 @@ export default function CreatePage() {
     let key: string | null = null;
     try { key = localStorage.getItem(ownerKey(slug)); } catch { /* storage blocked */ }
     if (!key) {
-      setStatus("To edit a published invitation, open its private manage link on this device first.");
+      setStatus(() => (t: HostText) => t.needManageLink);
       setReady(true);
       return;
     }
@@ -73,9 +77,9 @@ export default function CreatePage() {
         invitations: (experience.guests ?? []).filter(g => g.events !== "all" && g.events.includes(e.id)).length,
       }]));
       setOwned({ slug, key });
-      setStatus("Editing your live invitation. Changes reach guests when you press Update.");
+      setStatus(() => (t: HostText) => t.editingLive);
     } catch {
-      setStatus("Couldn’t open that invitation. Check your connection and try again.");
+      setStatus(() => (t: HostText) => t.couldntOpen);
     }
     setReady(true);
   }
@@ -89,7 +93,7 @@ export default function CreatePage() {
       return next;
     });
     setDirty(true);
-    setStatus(owned ? "Changes not live yet. Press Update." : "Unsaved changes");
+    setStatus(() => (t: HostText) => (owned ? t.notLiveYet : t.unsaved));
   }
 
   function setEvents(next: (events: ScheduleItem[]) => ScheduleItem[]) {
@@ -101,7 +105,7 @@ export default function CreatePage() {
       return rest;
     });
     setDirty(true);
-    setStatus(owned ? "Changes not live yet. Press Update." : "Unsaved changes");
+    setStatus(() => (t: HostText) => (owned ? t.notLiveYet : t.unsaved));
   }
   const updateEvent = (id: string, patch: Partial<ScheduleItem>) => setEvents(events => events.map(e => (e.id === id ? { ...e, ...patch } : e)));
   function addEvent(name: string) {
@@ -132,7 +136,7 @@ export default function CreatePage() {
     if (!owned) setDraft(drafts.current[id] ?? readDraft(id) ?? initialDraft(selected));
     setOpened(false);
     setDirty(true);
-    setStatus(owned ? "Changes not live yet. Press Update." : "Unsaved changes");
+    setStatus(() => (t: HostText) => (owned ? t.notLiveYet : t.unsaved));
     if (!owned) history.replaceState(null, "", `/create?template=${id}`);
   }
 
@@ -140,10 +144,10 @@ export default function CreatePage() {
     try {
       localStorage.setItem(draftKey(templateId), JSON.stringify(draft));
       if (!owned) setDirty(false);
-      setStatus(owned ? "Saved on this device. Press Update to make it live." : "Saved on this device");
+      setStatus(() => (t: HostText) => t.savedHere(!!owned));
       return true;
     } catch {
-      setStatus("This browser couldn’t save the draft. Keep this tab open and try again.");
+      setStatus(() => (t: HostText) => t.couldntSave);
       return false;
     }
   }
@@ -153,7 +157,7 @@ export default function CreatePage() {
     if (!checked.ok) {
       setErrors(checked.errors);
       setCheckEvents(true);
-      setStatus("A few details are missing before this can go live.");
+      setStatus(() => (t: HostText) => t.missingDetails);
       setMobilePanel("edit");
       const first = Object.keys(checked.errors)[0];
       const badEvent = draft.events.find(item => scheduleItemError(item));
@@ -162,7 +166,7 @@ export default function CreatePage() {
     }
     setErrors({});
     setPublishing(true);
-    setStatus(owned ? "Updating your invitation…" : "Publishing…");
+    setStatus(() => (t: HostText) => (owned ? t.updatingStatus : t.publishing));
     try {
       const response = await fetch(owned ? `/api/experiences/${owned.slug}` : "/api/experiences", {
         method: owned ? "PATCH" : "POST",
@@ -183,100 +187,102 @@ export default function CreatePage() {
       published.current = checked.value.events;
       setRemoved(null);
       setDirty(false);
-      setStatus(owned ? "Updated. Guests see your changes now." : "Published! Share it whenever you’re ready.");
+      setStatus(() => (t: HostText) => t.publishedStatus(!!owned));
       dialog.current?.showModal();
     } catch (failure) {
-      setStatus((failure as Error).message || "Couldn’t publish. Check your connection and try again.");
+      const text = (failure as Error).message;
+      setStatus(() => (t: HostText) => (text ? hostMessage(text, t.lang) : t.couldntPublish));
     }
     setPublishing(false);
   }
 
-  const fieldError = (key: keyof InvitationDraft) => errors[key] ? <p className="studio-error" id={`${key}-error`}>{errors[key]}</p> : null;
+  const fieldError = (key: keyof InvitationDraft) => errors[key] ? <p className="studio-error" id={`${key}-error`}>{message(errors[key]!)}</p> : null;
   const described = (key: keyof InvitationDraft) => errors[key] ? { "aria-invalid": true, "aria-describedby": `${key}-error` } : {};
 
-  return <div className="cinema studio-page" aria-busy={!ready}>
+  return <div className="cinema studio-page" aria-busy={!ready} lang={lang}>
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
-      <span className="studio-header-label">{owned ? "Editing a live invitation" : "Creator studio"}</span>
+      <span className="studio-header-label">{h.studioLabel(!!owned)}</span>
       <div className="studio-header-actions">
+        <HostLangSwitch h={h} toggle={toggle}/>
         {owned
-          ? <Link className="studio-fullscreen" href={`/manage/${owned.slug}`}>Replies</Link>
-          : <Link className="studio-fullscreen" href={`/e/preview?template=${templateId}&draft=1`} target="_blank" rel="noreferrer" onClick={event => { if (!saveDraft()) event.preventDefault(); }}>Full preview</Link>}
-        <button className="cin-cta cin-cta-outline studio-save studio-save-draft" onClick={saveDraft} disabled={!ready}>Save draft</button>
-        <button className="cin-cta cin-cta-light studio-save" onClick={() => void publish()} disabled={!ready || publishing}>{publishing ? (owned ? "Updating…" : "Publishing…") : owned ? "Update" : "Publish"}</button>
+          ? <Link className="studio-fullscreen" href={`/manage/${owned.slug}`}>{h.repliesLink}</Link>
+          : <Link className="studio-fullscreen" href={`/e/preview?template=${templateId}&draft=1`} target="_blank" rel="noreferrer" onClick={event => { if (!saveDraft()) event.preventDefault(); }}>{h.fullPreview}</Link>}
+        <button className="cin-cta cin-cta-outline studio-save studio-save-draft" onClick={saveDraft} disabled={!ready}>{h.saveDraft}</button>
+        <button className="cin-cta cin-cta-light studio-save" onClick={() => void publish()} disabled={!ready || publishing}>{publishing ? (owned ? h.updating : h.publishing) : owned ? h.update : h.publish}</button>
       </div>
     </header>
-    <div className="studio-mobile-tabs theme-paper" role="tablist" aria-label="Editor view"><button role="tab" aria-selected={mobilePanel === "edit"} aria-controls="studio-edit" onClick={() => setMobilePanel("edit")}>Details</button><button role="tab" aria-selected={mobilePanel === "preview"} aria-controls="studio-live" onClick={() => setMobilePanel("preview")}>Preview</button></div>
+    <div className="studio-mobile-tabs theme-paper" role="tablist" aria-label={h.editorView}><button role="tab" aria-selected={mobilePanel === "edit"} aria-controls="studio-edit" onClick={() => setMobilePanel("edit")}>{h.detailsTab}</button><button role="tab" aria-selected={mobilePanel === "preview"} aria-controls="studio-live" onClick={() => setMobilePanel("preview")}>{h.previewTab}</button></div>
     <main className={`studio-grid studio-show-${mobilePanel}`}>
-      <section className="studio-edit-panel theme-paper" id="studio-edit" aria-label="Invitation settings">
-        <Link className="studio-back" href={owned ? `/manage/${owned.slug}` : "/templates"}>{owned ? "← Back to your invitation" : "← All templates"}</Link>
-        <div className="studio-intro"><h1>Make it <span className="scribble">yours</span></h1><p>Edit the details and see your invitation update live.</p></div>
-        <fieldset className="studio-fieldset"><legend>Occasion</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><ArtImage name={item.id} fit="slice"/><span>{item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : ""}</i></button>)}</div></fieldset>
-        <fieldset className="studio-fieldset"><legend>Details</legend>
-          <div className="studio-field"><label htmlFor="title">Names or occasion title</label><input id="title" value={draft.title} maxLength={80} placeholder="Aarav & Meera" onChange={event => update("title", event.target.value)} {...described("title")}/>{fieldError("title")}</div>
+      <section className="studio-edit-panel theme-paper" id="studio-edit" aria-label={h.settingsLabel}>
+        <Link className="studio-back" href={owned ? `/manage/${owned.slug}` : "/templates"}>{owned ? h.backToInvitation : h.allTemplates}</Link>
+        <div className="studio-intro"><h1>{h.makeIt[0]} <span className="scribble">{h.makeIt[1]}</span></h1><p>{h.makeItBody}</p></div>
+        <fieldset className="studio-fieldset"><legend>{h.occasion}</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><ArtImage name={item.id} fit="slice"/><span>{h.occasionNames[item.id] ?? item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : ""}</i></button>)}</div></fieldset>
+        <fieldset className="studio-fieldset"><legend>{h.details}</legend>
+          <div className="studio-field"><label htmlFor="title">{h.titleLabel}</label><input id="title" value={draft.title} maxLength={80} placeholder="Aarav & Meera" onChange={event => update("title", event.target.value)} {...described("title")}/>{fieldError("title")}</div>
           <div className="studio-field-row">
-            <div className="studio-field"><label htmlFor="date">Date</label><input id="date" type="date" value={draft.date} onChange={event => update("date", event.target.value)} {...described("date")}/>{fieldError("date")}</div>
-            <div className="studio-field"><label htmlFor="time">Time</label><input id="time" type="time" value={draft.time} onChange={event => update("time", event.target.value)} {...described("time")}/>{fieldError("time")}</div>
+            <div className="studio-field"><label htmlFor="date">{h.date}</label><input id="date" type="date" value={draft.date} onChange={event => update("date", event.target.value)} {...described("date")}/>{fieldError("date")}</div>
+            <div className="studio-field"><label htmlFor="time">{h.time}</label><input id="time" type="time" value={draft.time} onChange={event => update("time", event.target.value)} {...described("time")}/>{fieldError("time")}</div>
           </div>
-          <div className="studio-field"><label htmlFor="venue">Venue</label><input id="venue" value={draft.venue} maxLength={140} placeholder="Venue name, city" onChange={event => update("venue", event.target.value)} {...described("venue")}/>{fieldError("venue")}</div>
+          <div className="studio-field"><label htmlFor="venue">{h.venue}</label><input id="venue" value={draft.venue} maxLength={140} placeholder={h.venuePlaceholder} onChange={event => update("venue", event.target.value)} {...described("venue")}/>{fieldError("venue")}</div>
         </fieldset>
         <fieldset className="studio-fieldset studio-schedule" id="events">
-          <legend>Schedule <span className="studio-legend-note">optional</span></legend>
-          <p className="studio-help">{template.id === "wedding" ? "Several events? Add each one, from the mehndi to the reception. Guests get a timeline and can save every date." : "More than one event? Add each one and guests get a timeline."}</p>
+          <legend>{h.schedule} <span className="studio-legend-note">{h.scheduleNote}</span></legend>
+          <p className="studio-help">{h.scheduleHelp(template.id === "wedding")}</p>
           {draft.events.map((item, index) => {
-            const problem = checkEvents ? scheduleItemError(item) : "";
-            const label = item.name.trim() || `event ${index + 1}`;
+            const problem = checkEvents ? message(scheduleItemError(item)) : "";
+            const label = item.name.trim() || h.eventFallbackLower(index + 1);
             return <div className="studio-event" key={item.id}>
-              <div className="studio-event-head"><span>{item.name.trim() || `Event ${index + 1}`}</span><button type="button" className="studio-event-remove" onClick={() => removeEvent(item)} aria-label={`Remove ${label} from the schedule`}>remove</button></div>
-              <div className="studio-field"><label htmlFor={`event-${item.id}-name`}>What’s happening</label><input id={`event-${item.id}-name`} list="event-names" value={item.name} maxLength={LIMITS.eventName} placeholder="Mehndi" onChange={event => updateEvent(item.id, { name: event.target.value })} aria-invalid={problem ? true : undefined} aria-describedby={problem ? `event-${item.id}-error` : undefined}/></div>
+              <div className="studio-event-head"><span>{item.name.trim() || h.eventFallback(index + 1)}</span><button type="button" className="studio-event-remove" onClick={() => removeEvent(item)} aria-label={h.removeEventLabel(label)}>{h.removeEvent}</button></div>
+              <div className="studio-field"><label htmlFor={`event-${item.id}-name`}>{h.whatsHappening}</label><input id={`event-${item.id}-name`} list="event-names" value={item.name} maxLength={LIMITS.eventName} placeholder="Mehndi" onChange={event => updateEvent(item.id, { name: event.target.value })} aria-invalid={problem ? true : undefined} aria-describedby={problem ? `event-${item.id}-error` : undefined}/></div>
               <div className="studio-field-row">
-                <div className="studio-field"><label htmlFor={`event-${item.id}-date`}>Date</label><input id={`event-${item.id}-date`} type="date" value={item.date} onChange={event => updateEvent(item.id, { date: event.target.value })}/></div>
-                <div className="studio-field"><label htmlFor={`event-${item.id}-time`}>Time <span>Optional</span></label><input id={`event-${item.id}-time`} type="time" value={item.time} onChange={event => updateEvent(item.id, { time: event.target.value })}/></div>
+                <div className="studio-field"><label htmlFor={`event-${item.id}-date`}>{h.date}</label><input id={`event-${item.id}-date`} type="date" value={item.date} onChange={event => updateEvent(item.id, { date: event.target.value })}/></div>
+                <div className="studio-field"><label htmlFor={`event-${item.id}-time`}>{h.time} <span>{h.optional}</span></label><input id={`event-${item.id}-time`} type="time" value={item.time} onChange={event => updateEvent(item.id, { time: event.target.value })}/></div>
               </div>
-              <div className="studio-field"><label htmlFor={`event-${item.id}-venue`}>Venue <span>If different</span></label><input id={`event-${item.id}-venue`} value={item.venue} maxLength={LIMITS.venue} placeholder={draft.venue || "Venue name, city"} onChange={event => updateEvent(item.id, { venue: event.target.value })}/></div>
+              <div className="studio-field"><label htmlFor={`event-${item.id}-venue`}>{h.venue} <span>{h.ifDifferent}</span></label><input id={`event-${item.id}-venue`} value={item.venue} maxLength={LIMITS.venue} placeholder={draft.venue || h.venuePlaceholder} onChange={event => updateEvent(item.id, { venue: event.target.value })}/></div>
               {problem && <p className="studio-error" id={`event-${item.id}-error`}>{problem}</p>}
             </div>;
           })}
           {removed && <div className="studio-removed" role="status">
-            <p>Removed the {removed.item.name || "event"}. {[removed.replies && `${removed.replies} ${removed.replies === 1 ? "reply" : "replies"}`, removed.invitations && `${removed.invitations} personal ${removed.invitations === 1 ? "invitation" : "invitations"}`].filter(Boolean).join(" and ")} {removed.replies + removed.invitations === 1 ? "includes" : "include"} it. They won’t count for it once you press Update.</p>
-            <button type="button" className="share-chip" onClick={putBack}>Put it back</button>
+            <p>{h.removedNote(removed.item.name, removed.replies, removed.invitations)}</p>
+            <button type="button" className="share-chip" onClick={putBack}>{h.putBack}</button>
           </div>}
           {draft.events.length < LIMITS.events && <div className="studio-event-add">
             {(SCHEDULE_PRESETS[template.id] ?? []).filter(preset => !draft.events.some(e => e.name.trim().toLowerCase() === preset.name.toLowerCase())).map(preset => <button type="button" className="share-chip" key={preset.name} onClick={() => addEvent(preset.name)}>+ {preset.name}</button>)}
-            <button type="button" className="share-chip" onClick={() => addEvent("")}>+ Add an event</button>
+            <button type="button" className="share-chip" onClick={() => addEvent("")}>{h.addEvent}</button>
           </div>}
           {fieldError("events")}
           <datalist id="event-names">{EVENT_NAMES.map(name => <option key={name} value={name}/>)}</datalist>
         </fieldset>
         <fieldset className="studio-fieldset">
-          <legend>Language <span className="studio-legend-note">for guests</span></legend>
-          <p className="studio-help">The language the invitation opens in. Guests can switch between Gujarati and English themselves.</p>
-          <div className="studio-language" role="radiogroup" aria-label="Language for guests">
+          <legend>{h.language} <span className="studio-legend-note">{h.forGuests}</span></legend>
+          <p className="studio-help">{h.languageHelp}</p>
+          <div className="studio-language" role="radiogroup" aria-label={h.languageGroup}>
             {LANGUAGE_CHOICES.map(([value, label]) => <label key={value} className={(draft.language ?? "en") === value ? "is-selected" : ""} lang={value}><input type="radio" name="language" checked={(draft.language ?? "en") === value} onChange={() => update("language", value)}/><span>{label}</span></label>)}
           </div>
         </fieldset>
-        <fieldset className="studio-fieldset studio-message-field"><legend>Message to guests</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">Your message to guests</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder="A few words for the people you’re inviting…" onChange={event => update("message", event.target.value)} {...described("message")}/><span className="studio-character-count">{draft.message.length} / 500</span>{fieldError("message")}</div>
-          <div className="studio-field studio-thanks-field"><label htmlFor="thanks">After the day <span>Optional</span></label><p className="studio-help">Once it’s all over, the invitation turns into a thank-you. Write the note guests will see then.</p><textarea id="thanks" rows={3} value={draft.thanks ?? ""} maxLength={500} placeholder="Thank you for the love, the blessings, and for being there…" onChange={event => update("thanks", event.target.value)} {...described("thanks")}/><span className="studio-character-count">{(draft.thanks ?? "").length} / 500</span>{fieldError("thanks")}</div>
+        <fieldset className="studio-fieldset studio-message-field"><legend>{h.messageLegend}</legend><div className="studio-field"><label className="studio-sr-only" htmlFor="message">{h.messageLabel}</label><textarea id="message" rows={4} value={draft.message} maxLength={500} placeholder={h.messagePlaceholder} onChange={event => update("message", event.target.value)} {...described("message")}/><span className="studio-character-count">{draft.message.length} / 500</span>{fieldError("message")}</div>
+          <div className="studio-field studio-thanks-field"><label htmlFor="thanks">{h.thanksLabel} <span>{h.optional}</span></label><p className="studio-help">{h.thanksHelp}</p><textarea id="thanks" rows={3} value={draft.thanks ?? ""} maxLength={500} placeholder={h.thanksPlaceholder} onChange={event => update("thanks", event.target.value)} {...described("thanks")}/><span className="studio-character-count">{(draft.thanks ?? "").length} / 500</span>{fieldError("thanks")}</div>
         </fieldset>
-        <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status}</span></div>
-        <p className="studio-storage-note">{owned ? <>Live at <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. Drafts are also kept on this device.</> : "Drafts are saved on this device. Publish to get a link you can share."}</p>
+        <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status(h)}</span></div>
+        <p className="studio-storage-note">{owned ? <>{h.liveAt} <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. {h.draftsAlsoKept}</> : h.draftsSaved}</p>
       </section>
-      <aside className="studio-preview-panel theme-paper" id="studio-live" aria-label="Live invitation preview"><div className="studio-preview-inner"><div className="studio-preview-toolbar"><span className="studio-live"><i/>Live preview</span><button onClick={() => setOpened(false)} aria-label="Replay invitation reveal">Replay</button></div><div className="studio-canvas-frame"><InvitationScene template={template} draft={draft} compact opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)}/></div><div className="studio-preview-bottom"><span>{template.category}</span><span>tap the drawing to try it</span></div></div></aside>
+      <aside className="studio-preview-panel theme-paper" id="studio-live" aria-label={h.livePreviewLabel}><div className="studio-preview-inner"><div className="studio-preview-toolbar"><span className="studio-live"><i/>{h.livePreview}</span><button onClick={() => setOpened(false)} aria-label={h.replayLabel}>{h.replay}</button></div><div className="studio-canvas-frame"><InvitationScene template={template} draft={draft} compact opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)}/></div><div className="studio-preview-bottom"><span>{h.occasionNames[template.id] ?? template.category}</span><span>{h.tapToTry}</span></div></div></aside>
     </main>
 
     <dialog ref={dialog} className="publish-dialog" aria-labelledby="publish-title">
       {owned && <div className="sketch-card publish-card">
-        <span className="cin-note">it’s live!</span>
-        <h2 id="publish-title">Your invitation is ready to share</h2>
-        <ShareTools url={`${origin}/e/${owned.slug}`} title={draft.title} lang={draft.language}/>
+        <span className="cin-note">{h.itsLive}</span>
+        <h2 id="publish-title">{h.readyToShare}</h2>
+        <ShareTools url={`${origin}/e/${owned.slug}`} title={draft.title} lang={draft.language} ui={lang}/>
         <div className="publish-private">
-          <h3>Your private manage link</h3>
-          <p>Open it to see replies and make changes from any device. Anyone with it can edit, so keep it to yourself. On this device, it’s also under <Link href="/mine">My invitations</Link>.</p>
-          <CopyField value={`${origin}/manage/${owned.slug}#k=${owned.key}`} label="Copy manage link"/>
+          <h3>{h.privateLink}</h3>
+          <p>{h.privateLinkBody} <Link href="/mine">{h.myInvitations}</Link>.</p>
+          <CopyField value={`${origin}/manage/${owned.slug}#k=${owned.key}`} label={h.copyManageLink} ui={lang}/>
         </div>
         <div className="publish-actions">
-          <Link className="cin-cta cin-cta-outline" href={`/manage/${owned.slug}`}>See replies</Link>
-          <button type="button" className="cin-cta cin-cta-light" onClick={() => dialog.current?.close()}>Keep editing</button>
+          <Link className="cin-cta cin-cta-outline" href={`/manage/${owned.slug}`}>{h.seeReplies}</Link>
+          <button type="button" className="cin-cta cin-cta-light" onClick={() => dialog.current?.close()}>{h.keepEditing}</button>
         </div>
       </div>}
     </dialog>
