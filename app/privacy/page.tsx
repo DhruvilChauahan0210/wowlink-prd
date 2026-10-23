@@ -19,7 +19,7 @@ const CONTENT: Record<Lang, Content> = {
     title: "Privacy — WowLink",
     description: "What WowLink keeps when you make an invitation or reply to one, who can see it, and how it’s deleted.",
     heading: ["What we keep, and", "who sees it"],
-    intro: "WowLink makes invitation pages. To do that it keeps what hosts write and what guests reply, and nothing more. Here is all of it, in plain words.",
+    intro: "WowLink makes invitation pages. To do that it keeps what hosts write and what guests reply, plain counts of visits, and any reports. Here is all of it, in plain words.",
     earlyLabel: "early days",
     early: "WowLink is still being tried out. This page says how it works today. It will be reviewed and updated before WowLink opens to everyone, including where information is stored and for how long.",
     updated: "Last updated",
@@ -31,6 +31,7 @@ const CONTENT: Record<Lang, Content> = {
           "Personal invitations: the name of each household, and a WhatsApp number if the host adds one.",
           "When each personal link was first and last opened. The page itself reports this, so a link preview in WhatsApp doesn’t count.",
           "The private manage key, kept only in scrambled form (a hash), so it can’t be read back or recovered.",
+          "Plain counts, day by day: visits, how many people opened it, how many played the opening, visits from the QR code, and how the host shared it. Nobody is identified by them.",
         ],
       },
       {
@@ -48,6 +49,7 @@ const CONTENT: Record<Lang, Content> = {
           "There are no tracking cookies, no ads and no outside analytics services on any page.",
           "Your internet address (IP) is used to slow down spam. It’s held only in the server’s memory, and never saved with your reply or anywhere else.",
           "Your choice of language, and a host’s manage links, are remembered in your own browser, not by WowLink.",
+          "Your browser also remembers that it has opened an invitation (and played its opening), so you’re counted once however often you come back. A host’s visits aren’t counted from a browser where they’ve opened their manage page.",
           "Links to Google Maps, Google Calendar and WhatsApp open those services only when you tap them.",
         ],
       },
@@ -58,6 +60,14 @@ const CONTENT: Record<Lang, Content> = {
           "Guests see the invitation as their own link shows it. They never see the guest list, other people’s replies or anyone’s number.",
           "Wishes appear on the invitation only if the host turns that on, and only with the name the writer typed. The host can hide any one of them.",
           "Search engines are asked not to list invitations.",
+          "WowLink sees totals for the whole app: how many invitations are made, opened and replied to, visits to its own pages (like the studio and the samples), and clicks on “Create yours free”. Never who replied.",
+        ],
+      },
+      {
+        heading: "Reports",
+        items: [
+          "Anyone can report an invitation from the link at the bottom of it. A report keeps the reason and what you write, and nothing about who sent it, so the hosts can’t find out.",
+          "WowLink opens a reported invitation to look at it. If it breaks the rules, it’s taken down: guests can no longer open it and it can’t be published again. Its host keeps their replies, and can still delete it.",
         ],
       },
       {
@@ -91,7 +101,7 @@ const CONTENT: Record<Lang, Content> = {
     title: "ગોપનીયતા — WowLink",
     description: "આમંત્રણ બનાવો કે તેનો જવાબ આપો ત્યારે WowLink શું સાચવે છે, તે કોણ જોઈ શકે છે, અને તે કેવી રીતે કાઢી નખાય છે.",
     heading: ["અમે શું સાચવીએ છીએ, અને", "કોણ જુએ છે"],
-    intro: "WowLink આમંત્રણનાં પાનાં બનાવે છે. એ માટે યજમાન જે લખે અને મહેમાનો જે જવાબ આપે તે સાચવે છે, એથી વધુ કંઈ નહીં. બધું અહીં સાદી ભાષામાં છે.",
+    intro: "WowLink આમંત્રણનાં પાનાં બનાવે છે. એ માટે યજમાન જે લખે અને મહેમાનો જે જવાબ આપે તે, મુલાકાતોની સાદી ગણતરી, અને ફરિયાદો સાચવે છે. બધું અહીં સાદી ભાષામાં છે.",
     earlyLabel: "હજી શરૂઆત છે",
     early: "WowLink હજી અજમાયશમાં છે. આ પાનું આજે તે જે રીતે કામ કરે છે તે જણાવે છે. બધા માટે શરૂ થાય તે પહેલાં તેની સમીક્ષા થશે, અને માહિતી ક્યાં અને કેટલો સમય સચવાય છે તે સહિત તેને અપડેટ કરાશે.",
     updated: "છેલ્લું અપડેટ",
@@ -103,6 +113,7 @@ const CONTENT: Record<Lang, Content> = {
           "વ્યક્તિગત આમંત્રણો: દરેક પરિવારનું નામ, અને યજમાન ઉમેરે તો WhatsApp નંબર.",
           "દરેક વ્યક્તિગત લિંક પહેલી અને છેલ્લી વાર ક્યારે ખોલાઈ. પાનું પોતે જ આ જણાવે છે, એટલે WhatsAppમાં લિંકનું પ્રીવ્યૂ ગણાતું નથી.",
           "મેનેજ લિંકની ખાનગી ચાવી, ફક્ત ગૂંચવેલા રૂપમાં (hash), એટલે તે પાછી વાંચી કે મેળવી શકાતી નથી.",
+          "દિવસ પ્રમાણે સાદી ગણતરી: મુલાકાતો, કેટલા લોકોએ ખોલ્યું, કેટલાએ ખોલવાની વિધિ માણી, QR કોડથી કેટલી મુલાકાતો, અને યજમાને કેવી રીતે શેર કર્યું. તેનાથી કોઈની ઓળખ થતી નથી.",
         ],
       },
       {
@@ -120,6 +131,7 @@ const CONTENT: Record<Lang, Content> = {
           "કોઈ પાના પર ટ્રેકિંગ કૂકી, જાહેરાતો કે બહારની એનાલિટિક્સ સેવા નથી.",
           "આપનું ઇન્ટરનેટ સરનામું (IP) સ્પામ રોકવા માટે વપરાય છે. તે ફક્ત સર્વરની મેમરીમાં રહે છે, અને આપના જવાબ સાથે કે બીજે ક્યાંય સચવાતું નથી.",
           "આપની ભાષાની પસંદગી, અને યજમાનની મેનેજ લિંક, આપના પોતાના બ્રાઉઝરમાં યાદ રહે છે, WowLink પાસે નહીં.",
+          "આપનું બ્રાઉઝર એ પણ યાદ રાખે છે કે તેણે આમંત્રણ ખોલ્યું છે (અને ખોલવાની વિધિ માણી છે), એટલે આપ ગમે તેટલી વાર આવો, એક જ વાર ગણાઓ છો. જે બ્રાઉઝરમાં યજમાને પોતાનું મેનેજ પાનું ખોલ્યું હોય, તેમાંથી તેમની મુલાકાતો ગણાતી નથી.",
           "Google Maps, Google Calendar અને WhatsAppની લિંક આપ દબાવો ત્યારે જ એ સેવાઓ ખોલે છે.",
         ],
       },
@@ -130,6 +142,14 @@ const CONTENT: Record<Lang, Content> = {
           "મહેમાનો આમંત્રણ તેમની પોતાની લિંક બતાવે તે રીતે જ જુએ છે. તેઓ મહેમાનોની યાદી, બીજાના જવાબો કે કોઈનો નંબર ક્યારેય જોતા નથી.",
           "શુભેચ્છાઓ આમંત્રણ પર ત્યારે જ દેખાય જ્યારે યજમાન તે ચાલુ કરે, અને ફક્ત લખનારે લખેલા નામ સાથે. યજમાન કોઈ પણ શુભેચ્છા છુપાવી શકે છે.",
           "સર્ચ એન્જિનને આમંત્રણો ન બતાવવા કહેવામાં આવે છે.",
+          "WowLink આખી એપની કુલ સંખ્યા જુએ છે: કેટલાં આમંત્રણો બન્યાં, ખોલાયાં અને તેના જવાબ આવ્યા, તેનાં પોતાનાં પાનાંની મુલાકાતો (જેમ કે સ્ટુડિયો અને નમૂના), અને “આપનું મફત બનાવો” પરના ક્લિક. કોણે જવાબ આપ્યો તે ક્યારેય નહીં.",
+        ],
+      },
+      {
+        heading: "ફરિયાદ",
+        items: [
+          "કોઈ પણ વ્યક્તિ આમંત્રણના નીચેના ભાગની લિંકથી તેની ફરિયાદ કરી શકે છે. ફરિયાદમાં કારણ અને આપે લખેલું જ સચવાય છે, મોકલનાર વિશે કંઈ નહીં, એટલે યજમાન જાણી શકતા નથી કે ફરિયાદ કોણે કરી.",
+          "WowLink ફરિયાદ થયેલું આમંત્રણ ખોલીને જુએ છે. જો તે નિયમો તોડતું હોય, તો તેને દૂર કરાય છે: મહેમાનો તેને ખોલી શકતા નથી અને તે ફરી પ્રકાશિત થઈ શકતું નથી. યજમાનના જવાબો તેમની પાસે રહે છે, અને તેઓ તેને કાઢી પણ શકે છે.",
         ],
       },
       {

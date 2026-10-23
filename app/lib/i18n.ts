@@ -119,6 +119,7 @@ const en = {
   privacyNote: (wishesShown: boolean): string => (wishesShown ? "Only the hosts see your reply. A wish may be shown on this page, with your name." : "Your reply goes to the hosts only."),
   privacyLink: "How it’s kept",
   privacy: "Privacy",
+  report: "Report",
   // footer
   madeWith: "Made with WowLink",
   createYours: "Create yours free",
@@ -221,6 +222,7 @@ const gu: GuestText = {
   privacyNote: (wishesShown: boolean) => (wishesShown ? "આપનો જવાબ ફક્ત યજમાન જ જોશે. શુભેચ્છા આપના નામ સાથે આ પાના પર દેખાઈ શકે છે." : "આપનો જવાબ ફક્ત યજમાન જ જોશે."),
   privacyLink: "તે કેવી રીતે સચવાય છે",
   privacy: "ગોપનીયતા",
+  report: "ફરિયાદ કરો",
   madeWith: "WowLink થી બનાવેલું",
   createYours: "આપનું મફત બનાવો",
   countdown: {

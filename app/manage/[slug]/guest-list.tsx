@@ -7,6 +7,7 @@ import { csvName, invitationsCsv } from "../../lib/export";
 import { MESSAGES } from "../../lib/i18n";
 import { hostMessage, type HostText } from "../../lib/host-i18n";
 import { useHostText } from "../../ui/host-lang";
+import { countShare } from "../../ui/counting";
 import type { Experience, Rsvp } from "../../lib/store";
 
 /*
@@ -171,9 +172,11 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
     setBusy(false);
   }
 
+  // Taken down: the links can't open, so nothing can be added or sent.
+  const closed = !!experience.removed;
   return <>
-    <p className="manage-muted">{h.guestsIntro(schedule.length > 1)}</p>
-    {!full ? <form className="manage-guest-add" onSubmit={add}>
+    <p className="manage-muted">{closed ? h.takenDownShare : h.guestsIntro(schedule.length > 1)}</p>
+    {!closed && (!full ? <form className="manage-guest-add" onSubmit={add}>
       <div className="manage-picker-modes manage-add-modes" role="radiogroup" aria-label={h.howToAdd}>
         <label className={!many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={!many} onChange={() => { setMany(false); setErrors({}); }}/><span>{h.oneHousehold}</span></label>
         <label className={many ? "is-selected" : ""}><input type="radio" name="add-mode" checked={many} onChange={() => { setMany(true); setErrors({}); }}/><span>{h.pasteList}</span></label>
@@ -199,7 +202,7 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
       {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={edit(setEvents)} legend={h.whichCelebrations(many)} error={errors.events}/>}
       {errors.form && !errors.name && !errors.events && !errors.phone && !errors.list && <p className="studio-error" role="alert">{tr(errors.form)}</p>}
       <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{h.addInvitation(lines, many)}</button>
-    </form> : <p className="manage-warn">{h.noRoom(LIMITS.rsvpsPerEvent)}</p>}
+    </form> : <p className="manage-warn">{h.noRoom(LIMITS.rsvpsPerEvent)}</p>)}
     <p className="share-status" role="status">{status}</p>
     {experience.guests.length > 0 && <p className="manage-guest-summary">{h.openedSummary(experience.guests.filter(g => g.openedAt).length, experience.guests.length, experience.guests.filter(g => rsvps.some(r => r.guestId === g.id)).length)}</p>}
     {experience.guests.length > 0 && <ul className="manage-guests">{[...experience.guests].reverse().map(guest => <GuestRow key={guest.id} owner={owner} origin={origin} guest={guest} experience={experience} reply={rsvps.find(r => r.guestId === guest.id)} onChanged={onChanged}/>)}</ul>}
@@ -259,6 +262,7 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      countShare(owner, "personal");
       setTimeout(() => setCopied(false), 2200);
     } catch {
       // Clipboard blocked: show the link so it can be copied by hand.
@@ -300,12 +304,14 @@ function GuestRow({ owner, origin, guest, experience, reply, onChanged }: { owne
       <button type="button" className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void run(() => ownerCall(owner, `/guests/${guest.id}`, "PATCH", { newLink: true }))}>{h.makeNewLink}</button>
       <button type="button" className="share-chip" onClick={() => setMode("view")}>{h.cancel}</button>
     </div> : <div className="manage-guest-actions">
+      {!experience.removed && <>
       <button type="button" className="share-chip" onClick={() => void copy()} aria-label={h.copyLinkFor(guest.name)}>{copied ? h.copied : h.copyLink}</button>
-      <a className="share-chip" href={whatsApp(message, guest.phone)} target="_blank" rel="noreferrer" aria-label={h.sendOnWhatsApp(guest.name)}>{h.whatsApp}</a>
-      {reminder && <a className="share-chip" href={whatsApp(reminder, guest.phone)} target="_blank" rel="noreferrer" aria-label={h.remindOnWhatsApp(guest.name)}>{h.remind}</a>}
+      <a className="share-chip" href={whatsApp(message, guest.phone)} target="_blank" rel="noreferrer" aria-label={h.sendOnWhatsApp(guest.name)} onClick={() => countShare(owner, "personal")}>{h.whatsApp}</a>
+      {reminder && <a className="share-chip" href={whatsApp(reminder, guest.phone)} target="_blank" rel="noreferrer" aria-label={h.remindOnWhatsApp(guest.name)} onClick={() => countShare(owner, "personal")}>{h.remind}</a>}
       <a className="share-chip" href={`/e/${experience.slug}/${guest.id}?preview=1`} target="_blank" rel="noreferrer" aria-label={h.previewFor(guest.name)}>{h.preview}</a>
+      </>}
       <button type="button" className="share-chip" onClick={() => setMode("edit")} aria-label={h.editFor(guest.name)}>{h.edit}</button>
-      <button type="button" className="share-chip" onClick={() => setMode("relink")} aria-label={h.newLinkFor(guest.name)}>{h.newLink}</button>
+      {!experience.removed && <button type="button" className="share-chip" onClick={() => setMode("relink")} aria-label={h.newLinkFor(guest.name)}>{h.newLink}</button>}
       <button type="button" className="share-chip" onClick={() => setMode("remove")} aria-label={h.removeFor(guest.name)}>{h.remove}</button>
     </div>}
     {showUrl && <div className="share-url"><label className="studio-sr-only" htmlFor={`${id}-url`}>{h.linkFor(guest.name)}</label><input id={`${id}-url`} readOnly value={url} autoFocus onFocus={e => e.currentTarget.select()}/></div>}

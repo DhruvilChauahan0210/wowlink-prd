@@ -1,5 +1,9 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 
+/** The admin key the test server runs with (playwright.config.ts). Only for tests. */
+export const TEST_ADMIN_KEY = "test-only-admin-key-not-a-real-secret";
+export const adminHeaders = (key = TEST_ADMIN_KEY) => ({ authorization: `Bearer ${key}`, "x-forwarded-for": freshIp() });
+
 let counter = 0;
 /** A different pretend client address each call, so per-client rate limits don't couple unrelated tests. */
 export const freshIp = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${(counter++ % 250) + 1}`;

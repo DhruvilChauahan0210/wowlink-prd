@@ -28,6 +28,8 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Personal invitations** (`/e/<slug>/<id>`): a link for one household ("the Patel family"). It opens addressed to them and shows only the celebrations the host picked. The household has one reply, which they can change later. The general link can also be limited, for example to the reception only. Celebrations a link doesn't show never reach that browser: not in the page, the calendar file or the share image.
 - **The manage page** (`/manage/<slug>#k=…`): a private link for reply totals, the headcount for each celebration, who hasn't replied, personal invitations, editing, and unpublishing. You can add invitations one at a time or paste a whole list (one household per line, optionally with a WhatsApp number), then preview, send, remind, replace a link or remove each one. With a number, WhatsApp opens that family's chat directly. Each household shows whether they've opened their link yet ("Opened 22 Oct · no reply yet"), counted from real visits only, not link previews. Numbers are only ever shown to the host. Everything can be downloaded as a spreadsheet: every reply, the headcount per celebration for the caterer, and the invitation list with links.
 - **Deleting.** On the manage page a host can delete a single reply (when a guest asks to be taken off), or the whole invitation with every reply, wish, household and number in it. Both ask first; deleting the invitation offers to download the replies, then takes it off My invitations on that device. Only a deleted invitation's slug is kept, so its old link can never open someone else's invitation.
+- **How it's doing.** The manage page shows how many people opened the invitation, how many played the opening and replied, visits from the printed QR code, visits over the last two weeks, and how the host shared it (WhatsApp, copied link, QR code, personal links). These are plain daily counts (`app/lib/insights.ts`), reported by the page once it runs, so link previews don't count, and a browser where the host has opened their manage page isn't counted. A browser remembers it has been counted, so each browser counts once. No cookies, no outside analytics, and nobody is identified.
+- **Reports and taking down.** Every invitation has a "Report" link in its footer (`/report/<slug>`, in the guest's language). A report keeps the reason and what was written, never who sent it, and one address can send five an hour. WowLink's admin (`/admin`, opened with `WOWLINK_ADMIN_KEY`) lists reported invitations, most reported first. From there you can take one down, restore it, dismiss its reports, or find any invitation by its link. A taken-down invitation can't be opened, replied to or republished; its host sees why on their manage page and keeps their replies. The admin also shows the app's numbers over 7, 30 or 90 days: occasion pages, samples, studio visits, invitations published by occasion, visits, people, openings, replies, "Create yours free" clicks, sharing, reports and take-downs.
 - **Privacy** (`/privacy`, `/privacy?lang=gu`): what WowLink keeps, who sees it, that a link isn't a lock, and how things are deleted, in plain English and Gujarati. Guests reach it from the reply form and the invitation's footer, in their language; hosts from the manage page.
 - **Occasion pages for search** (`/templates/<occasion>`): each occasion has its own page with a sample that opens right there, what it's good for, what guests get, and a few questions answered, written for searches like "Garba invitation maker online" or "Gujarati wedding invitation website" (`app/lib/occasion-pages.ts`). Each has its own share card. `sitemap.xml` lists the home page, the occasions, their pages and the privacy page; `robots.txt` keeps crawlers out of the API and the hosts' pages. Invitations, the studio, the manage pages and My invitations all carry `noindex`.
 
@@ -41,8 +43,11 @@ Playwright runs the unit and end-to-end tests against a production build on port
 
 ## Configuration
 
+Copy `.env.example` to `.env.local` and fill it in.
+
 | Variable | Used for |
 |---|---|
+| `WOWLINK_ADMIN_KEY` | Opens the admin page (`/admin`). At least 24 characters (`openssl rand -base64 32`). Without it the admin doesn't exist. Ten wrong keys from one address lock that address out for an hour (the page then says so). |
 | `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews, canonical links, `sitemap.xml` and `robots.txt` (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
 
 ## Current limits
@@ -54,6 +59,8 @@ Playwright runs the unit and end-to-end tests against a production build on port
 - The free plan's 100 replies count every general-link reply plus one place kept for each personal invitation, so an invited household can always reply.
 - Subscriptions, analytics and the free plan's 60-day expiry aren't built yet.
 - The PRD puts custom colours in the paid plan. Until plans exist, every host has them.
+- Each counted visit rewrites the JSON file, like every other change. That's fine for trying it out; with Supabase, counts become single increments.
+- The admin is one shared key, not accounts. When accounts arrive it should become a role.
 - The privacy page describes the app as it is today. Before launch it needs a proper review: where the data is hosted, how long it's kept, what the hosting provider logs, and consent.
 
 ## Performance on phones

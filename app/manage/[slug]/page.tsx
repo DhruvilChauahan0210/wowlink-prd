@@ -13,6 +13,8 @@ import { WowLinkBrand } from "../../ui/brand";
 import { CopyField, ShareTools } from "../../ui/share-tools";
 import { csvName, headcountCsv, repliesCsv } from "../../lib/export";
 import { GeneralLinkAudience, GuestList, Headcount, WishesCard, saveCsv } from "./guest-list";
+import { Insights } from "./insights";
+import { REASON_TEXT } from "../../lib/reports";
 
 type Loaded = { experience: Experience; rsvps: Rsvp[] };
 type Problem = "" | "no-key" | "invalid" | "offline";
@@ -144,7 +146,8 @@ export default function ManagePage() {
   }, [data]);
 
   const experience = data?.experience;
-  const live = experience?.status === "published";
+  const removed = experience?.removed;
+  const live = experience?.status === "published" && !removed;
   const schedule = sortSchedule(experience?.events ?? []);
   const owner = key ? { slug, ownerKey: key } : null;
   const reload = useCallback(async () => { if (key) await load(key); }, [key, load]);
@@ -158,7 +161,7 @@ export default function ManagePage() {
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
       <span className="studio-header-label">{h.yourInvitation}</span>
-      <div className="studio-header-actions"><HostLangSwitch h={h} toggle={toggle}/><Link className="studio-fullscreen" href="/mine">{h.myInvitations}</Link>{experience && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>{h.editInStudio}</Link>}</div>
+      <div className="studio-header-actions"><HostLangSwitch h={h} toggle={toggle}/><Link className="studio-fullscreen" href="/mine">{h.myInvitations}</Link>{experience && !removed && <Link className="cin-cta cin-cta-light studio-save" href={`/create?edit=${slug}`}>{h.editInStudio}</Link>}</div>
     </header>
     <main className="manage theme-paper">
       {problem === "no-key" && <Notice h={h} title={h.noKeyTitle}>{h.noKeyBody[0]} <b>#</b> {h.noKeyBody[1]}</Notice>}
@@ -175,16 +178,26 @@ export default function ManagePage() {
         <section className="manage-hero">
           <div className="cin-print manage-print"><span className="cin-photo"><ArtImage name={experience.templateId as ArtName} fit="slice"/></span></div>
           <div>
-            <span className={`manage-status is-${experience.status}`}>{live ? h.live : h.unpublished}</span>
+            <span className={`manage-status is-${removed ? "removed" : experience.status}`}>{removed ? h.takenDown : live ? h.live : h.unpublished}</span>
             <h1>{experience.title}</h1>
             <p>{formatInvitationDate(experience.date, true, lang)}{experience.time && ` · ${formatInvitationTime(experience.time, lang)}`} · {experience.venue}</p>
           </div>
         </section>
 
+        {removed && <section className="sketch-card manage-card manage-taken-down" aria-labelledby="taken-down-heading">
+          <h2 id="taken-down-heading">{h.takenDownTitle}</h2>
+          <p>{h.takenDownBody(removed.reason ? REASON_TEXT[lang][removed.reason] : "")}</p>
+        </section>}
+
         <section className="sketch-card manage-card" aria-labelledby="share-heading">
           <h2 id="share-heading">{h.shareIt}</h2>
-          {live ? <ShareTools url={`${origin}/e/${slug}`} title={experience.title} lang={experience.language} ui={lang}/> : <p className="manage-muted">{h.unpublishedNote}</p>}
+          {live ? <ShareTools url={`${origin}/e/${slug}`} title={experience.title} lang={experience.language} ui={lang} owner={owner ?? undefined}/> : <p className="manage-muted">{removed ? h.takenDownShare : h.unpublishedNote}</p>}
           {owner && schedule.length > 1 && <GeneralLinkAudience owner={owner} experience={experience} onSaved={reload}/>}
+        </section>
+
+        <section className="sketch-card manage-card" aria-labelledby="insights-heading">
+          <h2 id="insights-heading">{h.insightsHeading}</h2>
+          <Insights experience={experience} rsvps={data.rsvps}/>
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="guests-heading">
@@ -243,12 +256,12 @@ export default function ManagePage() {
           <h2 id="private-heading">{h.privateHeading}</h2>
           <p className="manage-muted">{h.privateBody}</p>
           {key && <CopyField value={`${origin}/manage/${slug}#k=${key}`} label={h.copyManageLink} ui={lang}/>}
-          <div className="manage-actions">
+          {!removed && <div className="manage-actions">
             {live
               ? <button className="cin-cta cin-cta-outline" disabled={busy} onClick={() => void setStatus("unpublished")}>{h.unpublish}</button>
               : <button className="cin-cta cin-cta-light" disabled={busy} onClick={() => void setStatus("published")}>{h.publishAgain}</button>}
             <span className="manage-muted">{h.unpublishNote(live)}</span>
-          </div>
+          </div>}
           <Link className="cin-text-link manage-privacy-link" href={lang === "gu" ? "/privacy?lang=gu" : "/privacy"}>{h.privacyLink} <span aria-hidden="true">→</span></Link>
         </section>
 

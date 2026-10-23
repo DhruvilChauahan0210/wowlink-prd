@@ -11,6 +11,7 @@ import type { PublicWish } from "../lib/store";
 import { MomentMark, WowLinkBrand } from "./brand";
 import { Bowl, Diya, Flower, Leaf, Note, Ring, Star } from "./doodles";
 import { InvitationScene } from "./invitation-scene";
+import { countAttribution, countPage, countPlayed, countVisit } from "./counting";
 
 type Reply = { name: string; attendance: Attendance; guestCount: number; byEvent?: ByEvent; wish?: string; at?: string };
 
@@ -91,6 +92,12 @@ function Countdown({ date, time, events, t }: { date: string; time: string; even
   return <p className="inv-countdown">{count !== null && <span className="inv-countdown-n">{count}</span>}<span>{label}</span></p>;
 }
 
+/** The report page, in the guest's language, knowing which link to send them back to. */
+const reportHref = (slug: string, lang: Lang, guestId?: string) => {
+  const query = new URLSearchParams({ ...(lang === "gu" && { lang: "gu" }), ...(guestId && { from: guestId }) }).toString();
+  return `/report/${slug}${query ? `?${query}` : ""}`;
+};
+
 /** Everything a guest sees: the opening, the details, the message and the RSVP. */
 export function GuestExperience({ template, draft, mode, slug, guest, reply, previewOnly = false, wishes = null }: Props) {
   const live = mode === "live";
@@ -153,12 +160,16 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const attendanceRef = useRef<HTMLFieldSetElement>(null);
   const focusForm = useRef(false);
   useEffect(() => { if (live) setPageUrl(location.origin + location.pathname); }, [live]);
-  // Let the host know the household opened their link. Sent from the browser, so WhatsApp's link preview (which
-  // fetches the page but never runs it) doesn't count, and neither does the host's own preview.
+  // Count the visit, and let the host know a household opened their link. Sent from the browser, so WhatsApp's link
+  // preview (which fetches the page but never runs it) doesn't count, and neither do the host's own visits or previews.
   useEffect(() => {
-    if (!sends || !guest || !slug) return;
-    fetch(`/api/experiences/${slug}/opened`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ guest: guest.id }), keepalive: true }).catch(() => undefined);
+    if (sends && slug) countVisit(slug, guest?.id);
   }, [sends, guest, slug]);
+  useEffect(() => { if (mode === "template") countPage("sample"); }, [mode]);
+  function openInvitation() {
+    setOpened(true);
+    if (sends && slug) countPlayed(slug);
+  }
   useEffect(() => {
     if (state !== "idle" || !focusForm.current) return;
     focusForm.current = false;
@@ -278,7 +289,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         </li>)}</ul>
       </section>}
       {!draft.pending && over && <p className="inv-after theme-paper" role="note">{t.afterBanner}</p>}
-      <InvitationScene template={template} draft={draft} lang={lang} addressee={guest?.name} opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)} onDetails={() => document.getElementById("occasion-details")?.scrollIntoView({ behavior: smooth() })}/>
+      <InvitationScene template={template} draft={draft} lang={lang} addressee={guest?.name} opened={opened} onOpen={openInvitation} onReplay={() => setOpened(false)} onDetails={() => document.getElementById("occasion-details")?.scrollIntoView({ behavior: smooth() })}/>
       {draft.pending ? <section className="inv-details-section inv-pending theme-paper" id="occasion-details">
         <h2>{pendingThe} <span className="scribble">{pendingWord}</span></h2>
         <p>{t.pendingBody}</p>
@@ -387,6 +398,6 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         <ul className="inv-wishes">{wishes.map((w, i) => <li key={i} className="inv-wish"><p>{w.text}</p><span>— {w.name || t.aGuest}</span></li>)}</ul>
       </section>}
     </main>
-    <footer className="invitation-footer"><WowLinkBrand/><span>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link><Link href="/templates">{t.createYours} <span aria-hidden="true">→</span></Link></footer>
+    <footer className="invitation-footer"><WowLinkBrand/><span>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}<Link href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link></footer>
   </div>;
 }

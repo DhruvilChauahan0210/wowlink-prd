@@ -1,3 +1,4 @@
+import type { ShareChannel } from "./insights";
 import type { Attendance, Lang, TemplateId } from "./invitations";
 import type { PaletteId } from "./palette";
 
@@ -180,6 +181,31 @@ const en = {
   removeReplyFor: (name: string) => `Remove the reply from ${name}`,
   removeReplyConfirm: (personal: boolean, wish: boolean): string => `Delete this reply${wish ? " and its wish" : ""} for good? It comes out of your counts.${personal ? " Their personal link still works, so they can reply again." : ""}`,
   aReply: "a guest",
+
+  // ---------- insights ----------
+  insightsHeading: "How it’s doing",
+  peopleOpened: "People who opened it",
+  visitsN: (n: number) => `${plural(n, "visit", "visits")} in all`,
+  playedOpening: "Played the opening",
+  ofThem: (p: number) => `${p}% of them`,
+  repliedLabel: "Replied",
+  fromQr: "From the QR code",
+  qrVisits: (n: number) => (n === 1 ? "visit" : "visits"),
+  visitsChart: "Visits, last 14 days",
+  chartDay: (day: string, n: number) => `${day}: ${plural(n, "visit", "visits")}`,
+  sharedIt: "You shared it:",
+  shareNames: { whatsapp: "WhatsApp", copy: "link copied", native: "share sheet", qr: "QR code shown", personal: "personal links sent" } as Record<ShareChannel, string>,
+  notSharedYet: "You haven’t shared it from here yet.",
+  noVisitsYet: "No visits yet. Share the link and they’ll show up here.",
+  insightsNote: (since: string) => `Counted from real visits only: link previews don’t count, nor do your own visits from a browser where you’ve opened this page. Each browser counts once as a person. Nobody is identified.${since ? ` Counting started ${since}.` : ""}`,
+  countingNew: "This invitation was made before WowLink counted visits. New visits will show up here.",
+  studioTakenDown: "WowLink took this invitation down, so it can’t be updated or published again.",
+
+  // ---------- taken down after a report ----------
+  takenDown: "Taken down",
+  takenDownTitle: "WowLink took this invitation down",
+  takenDownBody: (reason: string) => `It was reported${reason ? ` (${reason.toLowerCase()})` : ""}, and it breaks WowLink’s rules. Guests can’t open it, and it can’t be published again. Your replies are still here to read and download, and you can delete it.`,
+  takenDownShare: "It was taken down, so there’s no link to share.",
 
   // ---------- celebrations, the general link and the headcount ----------
   everyCelebration: "Every celebration",
@@ -450,6 +476,29 @@ const gu: HostText = {
   removeReplyConfirm: (personal: boolean, wish: boolean) => `${wish ? "આ જવાબ અને તેની શુભેચ્છા હંમેશ માટે કાઢી નાખવાં છે?" : "આ જવાબ હંમેશ માટે કાઢી નાખવો છે?"} તે આપની ગણતરીમાંથી નીકળી જશે.${personal ? " તેમની વ્યક્તિગત લિંક ચાલુ રહેશે, એટલે તેઓ ફરી જવાબ આપી શકશે." : ""}`,
   aReply: "એક મહેમાન",
 
+  insightsHeading: "આમંત્રણ કેવું ચાલે છે",
+  peopleOpened: "ખોલનારા લોકો",
+  visitsN: (n: number) => `કુલ ${n} મુલાકાત`,
+  playedOpening: "ખોલવાની વિધિ માણી",
+  ofThem: (p: number) => `તેમાંથી ${p}%`,
+  repliedLabel: "જવાબ આપ્યો",
+  fromQr: "QR કોડથી આવ્યા",
+  qrVisits: () => "મુલાકાત",
+  visitsChart: "છેલ્લા 14 દિવસની મુલાકાતો",
+  chartDay: (day: string, n: number) => `${day}: ${n} મુલાકાત`,
+  sharedIt: "આપે શેર કર્યું:",
+  shareNames: { whatsapp: "WhatsApp", copy: "લિંક કૉપિ", native: "શેર", qr: "QR કોડ બતાવ્યો", personal: "વ્યક્તિગત લિંક મોકલી" },
+  notSharedYet: "આપે હજી અહીંથી શેર કર્યું નથી.",
+  noVisitsYet: "હજી કોઈ મુલાકાત નથી. લિંક મોકલો એટલે અહીં દેખાશે.",
+  insightsNote: (since: string) => `ફક્ત સાચી મુલાકાતો ગણાય છે: લિંકનું પ્રીવ્યૂ ગણાતું નથી, અને જે બ્રાઉઝરમાં આપે આ પાનું ખોલ્યું છે તેમાંથી આપની પોતાની મુલાકાતો પણ નહીં. દરેક બ્રાઉઝર એક વ્યક્તિ તરીકે એક જ વાર ગણાય છે. કોઈની ઓળખ થતી નથી.${since ? ` ગણતરી ${since} થી શરૂ થઈ.` : ""}`,
+  countingNew: "આ આમંત્રણ WowLink મુલાકાતો ગણતું થયું તે પહેલાં બન્યું હતું. નવી મુલાકાતો અહીં દેખાશે.",
+  studioTakenDown: "WowLink એ આ આમંત્રણ દૂર કર્યું છે, એટલે તેમાં ફેરફાર કે ફરી પ્રકાશન થઈ શકે નહીં.",
+
+  takenDown: "દૂર કરાયું",
+  takenDownTitle: "WowLink એ આ આમંત્રણ દૂર કર્યું છે",
+  takenDownBody: (reason: string) => `તેની ફરિયાદ થઈ હતી${reason ? ` (${reason})` : ""}, અને તે WowLink ના નિયમો તોડે છે. મહેમાનો તેને ખોલી શકતા નથી, અને તે ફરી પ્રકાશિત થઈ શકે નહીં. આપના જવાબો અહીં જોઈ અને ડાઉનલોડ કરી શકાય છે, અને આપ તેને કાઢી નાખી શકો છો.`,
+  takenDownShare: "તે દૂર કરાયું છે, એટલે શેર કરવા કોઈ લિંક નથી.",
+
   everyCelebration: "બધા પ્રસંગો",
   onlySome: "અમુક જ",
   noCelebrationsYet: "હજી કોઈ પ્રસંગ નથી",
@@ -585,6 +634,7 @@ const ERRORS_GU: [RegExp, string | ((...m: string[]) => string)][] = [
   [/^That personal invitation isn’t there any more\.$/, "એ વ્યક્તિગત આમંત્રણ હવે નથી."],
   [/^That wish isn’t there any more\.$/, "એ શુભેચ્છા હવે નથી."],
   [/^That reply isn’t there any more\.$/, "એ જવાબ હવે નથી."],
+  [/^WowLink took this invitation down after it was reported, so it can’t be published again\.$/, "ફરિયાદ પછી WowLink એ આ આમંત્રણ દૂર કર્યું છે, એટલે તે ફરી પ્રકાશિત થઈ શકે નહીં."],
   [/^Couldn’t save that\. Check your connection and try again\.$/, "સચવાયું નહીં. ઇન્ટરનેટ તપાસીને ફરી પ્રયાસ કરો."],
   [/^You’ve published a lot in the last hour\./, "છેલ્લા એક કલાકમાં ઘણું પ્રકાશિત કર્યું છે. થોડી વાર પછી પ્રયાસ કરો."],
   [/^Choose an occasion first\.$/, "પહેલાં પ્રસંગ પસંદ કરો."],

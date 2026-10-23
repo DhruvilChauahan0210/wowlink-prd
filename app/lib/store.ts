@@ -2,7 +2,9 @@ import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { answersFor, isGuestId, repliesUsed, validateGuest, validateGuestList, validatePublicEvents, viewFor, type AudienceView, type ByEvent, type EventFilter, type Guest, type GuestErrors } from "./guests";
+import { INVITATION_DAYS, METRIC_DAYS, bump, dayKey, emptyStats, summarise, trimDays, type InvitationStats, type Metrics, type PageMetric, type ShareChannel } from "./insights";
 import { LIMITS, type Attendance, type InvitationDraft, type TemplateId } from "./invitations";
+import type { Removal, Report, ReportReason } from "./reports";
 
 /*
  * Where published invitations and RSVPs live.
@@ -29,6 +31,10 @@ export type Experience = InvitationDraft & {
   publicEvents: EventFilter;
   /** Whether guests' wishes are shown on the invitation (the host always sees them). */
   showWishes: boolean;
+  /** Set when WowLink took it down after a report: guests can't open it and it can't be published again. */
+  removed?: Removal;
+  /** Plain counts of visits, openings and shares (see insights.ts). Missing until the first one. */
+  stats?: InvitationStats;
 };
 export type Rsvp = {
   id: string;
@@ -61,7 +67,7 @@ export type GuestView = { experience: PublicExperience; guest: Pick<Guest, "id" 
 
 type StoredExperience = Experience & { keyHash: string };
 /** `retired`: the slugs of deleted invitations, so an old link shared on WhatsApp never opens someone else's. Nothing else of them is kept. */
-type Db = { experiences: StoredExperience[]; rsvps: Rsvp[]; retired: string[] };
+type Db = { experiences: StoredExperience[]; rsvps: Rsvp[]; retired: string[]; reports: Report[]; metrics: Metrics };
 
 // Tests point this at their own file so they never touch real data.
 const FILE = process.env.WOWLINK_DATA_FILE ? path.resolve(process.env.WOWLINK_DATA_FILE) : path.join(process.cwd(), ".data", "wowlink.json");
@@ -81,9 +87,9 @@ const withDefaults = (e: StoredExperience): StoredExperience => ({ ...e, events:
 async function load(): Promise<Db> {
   try {
     const db = JSON.parse(await fs.readFile(FILE, "utf8")) as Db;
-    return { experiences: (db.experiences ?? []).map(withDefaults), rsvps: db.rsvps ?? [], retired: db.retired ?? [] };
+    return { experiences: (db.experiences ?? []).map(withDefaults), rsvps: db.rsvps ?? [], retired: db.retired ?? [], reports: db.reports ?? [], metrics: db.metrics ?? {} };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { experiences: [], rsvps: [], retired: [] };
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { experiences: [], rsvps: [], retired: [], reports: [], metrics: {} };
     throw error;
   }
 }
@@ -140,6 +146,8 @@ const publicWishes = (db: Db, e: Experience): PublicWish[] | null =>
 /** The invitation as one link shows it: only the fields a guest may see, and only their celebrations. */
 const toPublic = (db: Db, e: Experience, filter: EventFilter): PublicExperience => ({ slug: e.slug, templateId: e.templateId, ...viewFor(draftOf(e), filter), wishes: publicWishes(db, e) });
 const strip = ({ keyHash: _keyHash, ...experience }: StoredExperience): Experience => experience;
+/** What guests can reach: published, and not taken down. */
+const isLive = (e: Experience) => e.status === "published" && !e.removed;
 
 // ---------- experiences ----------
 
@@ -147,6 +155,8 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft)
   return write((db) => {
     const key = randomBytes(24).toString("base64url");
     const now = new Date().toISOString();
+    bump(db.metrics, "published", Date.now());
+    bump(db.metrics, `published:${templateId}`, Date.now());
     const stored: StoredExperience = {
       ...draft,
       id: randomUUID(),
@@ -158,6 +168,7 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft)
       guests: [],
       publicEvents: "all",
       showWishes: false,
+      stats: emptyStats(now),
       keyHash: hash(key),
     };
     db.experiences.push(stored);
@@ -168,7 +179,7 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft)
 /** The general link's view of a published invitation, or null if it doesn't exist or has been unpublished. */
 export function getPublished(slug: string) {
   return read((db) => {
-    const found = db.experiences.find((e) => e.slug === slug && e.status === "published");
+    const found = db.experiences.find((e) => e.slug === slug && isLive(e));
     return found ? toPublic(db, found, found.publicEvents) : null;
   });
 }
@@ -177,7 +188,7 @@ export function getPublished(slug: string) {
 export function getGuestView(slug: string, guestId: string) {
   return read((db): GuestView | null => {
     if (!isGuestId(guestId)) return null;
-    const found = db.experiences.find((e) => e.slug === slug && e.status === "published");
+    const found = db.experiences.find((e) => e.slug === slug && isLive(e));
     const guest = found?.guests.find((g) => g.id === guestId);
     if (!found || !guest) return null;
     const reply = db.rsvps.find((r) => r.experienceId === found.id && r.guestId === guest.id);
@@ -204,12 +215,15 @@ export function getOwned(slug: string, key: string) {
 }
 
 type Patch = { templateId?: TemplateId; draft?: InvitationDraft; status?: Experience["status"]; publicEvents?: unknown; showWishes?: boolean };
+type UpdateResult = { ok: true; experience: Experience } | { ok: false; reason: "not-yours" | "invalid" | "removed" };
 
 /** Edit an invitation. `publicEvents` is checked here, against the schedule as it is after this edit. */
 export function updateOwned(slug: string, key: string, patch: Patch) {
-  return write((db): { ok: true; experience: Experience } | { ok: false; reason: "not-yours" | "invalid" } => {
+  return write((db): UpdateResult => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
+    // A taken-down invitation can't be put back in front of guests (its host can still delete it).
+    if (found.removed && patch.status === "published") return { ok: false, reason: "removed" };
     const publicEvents = patch.publicEvents === undefined ? undefined : validatePublicEvents(patch.publicEvents, patch.draft?.events ?? found.events);
     if (publicEvents === null) return { ok: false, reason: "invalid" };
     if (patch.templateId) found.templateId = patch.templateId;
@@ -233,6 +247,7 @@ export function deleteOwned(slug: string, key: string) {
     const [gone] = db.experiences.splice(index, 1);
     const before = db.rsvps.length;
     db.rsvps = db.rsvps.filter((r) => r.experienceId !== gone.id);
+    db.reports = db.reports.filter((r) => r.experienceId !== gone.id);
     db.retired.push(gone.slug);
     return { ok: true, replies: before - db.rsvps.length };
   });
@@ -306,6 +321,15 @@ export function updateGuest(slug: string, key: string, guestId: string, input: u
 
 const OPEN_GAP_MS = 10 * 60 * 1000;
 
+/** Record that a household opened their link; refreshes within ten minutes aren't recorded again. */
+function opened(guest: Guest, now: number) {
+  if (guest.lastOpenedAt && now - Date.parse(guest.lastOpenedAt) < OPEN_GAP_MS) return false;
+  const at = new Date(now).toISOString();
+  guest.openedAt ??= at;
+  guest.lastOpenedAt = at;
+  return true;
+}
+
 /**
  * A household opened their personal link (reported by the page itself, so link previews don't count). Refreshes
  * within ten minutes aren't recorded again, which keeps the file from being rewritten on every visit.
@@ -313,14 +337,10 @@ const OPEN_GAP_MS = 10 * 60 * 1000;
 export function markOpened(slug: string, guestId: string) {
   return write((db): { ok: boolean } => {
     if (!isGuestId(guestId)) return { ok: false };
-    const found = db.experiences.find((e) => e.slug === slug && e.status === "published");
+    const found = db.experiences.find((e) => e.slug === slug && isLive(e));
     const guest = found?.guests.find((g) => g.id === guestId);
     if (!guest) return { ok: false };
-    const now = new Date();
-    if (guest.lastOpenedAt && now.getTime() - Date.parse(guest.lastOpenedAt) < OPEN_GAP_MS) return { ok: false };
-    guest.openedAt ??= now.toISOString();
-    guest.lastOpenedAt = now.toISOString();
-    return { ok: true };
+    return { ok: opened(guest, Date.now()) };
   });
 }
 
@@ -348,7 +368,7 @@ type RsvpResult = { ok: true; updated: boolean } | { ok: false; reason: "missing
  */
 export function addRsvp(slug: string, input: RsvpInput) {
   return write((db): RsvpResult => {
-    const found = db.experiences.find((e) => e.slug === slug && e.status === "published");
+    const found = db.experiences.find((e) => e.slug === slug && isLive(e));
     if (!found) return { ok: false, reason: "missing" };
     const guest = isGuestId(input.guestId) ? found.guests.find((g) => g.id === input.guestId) : undefined;
     if (input.guestId !== undefined && !guest) return { ok: false, reason: "guest" };
@@ -367,6 +387,7 @@ export function addRsvp(slug: string, input: RsvpInput) {
     }
     // Households with a personal link always get through: their place was kept when the host added them.
     if (!guest && repliesUsed(rsvpsOf(db, found), found.guests) >= LIMITS.rsvpsPerEvent) return { ok: false, reason: "full" };
+    bump(db.metrics, "reply", Date.now());
     db.rsvps.push({ id: randomUUID(), experienceId: found.id, ...reply, ...(guest && { guestId: guest.id }), createdAt: now });
     return { ok: true, updated: false };
   });
@@ -397,5 +418,172 @@ export function setWishHidden(slug: string, key: string, rsvpId: string, hidden:
     if (hidden) reply.wishHidden = true;
     else delete reply.wishHidden;
     return { ok: true };
+  });
+}
+
+// ---------- counting (see insights.ts) ----------
+
+const statsOf = (e: Experience) => (e.stats ??= emptyStats(new Date().toISOString()));
+
+type Visit = { first: boolean; viaQr: boolean; guestId?: string };
+
+/**
+ * Someone opened an invitation: reported by the page once it's running, so link previews and crawlers don't count,
+ * and not by the host's own browser. `first` is the browser's first visit, so each person is counted once.
+ */
+export function recordVisit(slug: string, visit: Visit) {
+  return write((db): { ok: boolean } => {
+    const found = db.experiences.find((e) => e.slug === slug && isLive(e));
+    if (!found) return { ok: false };
+    const now = Date.now();
+    const stats = statsOf(found);
+    stats.views += 1;
+    if (visit.first) stats.visitors += 1;
+    if (visit.viaQr) stats.viaQr += 1;
+    stats.days[dayKey(now)] = (stats.days[dayKey(now)] ?? 0) + 1;
+    trimDays(stats.days, INVITATION_DAYS, now);
+    bump(db.metrics, "view", now);
+    if (visit.first) bump(db.metrics, "visitor", now);
+    if (visit.viaQr) bump(db.metrics, "via-qr", now);
+    const guest = isGuestId(visit.guestId) ? found.guests.find((g) => g.id === visit.guestId) : undefined;
+    if (guest) opened(guest, now);
+    trimDays(db.metrics, METRIC_DAYS, now);
+    return { ok: true };
+  });
+}
+
+/** Someone played the opening (once per browser). */
+export function recordPlayed(slug: string) {
+  return write((db): { ok: boolean } => {
+    const found = db.experiences.find((e) => e.slug === slug && isLive(e));
+    if (!found) return { ok: false };
+    statsOf(found).played += 1;
+    bump(db.metrics, "played", Date.now());
+    return { ok: true };
+  });
+}
+
+/** A guest followed "Create yours free" from an invitation: how WowLink spreads. */
+export function recordAttribution(slug: string) {
+  return write((db): { ok: boolean } => {
+    if (!db.experiences.some((e) => e.slug === slug && isLive(e))) return { ok: false };
+    bump(db.metrics, "attribution", Date.now());
+    return { ok: true };
+  });
+}
+
+/** The host shared their invitation (or a personal link) one way or another. Owner only. */
+export function recordShare(slug: string, key: string, channel: ShareChannel) {
+  return write((db): { ok: boolean } => {
+    const found = db.experiences.find((e) => e.slug === slug);
+    if (!found || !keyMatches(found.keyHash, key) || found.removed) return { ok: false };
+    const stats = statsOf(found);
+    stats.shares[channel] = (stats.shares[channel] ?? 0) + 1;
+    bump(db.metrics, `share:${channel}`, Date.now());
+    return { ok: true };
+  });
+}
+
+/** A visit to one of WowLink's own pages (the studio, a sample, an occasion's page). */
+export function recordPageView(page: PageMetric) {
+  return write((db) => {
+    bump(db.metrics, page, Date.now());
+    return { ok: true };
+  });
+}
+
+// ---------- reports and taking down (WowLink's admin) ----------
+
+/** The most open reports one invitation keeps, so it can't be flooded: newer ones replace the oldest. */
+const OPEN_REPORTS_MAX = 50;
+
+export function addReport(slug: string, reason: ReportReason, details: string) {
+  return write((db): { ok: true } | { ok: false; reason: "missing" } => {
+    const found = db.experiences.find((e) => e.slug === slug && isLive(e));
+    if (!found) return { ok: false, reason: "missing" };
+    // At the cap, the oldest open report makes way, so the latest (often the most telling) is always there.
+    const open = db.reports.filter((r) => r.experienceId === found.id && !r.resolvedAt);
+    if (open.length >= OPEN_REPORTS_MAX) db.reports.splice(db.reports.indexOf(open[0]), 1);
+    db.reports.push({ id: randomUUID(), experienceId: found.id, reason, details, createdAt: new Date().toISOString() });
+    bump(db.metrics, "report", Date.now());
+    return { ok: true };
+  });
+}
+
+/** What the admin sees of an invitation: enough to judge a report, not its guest list or replies. */
+export type AdminInvitation = Pick<Experience, "slug" | "templateId" | "title" | "date" | "venue" | "status" | "createdAt" | "removed"> & { households: number; replies: number; reports: Report[] };
+
+const forAdmin = (db: Db, e: StoredExperience): AdminInvitation => ({
+  slug: e.slug, templateId: e.templateId, title: e.title, date: e.date, venue: e.venue, status: e.status, createdAt: e.createdAt, removed: e.removed,
+  households: e.guests.length,
+  replies: rsvpsOf(db, e).length,
+  reports: db.reports.filter((r) => r.experienceId === e.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+});
+
+/** Every invitation with reports: those still to look at first (most reported first), then the rest, latest first. */
+export function reportedInvitations() {
+  return read((db) => {
+    const reported = db.experiences.filter((e) => db.reports.some((r) => r.experienceId === e.id)).map((e) => forAdmin(db, e));
+    const open = (i: AdminInvitation) => i.reports.filter((r) => !r.resolvedAt).length;
+    return reported.sort((a, b) => open(b) - open(a) || b.reports[0].createdAt.localeCompare(a.reports[0].createdAt));
+  });
+}
+
+export function adminInvitation(slug: string) {
+  return read((db) => {
+    const found = db.experiences.find((e) => e.slug === slug);
+    return found ? forAdmin(db, found) : null;
+  });
+}
+
+/** The invitation as its general link shows guests, whatever its state: for the admin to look at before deciding. */
+export function adminView(slug: string) {
+  return read((db) => {
+    const found = db.experiences.find((e) => e.slug === slug);
+    return found ? toPublic(db, found, "all") : null;
+  });
+}
+
+export type Moderation = "take-down" | "restore" | "dismiss";
+
+/** Take an invitation down (its open reports count as acted on), put it back, or dismiss its open reports. */
+export function moderate(slug: string, action: Moderation) {
+  return write((db): { ok: true; invitation: AdminInvitation } | { ok: false } => {
+    const found = db.experiences.find((e) => e.slug === slug);
+    if (!found) return { ok: false };
+    const now = new Date().toISOString();
+    const open = db.reports.filter((r) => r.experienceId === found.id && !r.resolvedAt);
+    if (action === "take-down") {
+      // The most common reason given, for the host's notice.
+      const counts = new Map<ReportReason, number>();
+      for (const report of open) counts.set(report.reason, (counts.get(report.reason) ?? 0) + 1);
+      const reason = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
+      found.removed = { at: now, ...(reason && { reason }) };
+      for (const report of open) Object.assign(report, { resolvedAt: now, outcome: "taken-down" });
+      bump(db.metrics, "taken-down", Date.now());
+    } else if (action === "restore") {
+      delete found.removed;
+    } else {
+      for (const report of open) Object.assign(report, { resolvedAt: now, outcome: "dismissed" });
+    }
+    return { ok: true, invitation: forAdmin(db, found) };
+  });
+}
+
+/** The app's numbers over the last `days` days, and how things stand now. */
+export function appNumbers(days: number) {
+  return read((db) => {
+    const now = Date.now();
+    const live = db.experiences.filter(isLive).length;
+    return {
+      ...summarise(db.metrics, days, now, ["view", "published", "reply"]),
+      now: {
+        live,
+        unpublished: db.experiences.filter((e) => e.status === "unpublished" && !e.removed).length,
+        takenDown: db.experiences.filter((e) => e.removed).length,
+        replies: db.rsvps.length,
+        openReports: db.reports.filter((r) => !r.resolvedAt).length,
+      },
+    };
   });
 }

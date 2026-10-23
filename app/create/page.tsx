@@ -6,6 +6,7 @@ import { EVENT_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate,
 import { WowLinkBrand } from "../ui/brand";
 import { ArtImage } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
+import { countPage } from "../ui/counting";
 import { CopyField, ShareTools } from "../ui/share-tools";
 import { HostLangSwitch, useHostLang } from "../ui/host-lang";
 import { hostMessage, type HostText } from "../lib/host-i18n";
@@ -28,6 +29,8 @@ export default function CreatePage() {
   const [status, setStatus] = useState<(h: HostText) => string>(() => (t: HostText) => t.canvasReady);
   const [mobilePanel, setMobilePanel] = useState<"edit" | "preview">("edit");
   const [owned, setOwned] = useState<Owned | null>(null);
+  // Taken down by WowLink after a report: it opens, but can't be updated.
+  const [takenDown, setTakenDown] = useState(false);
   const [errors, setErrors] = useState<DraftErrors>({});
   // After a failed publish, show what's wrong next to each schedule entry (and keep showing it until fixed).
   const [checkEvents, setCheckEvents] = useState(false);
@@ -44,6 +47,7 @@ export default function CreatePage() {
 
   useEffect(() => {
     setOrigin(location.origin);
+    countPage("studio");
     const params = new URLSearchParams(location.search);
     const edit = params.get("edit");
     if (edit) {
@@ -78,7 +82,8 @@ export default function CreatePage() {
         invitations: (experience.guests ?? []).filter(g => g.events !== "all" && g.events.includes(e.id)).length,
       }]));
       setOwned({ slug, key });
-      setStatus(() => (t: HostText) => t.editingLive);
+      setTakenDown(!!experience.removed);
+      setStatus(() => (t: HostText) => (experience.removed ? t.studioTakenDown : t.editingLive));
     } catch {
       setStatus(() => (t: HostText) => t.couldntOpen);
     }
@@ -94,7 +99,7 @@ export default function CreatePage() {
       return next;
     });
     setDirty(true);
-    setStatus(() => (t: HostText) => (owned ? t.notLiveYet : t.unsaved));
+    setStatus(() => (t: HostText) => (takenDown ? t.studioTakenDown : owned ? t.notLiveYet : t.unsaved));
   }
 
   function setEvents(next: (events: ScheduleItem[]) => ScheduleItem[]) {
@@ -106,7 +111,7 @@ export default function CreatePage() {
       return rest;
     });
     setDirty(true);
-    setStatus(() => (t: HostText) => (owned ? t.notLiveYet : t.unsaved));
+    setStatus(() => (t: HostText) => (takenDown ? t.studioTakenDown : owned ? t.notLiveYet : t.unsaved));
   }
   const updateEvent = (id: string, patch: Partial<ScheduleItem>) => setEvents(events => events.map(e => (e.id === id ? { ...e, ...patch } : e)));
   function addEvent(name: string) {
@@ -137,7 +142,7 @@ export default function CreatePage() {
     if (!owned) setDraft(drafts.current[id] ?? readDraft(id) ?? initialDraft(selected));
     setOpened(false);
     setDirty(true);
-    setStatus(() => (t: HostText) => (owned ? t.notLiveYet : t.unsaved));
+    setStatus(() => (t: HostText) => (takenDown ? t.studioTakenDown : owned ? t.notLiveYet : t.unsaved));
     if (!owned) history.replaceState(null, "", `/create?template=${id}`);
   }
 
@@ -204,14 +209,14 @@ export default function CreatePage() {
   return <div className="cinema studio-page" aria-busy={!ready} lang={lang}>
     <header className="studio-header theme-paper">
       <WowLinkBrand/>
-      <span className="studio-header-label">{h.studioLabel(!!owned)}</span>
+      <span className="studio-header-label">{takenDown ? h.takenDown : h.studioLabel(!!owned)}</span>
       <div className="studio-header-actions">
         <HostLangSwitch h={h} toggle={toggle}/>
         {owned
           ? <Link className="studio-fullscreen" href={`/manage/${owned.slug}`}>{h.repliesLink}</Link>
           : <Link className="studio-fullscreen" href={`/e/preview?template=${templateId}&draft=1`} target="_blank" rel="noreferrer" onClick={event => { if (!saveDraft()) event.preventDefault(); }}>{h.fullPreview}</Link>}
         <button className="cin-cta cin-cta-outline studio-save studio-save-draft" onClick={saveDraft} disabled={!ready}>{h.saveDraft}</button>
-        <button className="cin-cta cin-cta-light studio-save" onClick={() => void publish()} disabled={!ready || publishing}>{publishing ? (owned ? h.updating : h.publishing) : owned ? h.update : h.publish}</button>
+        <button className="cin-cta cin-cta-light studio-save" onClick={() => void publish()} disabled={!ready || publishing || takenDown}>{publishing ? (owned ? h.updating : h.publishing) : owned ? h.update : h.publish}</button>
       </div>
     </header>
     <div className="studio-mobile-tabs theme-paper" role="tablist" aria-label={h.editorView}><button role="tab" aria-selected={mobilePanel === "edit"} aria-controls="studio-edit" onClick={() => setMobilePanel("edit")}>{h.detailsTab}</button><button role="tab" aria-selected={mobilePanel === "preview"} aria-controls="studio-live" onClick={() => setMobilePanel("preview")}>{h.previewTab}</button></div>
@@ -279,7 +284,7 @@ export default function CreatePage() {
           <div className="studio-field studio-thanks-field"><label htmlFor="thanks">{h.thanksLabel} <span>{h.optional}</span></label><p className="studio-help">{h.thanksHelp}</p><textarea id="thanks" rows={3} value={draft.thanks ?? ""} maxLength={500} placeholder={h.thanksPlaceholder} onChange={event => update("thanks", event.target.value)} {...described("thanks")}/><span className="studio-character-count">{(draft.thanks ?? "").length} / 500</span>{fieldError("thanks")}</div>
         </fieldset>
         <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status(h)}</span></div>
-        <p className="studio-storage-note">{owned ? <>{h.liveAt} <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. {h.draftsAlsoKept}</> : h.draftsSaved}</p>
+        <p className="studio-storage-note">{owned && !takenDown ? <>{h.liveAt} <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. {h.draftsAlsoKept}</> : h.draftsSaved}</p>
       </section>
       <aside className="studio-preview-panel theme-paper" id="studio-live" aria-label={h.livePreviewLabel}><div className="studio-preview-inner"><div className="studio-preview-toolbar"><span className="studio-live"><i/>{h.livePreview}</span><button onClick={() => setOpened(false)} aria-label={h.replayLabel}>{h.replay}</button></div><div className="studio-canvas-frame"><InvitationScene template={template} draft={draft} compact opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)}/></div><div className="studio-preview-bottom"><span>{h.occasionNames[template.id] ?? template.category}</span><span>{h.tapToTry}</span></div></div></aside>
     </main>
@@ -288,7 +293,7 @@ export default function CreatePage() {
       {owned && <div className="sketch-card publish-card">
         <span className="cin-note">{h.itsLive}</span>
         <h2 id="publish-title">{h.readyToShare}</h2>
-        <ShareTools url={`${origin}/e/${owned.slug}`} title={draft.title} lang={draft.language} ui={lang}/>
+        <ShareTools url={`${origin}/e/${owned.slug}`} title={draft.title} lang={draft.language} ui={lang} owner={{ slug: owned.slug, ownerKey: owned.key }}/>
         <div className="publish-private">
           <h3>{h.privateLink}</h3>
           <p>{h.privateLinkBody} <Link href="/mine">{h.myInvitations}</Link>.</p>

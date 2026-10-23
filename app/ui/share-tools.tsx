@@ -5,12 +5,16 @@ import QRCode from "qrcode";
 import { HOST_TEXT } from "../lib/host-i18n";
 import { MESSAGES } from "../lib/i18n";
 import type { Lang } from "../lib/invitations";
+import { countShare } from "./counting";
 
-/** `lang`: the invitation's language, for the message guests receive. `ui`: the host's language, for the buttons. */
-type Props = { url: string; title: string; lang?: Lang; ui?: Lang };
+/**
+ * `lang`: the invitation's language, for the message guests receive. `ui`: the host's language, for the buttons.
+ * `owner`: the invitation's slug and manage key, so the host's insights can count how it was shared.
+ */
+type Props = { url: string; title: string; lang?: Lang; ui?: Lang; owner?: { slug: string; ownerKey: string } };
 
 /** Copy, WhatsApp, the phone's share sheet, and a printable QR code for a published invitation. */
-export function ShareTools({ url, title, lang = "en", ui = "en" }: Props) {
+export function ShareTools({ url, title, lang = "en", ui = "en", owner }: Props) {
   const h = HOST_TEXT[ui];
   const fieldId = useId();
   const [copied, setCopied] = useState(false);
@@ -19,17 +23,21 @@ export function ShareTools({ url, title, lang = "en", ui = "en" }: Props) {
   const [showQr, setShowQr] = useState(false);
   const invited = MESSAGES[lang].invited(title);
   const message = `${invited}\n${url}`;
+  // The printed code carries ?via=qr, so visits from it can be counted (the page removes it from the address).
+  const qrUrl = `${url}?via=qr`;
+  const counted = (channel: Parameters<typeof countShare>[1]) => { if (owner) countShare(owner, channel); };
 
   useEffect(() => setCanShare(typeof navigator !== "undefined" && "share" in navigator), []);
   useEffect(() => {
     if (!showQr || qr) return;
-    QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#241a13", light: "#fbf6ec" } }).then(setQr, () => setQr(""));
-  }, [showQr, qr, url]);
+    QRCode.toString(qrUrl, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#241a13", light: "#fbf6ec" } }).then(setQr, () => setQr(""));
+  }, [showQr, qr, qrUrl]);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      counted("copy");
       setTimeout(() => setCopied(false), 2200);
     } catch {
       // Clipboard can be blocked (insecure origin, permissions); select the field so it can be copied by hand.
@@ -44,9 +52,9 @@ export function ShareTools({ url, title, lang = "en", ui = "en" }: Props) {
       <button type="button" className="cin-cta cin-cta-light" onClick={copy}>{copied ? h.copied : h.copyLink}</button>
     </div>
     <div className="share-actions">
-      <a className="share-chip" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer">{h.whatsApp}</a>
-      {canShare && <button type="button" className="share-chip" onClick={() => navigator.share({ title, text: invited, url }).catch(() => undefined)}>{h.shareSheet}</button>}
-      <button type="button" className="share-chip" aria-expanded={showQr} onClick={() => setShowQr(!showQr)}>{showQr ? h.hideQr : h.qrCode}</button>
+      <a className="share-chip" href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer" onClick={() => counted("whatsapp")}>{h.whatsApp}</a>
+      {canShare && <button type="button" className="share-chip" onClick={() => navigator.share({ title, text: invited, url }).then(() => counted("native"), () => undefined)}>{h.shareSheet}</button>}
+      <button type="button" className="share-chip" aria-expanded={showQr} onClick={() => { if (!showQr) counted("qr"); setShowQr(!showQr); }}>{showQr ? h.hideQr : h.qrCode}</button>
       <a className="share-chip" href={url} target="_blank" rel="noreferrer">{h.open}</a>
     </div>
     <p className="share-status" role="status">{copied ? h.linkCopied : ""}</p>

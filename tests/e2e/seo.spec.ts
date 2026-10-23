@@ -19,7 +19,7 @@ test("the sitemap lists the public pages and nothing private", async ({ request 
 
 test("robots.txt keeps crawlers out of the private pages, and points to the sitemap", async ({ request }) => {
   const text = await (await request.get("/robots.txt")).text();
-  for (const path of ["/api/", "/manage/", "/mine"]) expect(text).toContain(`Disallow: ${path}`);
+  for (const path of ["/api/", "/manage/", "/mine", "/admin"]) expect(text).toContain(`Disallow: ${path}`);
   // Invitations carry noindex instead, which crawlers (and link-preview bots) can only read if they may fetch them.
   expect(text).not.toContain("Disallow: /e/");
   expect(text).toMatch(/Sitemap: http:\/\/localhost:3100\/sitemap\.xml/);

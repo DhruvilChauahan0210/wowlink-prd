@@ -37,6 +37,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
   const result = await updateOwned(slug, keyFrom(request), patch);
   if (result.ok) return Response.json({ experience: result.experience });
+  if (result.reason === "removed") return Response.json({ error: "WowLink took this invitation down after it was reported, so it can’t be published again." }, { status: 403 });
   return result.reason === "invalid" ? Response.json({ error: "Pick at least one celebration for the general link." }, { status: 422 }) : notYours();
 }
 
