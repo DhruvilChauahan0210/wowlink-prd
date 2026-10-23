@@ -14,16 +14,16 @@ for (const [family, file, style] of [["Fraunces", "fraunces.woff2", "normal"], [
   loadFont({ family, url: staticFile(`fonts/${file}`), style, weight: "100 900" });
 }
 
-/** How many frames the current scene really has (its voice line's length). */
-export const SceneLength = createContext(0);
+/** The current line's words and when each is said (seconds from the line's start). */
+export type Word = { w: string; s: number; e: number };
+export const SceneWords = createContext<Word[]>([]);
 
-/**
- * The scene's timing, fitted to its line: each scene was designed `base` frames long, and t(n) moves frame n to the
- * same moment in the real length, so a new script never leaves a scene's animations out of step.
- */
-export function useT(base: number) {
-  const length = useContext(SceneLength) || base;
-  return (n: number) => Math.round((n * length) / base);
+/** The frame (from the scene's start) at which a word is said; `fallback` if the line doesn't have it. */
+export function useWord(word: string, fallback = 0, nth = 0) {
+  const words = useContext(SceneWords);
+  const { fps } = useVideoConfig();
+  const found = words.filter((w) => w.w.replace(/[^\w]/g, "").toLowerCase() === word.toLowerCase())[nth];
+  return found ? Math.round(found.s * fps) : fallback;
 }
 
 /** The frame size, and whether this is the wide (16:9) version. */
@@ -46,14 +46,6 @@ export function useRange(from: number, to: number) {
 }
 
 const GRAIN = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .07 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
-
-/** The page: paper (or the dark night of the end card), with grain and a soft glow. */
-export function Paper({ dark = false }: { dark?: boolean }) {
-  return <AbsoluteFill style={{ background: dark ? C.dark : C.paper }}>
-    <AbsoluteFill style={{ background: dark ? "radial-gradient(60% 45% at 50% 42%, #3a2a1c 0%, transparent 70%)" : "radial-gradient(70% 50% at 50% 35%, #fbf4e6 0%, transparent 75%)" }}/>
-    <AbsoluteFill style={{ backgroundImage: GRAIN, opacity: dark ? 0.5 : 0.9 }}/>
-  </AbsoluteFill>;
-}
 
 /** Festive bunting across the top, dropping in flag by flag. */
 export function Bunting({ delay = 0, top = 0 }: { delay?: number; top?: number }) {
@@ -145,18 +137,6 @@ export function Pop({ delay = 0, children, style, from = 0.6 }: { delay?: number
   return <div style={{ ...style, opacity: Math.min(1, p * 1.4), transform: `${style?.transform ?? ""} translateY(${(1 - p) * 40}px) scale(${from + (1 - from) * p})` }}>{children}</div>;
 }
 
-/** A hand-drawn pill: an icon and a few words. */
-export function Chip({ children, dark = false, size = 40 }: { children: ReactNode; dark?: boolean; size?: number }) {
-  return <div style={{ display: "inline-flex", alignItems: "center", gap: size * 0.35, padding: `${size * 0.32}px ${size * 0.6}px`, borderRadius: 999, background: dark ? C.dark : C.surface, color: dark ? C.cream : C.ink, border: `3px solid ${C.ink}`, boxShadow: `5px 6px 0 ${dark ? C.marigold : C.red}`, font: `600 ${size}px/1.05 ${F.sans}`, whiteSpace: "nowrap" }}>{children}</div>;
-}
-
-/** A hand-drawn underline, drawing left to right. */
-export function Underline({ draw, width, color = C.red, thickness = 7 }: { draw: number; width: number; color?: string; thickness?: number }) {
-  return <svg width={width} height={22} viewBox="0 0 200 22" preserveAspectRatio="none" style={{ position: "absolute", left: 0, bottom: -16, overflow: "visible" }}>
-    <path d="M3 13C40 6 80 17 120 10S180 8 197 12" fill="none" stroke={color} strokeWidth={thickness} strokeLinecap="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - draw} vectorEffect="non-scaling-stroke"/>
-  </svg>;
-}
-
 /** A twinkling star or flower, drawn like WowLink's doodles. */
 export function Sparkle({ x, y, size = 50, delay = 0, color = C.marigold, kind = "star" }: { x: number; y: number; size?: number; delay?: number; color?: string; kind?: "star" | "flower" }) {
   const frame = useCurrentFrame();
@@ -168,4 +148,99 @@ export function Sparkle({ x, y, size = 50, delay = 0, color = C.marigold, kind =
   return <svg width={size} height={size} viewBox="0 0 50 50" style={{ position: "absolute", left: x - size / 2, top: y - size / 2, transform: `scale(${p * twinkle}) rotate(${(1 - p) * -90 + (frame - delay) * 0.6}deg)`, opacity: p }}>
     <path d={path} fill="none" stroke={color} strokeWidth={3.2} strokeLinejoin="round" strokeLinecap="round"/>
   </svg>;
+}
+
+// ---------- the Reels kit: backgrounds, impacts, stickers, confetti ----------
+
+export type Ground = "paper" | "marigold" | "red" | "dark";
+const GROUNDS: Record<Ground, { base: string; glow: string; ray: string }> = {
+  paper: { base: C.paper, glow: "#fbf4e6", ray: "#efe2c8" },
+  marigold: { base: "#e7a03a", glow: "#f6c463", ray: "#eeb04c" },
+  red: { base: "#a8341f", glow: "#cf5236", ray: "#b6402a" },
+  dark: { base: C.dark, glow: "#3a2a1c", ray: "#251c16" },
+};
+
+/** A scene's background: a colour, a soft glow, slowly turning sunburst rays (or dots on paper), and grain. */
+export function Ground({ kind, rays = kind !== "paper" }: { kind: Ground; rays?: boolean }) {
+  const frame = useCurrentFrame();
+  const { width, height } = useShape();
+  const g = GROUNDS[kind];
+  const size = Math.hypot(width, height) * 1.1;
+  return <AbsoluteFill style={{ background: g.base, overflow: "hidden" }}>
+    {rays && <svg width={size} height={size} viewBox="-50 -50 100 100" style={{ position: "absolute", left: width / 2 - size / 2, top: height * 0.55 - size / 2, transform: `rotate(${frame * 0.25}deg)` }}>
+      {Array.from({ length: 18 }, (_, i) => {
+        const a = (i / 18) * Math.PI * 2;
+        const b = a + Math.PI / 18;
+        return <path key={i} d={`M0 0L${50 * Math.cos(a) * 1.5} ${50 * Math.sin(a) * 1.5}L${50 * Math.cos(b) * 1.5} ${50 * Math.sin(b) * 1.5}Z`} fill={g.ray}/>;
+      })}
+    </svg>}
+    {!rays && <AbsoluteFill style={{ backgroundImage: `radial-gradient(${C.ink}22 2.2px, transparent 2.6px)`, backgroundSize: "44px 44px", backgroundPosition: `${frame * 0.4}px ${frame * 0.8}px` }}/>}
+    <AbsoluteFill style={{ background: `radial-gradient(55% 40% at 50% 55%, ${g.glow}cc 0%, transparent 75%)` }}/>
+    <AbsoluteFill style={{ backgroundImage: GRAIN, opacity: kind === "dark" ? 0.45 : 0.75 }}/>
+  </AbsoluteFill>;
+}
+
+/** A quick shake after each of `at` (frames): an offset to add to a transform. */
+export function shake(frame: number, at: number[], amp = 22, frames = 12) {
+  let x = 0;
+  let y = 0;
+  for (const a of at) {
+    const t = frame - a;
+    if (t < 0 || t > frames) continue;
+    const k = amp * Math.pow(1 - t / frames, 2);
+    x += k * Math.sin(t * 2.7);
+    y += k * Math.cos(t * 3.3) * 0.6;
+  }
+  return { x, y };
+}
+
+/** A rubber stamp slamming down: big, tilted, in a thick box. */
+export function Stamp({ at, children, color = C.red, ink = C.cream, rotate = -10, size = 120, style }: { at: number; children: ReactNode; color?: string; ink?: string; rotate?: number; size?: number; style?: CSSProperties }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  if (frame < at) return null;
+  const p = spring({ frame: frame - at, fps, config: { damping: 11, stiffness: 320, mass: 0.7 } });
+  return <div style={{ position: "absolute", ...style, transform: `translate(-50%, -50%) rotate(${rotate}deg) scale(${2.6 - 1.6 * p})`, opacity: Math.min(1, p * 3) }}>
+    <div style={{ background: color, color: ink, border: `${size * 0.07}px solid ${C.dark}`, borderRadius: size * 0.16, padding: `${size * 0.12}px ${size * 0.32}px`, font: `900 ${size}px/1 ${F.sans}`, letterSpacing: "-0.02em", whiteSpace: "nowrap", boxShadow: `0 ${size * 0.12}px 0 ${C.dark}` }}>{children}</div>
+  </div>;
+}
+
+/** An emoji sticker that pops on and wobbles. */
+export function Sticker({ at, emoji, size = 130, x, y, rotate = 0 }: { at: number; emoji: string; size?: number; x: number; y: number; rotate?: number }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  if (frame < at) return null;
+  const p = spring({ frame: frame - at, fps, config: { damping: 7, stiffness: 220 } });
+  const wobble = Math.sin((frame - at) / 5) * 6;
+  return <div style={{ position: "absolute", left: x, top: y, fontSize: size, lineHeight: 1, transform: `translate(-50%, -50%) scale(${p}) rotate(${rotate + wobble}deg)`, filter: "drop-shadow(0 10px 0 rgba(31,24,19,.25))" }}>{emoji}</div>;
+}
+
+const hash = (n: number) => {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+/** A burst of confetti from (x, y) at frame `at`: paper bits flying out and falling. */
+export function Confetti({ at, x, y, count = 36, power = 1, colors = [C.red, C.marigold, C.cream, "#e5739a", C.gold] }: { at: number; x: number; y: number; count?: number; power?: number; colors?: string[] }) {
+  const frame = useCurrentFrame();
+  const t = (frame - at) / 30;
+  if (t < 0 || t > 2.4) return null;
+  return <>
+    {Array.from({ length: count }, (_, i) => {
+      const angle = hash(i + at) * Math.PI * 2;
+      const speed = (700 + hash(i * 3 + at) * 900) * power;
+      const px = x + Math.cos(angle) * speed * t;
+      const py = y + Math.sin(angle) * speed * t * 0.8 + 1400 * t * t;
+      const w = 14 + hash(i * 7) * 16;
+      return <div key={i} style={{ position: "absolute", left: px, top: py, width: w, height: w * (hash(i * 5) > 0.5 ? 0.45 : 1), borderRadius: hash(i * 11) > 0.6 ? "50%" : 3, background: colors[i % colors.length], transform: `rotate(${t * 720 * (hash(i * 13) - 0.5)}deg)`, opacity: Math.max(0, 1 - t / 2.4) }}/>;
+    })}
+  </>;
+}
+
+/** A ring that bursts out from a point, behind a slam. */
+export function Shockwave({ at, x, y, color = C.cream, size = 900 }: { at: number; x: number; y: number; color?: string; size?: number }) {
+  const frame = useCurrentFrame();
+  const t = (frame - at) / 18;
+  if (t < 0 || t > 1) return null;
+  return <div style={{ position: "absolute", left: x - size / 2, top: y - size / 2, width: size, height: size, borderRadius: "50%", border: `${18 * (1 - t)}px solid ${color}`, transform: `scale(${0.1 + t})`, opacity: 1 - t }}/>;
 }

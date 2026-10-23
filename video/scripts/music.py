@@ -264,8 +264,61 @@ def tap(seconds=0.05):
     return np.diff(rng.standard_normal(n + 1)) * env(n, 0.0005, 0.006) * 0.5
 
 
+def boom(seconds=1.4):
+    """A cinematic hit: a deep falling thump with a burst of air on top."""
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    freq = 30 + 110 * np.exp(-t * 9)
+    body = np.sin(2 * np.pi * np.cumsum(freq) / RATE) * np.exp(-t * 2.6)
+    air = np.diff(rng.standard_normal(n + 1)) * np.exp(-t * 14) * 0.25
+    return np.tanh((body + air) * 2.5)
+
+
+def scratch(seconds=0.42):
+    """A record scratch: noise pushed back and forth through a moving filter."""
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    noise = rng.standard_normal(n)
+    sweep = 0.05 + 0.45 * (0.5 + 0.5 * np.sin(2 * np.pi * (3.5 * t + 6 * t * t)))
+    out = np.empty(n)
+    y = 0.0
+    for k in range(n):
+        y += sweep[k] * (noise[k] - y)
+        out[k] = y
+    tone = np.sin(2 * np.pi * np.cumsum(300 + 900 * np.abs(np.sin(2 * np.pi * 3 * t))) / RATE) * 0.3
+    return (out + tone) * env(n, 0.002, 0.25)
+
+
+def stamp(seconds=0.35):
+    """A rubber stamp landing: a short low knock and a slap."""
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    knock = np.sin(2 * np.pi * np.cumsum(80 + 160 * np.exp(-t * 60)) / RATE) * np.exp(-t * 22)
+    slap = np.diff(rng.standard_normal(n + 1)) * np.exp(-t * 70) * 0.6
+    return np.tanh((knock + slap) * 2)
+
+
+def sparkle(seconds=1.0):
+    """Glitter: quick high bell notes tumbling down."""
+    n = int(seconds * RATE)
+    out = np.zeros(n)
+    for k, f in enumerate([3520, 2960, 2637, 2349, 1976, 1760]):
+        i = int(k * 0.045 * RATE)
+        tt = np.arange(n - i) / RATE
+        out[i:] += np.sin(2 * np.pi * f * tt) * np.exp(-tt * 9) * 0.35
+    return out
+
+
+def swoosh_up(seconds=0.5):
+    n = int(seconds * RATE)
+    t = np.arange(n) / RATE
+    tone = np.sin(2 * np.pi * np.cumsum(300 * (6 ** (t / seconds))) / RATE) * 0.25
+    noise = np.diff(rng.standard_normal(n + 1)) * 0.3 * (t / seconds)
+    return (tone + noise) * np.sin(np.pi * t / seconds)
+
+
 os.makedirs("public/sfx", exist_ok=True)
-for name, sound in [("whoosh", whoosh()), ("pop", pop()), ("chime", chime()), ("tap", tap()), ("tick", tick())]:
+for name, sound in [("whoosh", whoosh()), ("pop", pop()), ("chime", chime()), ("tap", tap()), ("tick", tick()), ("boom", boom()), ("scratch", scratch()), ("stamp", stamp()), ("sparkle", sparkle()), ("swoosh-up", swoosh_up())]:
     write(f"public/sfx/{name}.wav", sound / (np.max(np.abs(sound)) + 1e-9) * 0.8)
 
-print(f"music {LENGTH:.1f}s (drop at {DROP:.2f}s, hit at {HIT:.2f}s) and 5 sound effects")
+print(f"music {LENGTH:.1f}s (drop at {DROP:.2f}s, hit at {HIT:.2f}s) and 10 sound effects")

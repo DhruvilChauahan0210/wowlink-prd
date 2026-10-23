@@ -2,7 +2,7 @@
 
 A Remotion project that renders the launch video in two shapes from one timeline: a vertical Reel (1080×1920, for
 Instagram Reels, YouTube Shorts and WhatsApp status) and a wide cut (1920×1080, for YouTube, LinkedIn and the site).
-About 33 seconds: a punchy Hinglish voiceover, an original track, and WowLink's real screens.
+About 31 seconds: a punchy Hinglish voiceover, an original track, and WowLink's real screens, cut like a Reel.
 
 ```bash
 cd video
@@ -15,16 +15,20 @@ npm run studio    # preview and tweak, at http://localhost:3210
 npm run render    # out/wowlink-launch-vertical.mp4 and out/wowlink-launch-wide.mp4
 ```
 
-- **The script** is in `scripts/voice.py`: what the voice says (Hindi words in Devanagari, English in English), the
-  caption on screen, and the words to underline. Change it, then run `voice`, `music` and `render` again: the
+- **The script** is in `scripts/voice.py`: each line as it's read and as it's captioned (Roman Hinglish, the way
+  people type it), and the words to highlight. Change it, then run `voice`, `music` and `render` again: the
   scenes, captions and music follow the new timings.
-- **The voice** is Microsoft's neural Hindi voice (`hi-IN-SwaraNeural`) through edge-tts, read faster, higher and
-  louder for Reels energy (`RATE`, `PITCH`, `VOLUME`), then trimmed, brightened and compressed so it sits up front,
-  with just a breath (`BREATH`) between lines. `VOICE` swaps it, for example to `hi-IN-MadhurNeural` for a male
-  voice. The scenes fit their animations to each line's length, so any script change keeps them in step.
+- **The voice** is Microsoft's Indian-English neural voice Neerja (`en-IN-NeerjaNeural`) through edge-tts, reading
+  the Roman Hinglish, faster, higher and louder for Reels energy (`RATE`, `PITCH`, `VOLUME`), then trimmed,
+  brightened and compressed so it sits up front, with just a breath (`BREATH`) between lines. `VOICE` swaps it (and
+  `SAY=hindi` reads the Devanagari lines, for a Hindi voice like `hi-IN-SwaraNeural`).
+- **The edit** lands on the words: voice.py keeps the moment each word is said, and every slam, stamp, sticker,
+  shake and confetti burst in `src/scenes.tsx` is timed to a spoken word (`useWord`). Each scene has its own colour
+  (`src/Launch.tsx`), slams in with a flash and a zoom, and pulses on the beat; the captions pop on a few words at
+  a time, key words in a marigold box. The effects are in `src/kit.tsx`.
 - **The music** is made in code (`scripts/music.py`): a tanpura drone, a ticking wait, a riser into the drop, a dhol
-  groove at 118 bpm with claps and a sitar-like melody, and a final hit. No samples, so nothing can be claimed on
-  Instagram or YouTube.
+  groove at 118 bpm with kicks, claps and a sitar-like melody, and a final hit, plus the sound effects (whooshes,
+  stamps, a record scratch, sparkles, booms). No samples, so nothing can be claimed on Instagram or YouTube.
 - **The screens** are taken headless from a private copy of WowLink with sample data, never the live site. The
   invitation's opening is captured frame by frame (`public/footage/opening/`), so it's as sharp as the stills.
   They're not in git (`npm run footage` makes them).

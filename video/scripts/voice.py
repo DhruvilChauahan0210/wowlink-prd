@@ -1,7 +1,7 @@
 """
-The launch video's voiceover: Microsoft's neural Hindi voice (edge-tts) reading Hinglish, one file per line so each
-caption lands on its own words. Hindi words in Devanagari, English words in English: that's how the voice reads
-Hinglish most naturally.
+The launch video's voiceover: Microsoft's Indian-English neural voice Neerja (edge-tts) reading Hinglish as people
+type it, one file per line, with the moment each word is said, so the captions land on the words. (The Devanagari
+lines are kept for a Hindi voice: SAY=hindi with hi-IN-SwaraNeural.)
 
 Reels energy: short punchy lines, read faster and a little higher, then each line is trimmed of its silences and
 compressed and brightened (numpy), so the voice sits up front and the lines run on with only a breath between them.
@@ -26,7 +26,12 @@ if os.path.exists(BUNDLE):
 
 import edge_tts  # noqa: E402 (after the certificate fix)
 
-VOICE = "hi-IN-SwaraNeural"
+# The voice, and what it reads: "hindi" (Hindi words in Devanagari) or "roman" (the captions, as people type
+# Hinglish), which suits an Indian-English voice. VOICE, SAY, OUT and ONLY (some ids) can be set to try others.
+VOICE = os.environ.get("VOICE", "en-IN-NeerjaNeural")
+SAY = os.environ.get("SAY", "roman")
+OUT = os.environ.get("OUT", "public/voice")
+ONLY = [i for i in os.environ.get("ONLY", "").split(",") if i]
 RATE = "+22%"
 PITCH = "+8Hz"
 VOLUME = "+15%"
@@ -89,7 +94,7 @@ def compress(x, threshold_db=-21, ratio=3.5, attack=0.004, release=0.09, makeup_
 
 def shape(line_id):
     """Trim the silences, cut the rumble, lift the presence, even it out, and keep it from clipping."""
-    raw, decoded, out = f"public/voice/{line_id}.raw.mp3", f"public/voice/{line_id}.raw.wav", f"public/voice/{line_id}.wav"
+    raw, decoded, out = f"{OUT}/{line_id}.raw.mp3", f"{OUT}/{line_id}.raw.wav", f"{OUT}/{line_id}.wav"
     env = {**os.environ, "NODE_OPTIONS": "--use-system-ca"}
     subprocess.run(["npx", "remotion", "ffmpeg", "-v", "error", "-y", "-i", raw, "-ar", str(RATE_HZ), "-ac", "1", decoded], check=True, env=env)
     with wave.open(decoded) as w:
@@ -97,7 +102,8 @@ def shape(line_id):
     os.remove(raw)
     os.remove(decoded)
     loud = np.flatnonzero(np.abs(x) > 10 ** (-45 / 20))
-    x = x[max(0, loud[0] - int(0.02 * RATE_HZ)): loud[-1] + int(0.06 * RATE_HZ)]
+    start = max(0, loud[0] - int(0.02 * RATE_HZ))
+    x = x[start: loud[-1] + int(0.06 * RATE_HZ)]
     x = highpass(x, 90)
     x = peak(x, 220, 1.5)
     x = peak(x, 3200, 3.5, q=1.2)
@@ -109,18 +115,34 @@ def shape(line_id):
         w.setsampwidth(2)
         w.setframerate(RATE_HZ)
         w.writeframes((x * 32767).astype("<i2").tobytes())
-    return len(x) / RATE_HZ
+    return len(x) / RATE_HZ, start / RATE_HZ
+
+
+async def speak(text, path):
+    """The voice reading `text` into `path`, and when it says each word (seconds from the start)."""
+    words = []
+    with open(path, "wb") as f:
+        async for chunk in edge_tts.Communicate(text, VOICE, rate=RATE, pitch=PITCH, volume=VOLUME, boundary="WordBoundary").stream():
+            if chunk["type"] == "audio":
+                f.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                words.append({"w": chunk["text"], "s": chunk["offset"] / 1e7, "e": (chunk["offset"] + chunk["duration"]) / 1e7})
+    return words
 
 
 async def main():
-    os.makedirs("public/voice", exist_ok=True)
+    os.makedirs(OUT, exist_ok=True)
     lines = []
     for line_id, said, caption, highlight in LINES:
-        await edge_tts.Communicate(said, VOICE, rate=RATE, pitch=PITCH, volume=VOLUME).save(f"public/voice/{line_id}.raw.mp3")
-        seconds = shape(line_id)
-        lines.append({"id": line_id, "caption": caption, "highlight": highlight, "seconds": round(seconds + BREATH, 3)})
+        if ONLY and line_id not in ONLY:
+            continue
+        words = await speak(caption if SAY == "roman" else said, f"{OUT}/{line_id}.raw.mp3")
+        seconds, trimmed = shape(line_id)
+        # Word times move with the silence trimmed from the start.
+        words = [{"w": w["w"], "s": round(max(0, w["s"] - trimmed), 3), "e": round(max(0, w["e"] - trimmed), 3)} for w in words]
+        lines.append({"id": line_id, "caption": caption, "highlight": highlight, "seconds": round(seconds + BREATH, 3), "words": words})
         print(f"{line_id}: {seconds:.2f}s")
-    with open("public/voice/lines.json", "w") as f:
+    with open(f"{OUT}/lines.json", "w") as f:
         json.dump(lines, f, ensure_ascii=False, indent=2)
     print(f"total {sum(l['seconds'] for l in lines):.1f}s")
 
