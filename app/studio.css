@@ -74,6 +74,10 @@
 .inv-birthday{--tone:#c9506d;--tone-2:#4f9a94}
 .inv-garba{--tone:#b8552c;--tone-2:#9c2f55}
 .inv-opening{--tone:#4f7a3c;--tone-2:#c2412d}
+.inv-engagement{--tone:#9c2f55;--tone-2:#e0922f}
+.inv-babyshower{--tone:#3d7f79;--tone-2:#e8899e}
+.inv-housewarming{--tone:#a24a24;--tone-2:#6f8f4e}
+.inv-anniversary{--tone:#b8405f;--tone-2:#e0922f}
 .inv-backdrop{position:absolute;inset:0;z-index:-1;pointer-events:none}
 .inv-backdrop .doodle{position:absolute;width:46px;height:46px;color:var(--tone-2)}
 .inv-d1{left:7%;top:9%;rotate:-14deg}
@@ -93,6 +97,10 @@
 .inv-birthday{--out:1s;--in:1.15s}
 .inv-garba{--out:1.25s;--in:1.4s}
 .inv-opening{--out:1.6s;--in:1.75s}
+.inv-engagement{--out:1s;--in:1.15s}
+.inv-babyshower{--out:1.3s;--in:1.45s}
+.inv-housewarming{--out:1.45s;--in:1.6s}
+.inv-anniversary{--out:1.55s;--in:1.7s}
 .inv-object{position:relative;width:min(100%,520px);aspect-ratio:520/300;margin-top:24px}
 .inv-hint{margin-top:16px;font:700 26px/1 var(--hand);color:var(--tone);rotate:-1.5deg}
 .o-art{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -172,6 +180,50 @@
 @keyframes sign-flip{0%{transform:scaleX(1)}50%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 @keyframes swap-out{0%,49%{opacity:1}50%,100%{opacity:0}}
 @keyframes swap-in{0%,49%{opacity:0}50%,100%{opacity:1}}
+
+/* engagement: press the heart clasp, the lid swings up and away, the rings rise and glint */
+.o-lid{transform-origin:176px 170px;transition:transform .7s cubic-bezier(.3,.6,.3,1) .15s,opacity .35s ease .6s}
+.inv-engagement.is-open .o-lid{transform:translate(-26px,-64px) rotate(-34deg);opacity:0}
+/* the watercolour is a little see-through, so what waits behind something stays hidden until it opens */
+.o-rings{opacity:0;transition:transform .7s cubic-bezier(.2,.7,.2,1) .4s,opacity .3s ease .25s}
+.inv-engagement.is-open .o-rings{transform:translateY(-34px);opacity:1}
+.o-glints{opacity:0;transform-origin:260px 124px}
+.inv-engagement.is-open .o-glints{animation:glint .8s ease .75s both}
+@keyframes glint{0%{opacity:0;transform:scale(.6)}40%{opacity:1}100%{opacity:0;transform:scale(1.25)}}
+.inv-engagement .inv-card{transform:translateY(60px) scale(.88)}
+
+/* baby shower: shake the rattle, the cradle rocks on its ropes and the little stars float up */
+.inv-babyshower.is-open .inv-trigger{animation:rattle .5s ease both;opacity:0;transform:none;transition:opacity .35s ease .5s}
+@keyframes rattle{25%{rotate:-18deg}50%{rotate:14deg}75%{rotate:-8deg}}
+.o-cradle{transform-origin:260px 48px}
+.inv-babyshower.is-open .o-cradle{animation:rock 1.3s ease-in-out .2s both}
+@keyframes rock{20%{transform:rotate(8deg)}45%{transform:rotate(-6deg)}70%{transform:rotate(3deg)}100%{transform:rotate(0)}}
+.inv-babyshower.is-open .o-star{animation:float-up 1s ease calc(.35s + var(--i) * .15s) both}
+@keyframes float-up{to{transform:translateY(-46px);opacity:0}}
+.inv-babyshower .inv-card{transform:translateY(50px) rotate(3deg)}
+
+/* housewarming: lift the saankal, the two doors swing in on warm light, and footsteps lead inside */
+.o-door-l{transform-origin:180px 164px;transition:transform 1s cubic-bezier(.45,.05,.3,1) .35s}
+.o-door-r{transform-origin:340px 164px;transition:transform 1s cubic-bezier(.45,.05,.3,1) .35s}
+.inv-housewarming.is-open .o-door-l{transform:scaleX(.14) skewY(-8deg)}
+.inv-housewarming.is-open .o-door-r{transform:scaleX(.14) skewY(8deg)}
+.o-inside{opacity:0;transition:opacity .5s ease .4s}
+.inv-housewarming.is-open .o-inside{opacity:1}
+.o-foot{opacity:0}
+.inv-housewarming.is-open .o-foot{animation:step-in .3s ease calc(.95s + var(--i) * .12s) both}
+@keyframes step-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.inv-housewarming.is-open .inv-trigger{transform:translateY(-16px) rotate(-60deg);opacity:0;transition:transform .4s ease,opacity .3s ease .2s}
+.inv-housewarming .inv-card{transform:scale(.72)}
+
+/* anniversary: break the wax seal, the flap turns up, and the letter rises out */
+.inv-anniversary.is-open .inv-trigger{transform:scale(1.35) rotate(18deg);opacity:0;transition:transform .3s ease,opacity .25s ease .1s}
+.o-flap-front{transform-origin:260px 100px;transition:transform .32s ease-in .2s}
+.inv-anniversary.is-open .o-flap-front{transform:scaleY(0)}
+.o-flap-back{transform-origin:260px 100px;transform:scaleY(0);transition:transform .32s ease-out .52s}
+.inv-anniversary.is-open .o-flap-back{transform:scaleY(1)}
+.o-letter{opacity:0;transition:transform .8s cubic-bezier(.2,.7,.2,1) .8s,opacity .25s ease .5s}
+.inv-anniversary.is-open .o-letter{transform:translateY(-104px);opacity:1}
+.inv-anniversary .inv-card{transform:translateY(90px) scale(.9)}
 
 .is-open .inv-intro{opacity:0;transform:translateY(60px) rotate(-3deg);pointer-events:none}
 

@@ -65,9 +65,13 @@ function InvitationScene() {
 }
 
 const occasions = [
-  { id: "wedding", title: "For your forever.", kind: "Weddings & engagements", detail: "A door opens. A new chapter begins." },
+  { id: "wedding", title: "For your forever.", kind: "Weddings", detail: "A door opens. A new chapter begins." },
+  { id: "engagement", title: "Say yes, together.", kind: "Engagements & sagai", detail: "Two rings, two families, one beginning." },
   { id: "birthday", title: "Make a wish.", kind: "Birthdays & milestones", detail: "A little surprise, waiting to be revealed." },
   { id: "garba", title: "Feel the rhythm.", kind: "Garba & Navratri", detail: "Bring your people together. Let the night begin." },
+  { id: "babyshower", title: "Little blessings.", kind: "Baby showers & seemant", detail: "Shower the parents-to-be with love." },
+  { id: "housewarming", title: "Step inside.", kind: "Housewarmings & vastu puja", detail: "Open the door to your new home." },
+  { id: "anniversary", title: "Still us.", kind: "Anniversaries", detail: "Raise a cup of chai to the years together." },
   { id: "opening", title: "Here’s to new.", kind: "Grand openings", detail: "Cut the ribbon on your next big thing." },
 ] as const;
 

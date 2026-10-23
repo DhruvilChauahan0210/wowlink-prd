@@ -21,11 +21,11 @@ for (const { path, check } of PAGES) {
   });
 }
 
-test("the home page hero draws itself, and the reel shows all four occasions", async ({ page }) => {
+test("the home page hero draws itself, and the reel shows all eight occasions", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".cin-hero-art.is-drawing")).toBeVisible();
-  await expect(page.locator(".cin-occasion-card")).toHaveCount(4);
-  await expect(page.locator(".cin-occasion-card h3")).toHaveText(["For your forever.", "Make a wish.", "Feel the rhythm.", "Here’s to new."]);
+  await expect(page.locator(".cin-occasion-card")).toHaveCount(8);
+  await expect(page.locator(".cin-occasion-card h3")).toHaveText(["For your forever.", "Say yes, together.", "Make a wish.", "Feel the rhythm.", "Little blessings.", "Step inside.", "Still us.", "Here’s to new."]);
 });
 
 test("an unknown invitation link shows the not-found page", async ({ page }) => {

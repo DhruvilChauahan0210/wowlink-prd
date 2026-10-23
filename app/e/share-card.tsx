@@ -25,7 +25,7 @@ const svgData = (svg: string) => `data:image/svg+xml;base64,${Buffer.from(svg).t
  */
 const drawable = (text: string) => text.replace(/((?:[ક-હ]઼?્)*[ક-હ]઼?)િ/g, "િ$1");
 
-const TONE: Record<ArtName, string> = { wedding: "#a8341f", birthday: "#c9506d", garba: "#b8552c", opening: "#4f7a3c" };
+const TONE: Record<ArtName, string> = { wedding: "#a8341f", birthday: "#c9506d", garba: "#b8552c", opening: "#4f7a3c", engagement: "#9c2f55", babyshower: "#3d7f79", housewarming: "#a24a24", anniversary: "#b8405f" };
 const INK = "#241a13";
 const PAPER = "#f3ebdc";
 

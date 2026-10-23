@@ -1,14 +1,14 @@
 import type { CSSProperties, ReactNode } from "react";
 
 /*
- * The four hand-drawn occasion illustrations. Every one is ink line work over loose colour washes,
+ * The eight hand-drawn occasion illustrations. Every one is ink line work over loose colour washes,
  * drawn on a 360 × 440 sheet.
  *  - `.wash` groups are the colour, roughened by the #wash filter and set slightly off the lines.
  *  - `.ink` groups are the line work. With `drawing`, each group draws itself in order like a pen
  *    going over the page, and the washes bleed in afterwards.
  */
 
-export type ArtName = "wedding" | "birthday" | "garba" | "opening";
+export type ArtName = "wedding" | "birthday" | "garba" | "opening" | "engagement" | "babyshower" | "housewarming" | "anniversary";
 
 const INK = "#2a1d14";
 const C = {
@@ -33,6 +33,10 @@ const LABELS: Record<ArtName, string> = {
   birthday: "A hand-drawn three-tier birthday cake with candles, balloons and confetti",
   garba: "A hand-drawn garbo pot glowing with light, crossed dandiya sticks and a rangoli",
   opening: "A hand-drawn shopfront with a striped awning, an open sign and a ribbon tied in a bow",
+  engagement: "A hand-drawn open ring box with two rings on a brass thali, with rose petals and a bowl of gol dhana",
+  babyshower: "A hand-drawn wooden cradle hung with little toys, under a crescent moon and stars",
+  housewarming: "A hand-drawn front door with a mango-leaf toran, a kalash, a tulsi pot and kumkum footprints leading in",
+  anniversary: "Two hand-drawn glasses of chai with their steam curling into a heart, under a string of fairy lights",
 };
 
 export function Art({ name, className = "", drawing = false, fit = "meet", label, decorative = false }: Props) {
@@ -340,4 +344,216 @@ function Opening() {
   );
 }
 
-const SCENES: Record<ArtName, () => ReactNode> = { wedding: Wedding, birthday: Birthday, garba: Garba, opening: Opening };
+// ---------- the engagement: an open ring box on a brass thali ----------
+
+function Engagement() {
+  const garland = along(13, [14, 34, 120, 84, 240, 84, 346, 34]);
+  const petals: [number, number, number, string][] = [[66, 334, 20, C.red], [94, 356, -30, C.pink], [252, 360, 40, C.red], [286, 300, -10, C.pink], [124, 366, 70, C.blush], [222, 368, -60, C.red], [56, 352, 10, C.blush]];
+  return (
+    <>
+      <Wash>
+        <circle cx="180" cy="230" r="136" fill={C.blush} opacity=".3" />
+        {garland.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="7" fill={i % 3 === 1 ? C.red : C.marigold} />)}
+        <ellipse cx="180" cy="340" rx="140" ry="36" fill={C.sun} opacity=".55" />
+        <path d="M120 176H240L248 252H112Z" fill={C.berry} />
+        <path d="M132 186H228L234 244H126Z" fill={C.pink} opacity=".7" />
+        <path d="M112 252H248V318C248 326 242 330 234 330H126C118 330 112 326 112 318Z" fill={C.berry} />
+        <ellipse cx="180" cy="262" rx="58" ry="14" fill={C.blush} />
+        <circle cx="162" cy="236" r="20" fill="none" stroke={C.marigold} strokeWidth="7" />
+        <circle cx="198" cy="232" r="20" fill="none" stroke={C.sun} strokeWidth="7" />
+        <path d="M198 194L208 204L198 214L188 204Z" fill={C.sky} />
+        {petals.map(([x, y, a, f], i) => <ellipse key={i} cx={x} cy={y} rx="10" ry="6" fill={f} transform={`rotate(${a} ${x} ${y})`} />)}
+        <path d="M264 318C266 336 314 336 316 318Z" fill={C.clay} />
+        <path d="M268 318C274 302 306 302 312 318Z" fill={C.marigold} />
+      </Wash>
+      <Ink d={0}>
+        <ellipse cx="180" cy="340" rx="142" ry="37" />
+        <ellipse cx="180" cy="336" rx="118" ry="26" strokeWidth="1.4" />
+        <path d="M112 252H248V318C248 326 242 330 234 330H126C118 330 112 326 112 318Z" />
+        <path d="M112 252L120 176H240L248 252" />
+        <path d="M132 186H228L234 244H126Z" strokeWidth="1.6" />
+        <ellipse cx="180" cy="262" rx="58" ry="14" />
+      </Ink>
+      <Ink d={0.9} w={2}>
+        <circle cx="162" cy="236" r="20" /><circle cx="162" cy="236" r="14" strokeWidth="1.4" />
+        <circle cx="198" cy="232" r="20" /><circle cx="198" cy="232" r="14" strokeWidth="1.4" />
+        <path d="M198 194L208 204L198 214L188 204ZM188 204H208M198 194V214" strokeWidth="1.4" />
+        {petals.map(([x, y, a], i) => <ellipse key={i} cx={x} cy={y} rx="10" ry="6" transform={`rotate(${a} ${x} ${y})`} strokeWidth="1.4" />)}
+        <path d="M264 318C266 336 314 336 316 318Z" />
+        <path d="M268 318C274 302 306 302 312 318" strokeWidth="1.6" />
+        <path d="M280 310h1M292 306h1M300 312h1M286 314h1" strokeWidth="3" />
+      </Ink>
+      <Ink d={1.6} w={1.8}>
+        <path d="M14 34C120 84 240 84 346 34" strokeWidth="1.3" />
+        {garland.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="6.5" />)}
+        <path d="M300 236C290 226 290 216 300 220C310 216 310 226 300 236Z" />
+        <Sparkle x={60} y={150} s={0.8} />
+        <Sparkle x={306} y={160} s={0.6} />
+        <Sparkle x={244} y={130} s={0.5} />
+        <Sparkle x={86} y={226} s={0.5} />
+      </Ink>
+    </>
+  );
+}
+
+// ---------- the baby shower: a wooden ghodiyu cradle under the moon ----------
+
+/** A five-pointed star centred on x, y. */
+const star = (x: number, y: number, r: number) => Array.from({ length: 10 }, (_, i) => {
+  const a = -Math.PI / 2 + (i * Math.PI) / 5;
+  const d = i % 2 ? r * 0.45 : r;
+  return `${i ? "L" : "M"}${r2(x + Math.cos(a) * d)} ${r2(y + Math.sin(a) * d)}`;
+}).join("") + "Z";
+
+function BabyShower() {
+  return (
+    <>
+      <Bunting y={20} sag={14} colors={[C.sky, C.blush, C.sun, C.teal]} />
+      <Wash>
+        <circle cx="180" cy="250" r="138" fill={C.sky} opacity=".35" />
+        <path d="M300 92C276 92 262 110 262 130C262 152 280 168 300 168C286 160 278 146 278 130C278 112 288 98 300 92Z" fill={C.sun} />
+        <path d="M86 392L120 116H132L102 392ZM274 392L240 116H228L258 392Z" fill={C.clay} opacity=".75" />
+        <path d="M112 106H248V122H112Z" fill={C.clay} />
+        <path d="M104 262C104 330 256 330 256 262Z" fill={C.marigold} />
+        <path d="M112 262C118 300 242 300 248 262Z" fill={C.red} opacity=".3" />
+        <path d="M118 262C124 252 236 252 242 262Z" fill={C.blush} />
+        <circle cx="160" cy="186" r="9" fill={C.red} />
+        <path d={star(182, 178, 11)} fill={C.sun} />
+        <path d="M200 190C196 178 210 170 216 178C222 186 212 196 200 190Z" fill={C.leaf} />
+        <ellipse cx="180" cy="396" rx="130" ry="12" fill={C.leaf} opacity=".25" />
+      </Wash>
+      <Ink d={0}>
+        <path d="M86 392L120 116M102 392L132 116M274 392L240 116M258 392L228 116" />
+        <path d="M112 106H248V122H112Z" />
+        <path d="M80 392H108M252 392H280" />
+        <path d="M144 122V262M216 122V262" strokeWidth="1.6" />
+        <path d="M104 262C104 330 256 330 256 262Z" />
+        <path d="M96 262H264" />
+      </Ink>
+      <Ink d={0.9} w={1.8}>
+        <path d="M112 262C118 300 242 300 248 262" strokeWidth="1.4" />
+        <path d={`M120 294${"q8 8 16 0".repeat(8)}`} strokeWidth="1.3" />
+        <path d="M118 262C124 252 236 252 242 262" />
+        <path d="M160 122V177M182 122V167M206 122V174" strokeWidth="1.2" />
+        <circle cx="160" cy="186" r="9" />
+        <path d={star(182, 178, 11)} />
+        <path d="M200 190C196 178 210 170 216 178C222 186 212 196 200 190ZM216 178L222 176" />
+        <path d="M300 92C276 92 262 110 262 130C262 152 280 168 300 168C286 160 278 146 278 130C278 112 288 98 300 92Z" />
+      </Ink>
+      <Ink d={1.6} w={1.6}>
+        <path d="M40 398C120 392 240 402 320 394" />
+        <path d="M296 250c4-6 10-6 14 0M44 300c4-6 10-6 14 0M60 208c4-6 10-6 14 0" />
+        <Sparkle x={52} y={84} s={0.7} />
+        <Sparkle x={240} y={84} s={0.5} />
+        <Sparkle x={318} y={206} s={0.6} />
+      </Ink>
+    </>
+  );
+}
+
+// ---------- the housewarming: the front door, with a toran, a kalash and footsteps going in ----------
+
+function foot(x: number, y: number, a: number) {
+  return <g transform={`rotate(${a} ${x} ${y})`}><ellipse cx={x} cy={y} rx="5" ry="9" />{[[-4, -12], [-1.5, -14], [1.5, -14.5], [4, -13]].map(([dx, dy], i) => <circle key={i} cx={x + dx} cy={y + dy} r="1.5" />)}</g>;
+}
+
+function Housewarming() {
+  const toran = along(9, [132, 244, 156, 258, 204, 258, 228, 244]);
+  const leaf = (x: number, y: number) => `M${x} ${y}C${x - 6} ${y + 8} ${x - 4} ${y + 18} ${x} ${y + 24}C${x + 4} ${y + 18} ${x + 6} ${y + 8} ${x} ${y}Z`;
+  return (
+    <>
+      <Wash>
+        <circle cx="180" cy="230" r="138" fill={C.sun} opacity=".25" />
+        <path d="M46 172L180 70L314 172Z" fill={C.clay} />
+        <path d="M64 166H296V380H64Z" fill={C.cream} />
+        <path d="M130 240H230V380H130Z" fill={C.berry} opacity=".8" />
+        <path d="M84 196H120V238H84ZM240 196H276V238H240Z" fill={C.sky} />
+        {toran.map(([x, y], i) => (i % 2 ? <circle key={i} cx={x} cy={y + 6} r="6" fill={C.marigold} /> : <path key={i} d={leaf(x, y)} fill={C.leaf} />))}
+        <path d="M250 352C238 358 238 382 264 386C290 382 290 358 278 352Z" fill={C.marigold} />
+        <circle cx="264" cy="334" r="10" fill={C.clay} />
+        <path d="M80 344H116L112 380H84Z" fill={C.red} opacity=".7" />
+        <path d="M98 344C88 330 90 316 98 308C106 316 108 330 98 344Z" fill={C.leaf} />
+        <path d="M112 380H248V394H112Z" fill={C.cream} />
+        <g fill={C.red}>{foot(170, 426, -8)}{foot(190, 412, 8)}</g>
+        {[[138, 388], [222, 388]].map(([x, y]) => <path key={x} d={`M${x} ${y - 4}C${x - 5} ${y - 10} ${x - 2} ${y - 16} ${x} ${y - 21}C${x + 2} ${y - 16} ${x + 5} ${y - 10} ${x} ${y - 4}Z`} fill={C.sun} />)}
+      </Wash>
+      <Ink d={0}>
+        <path d="M46 172L180 70L314 172" />
+        <path d="M64 166V380H296V166" />
+        <path d="M130 380V240H230V380M180 240V380" />
+        <path d="M140 252H172V312H140ZM188 252H220V312H188Z" strokeWidth="1.5" />
+        <path d="M84 196H120V238H84ZM240 196H276V238H240ZM102 196V238M258 196V238" />
+        <path d="M112 380H248V394H112Z" />
+      </Ink>
+      <Ink d={0.9} w={1.8}>
+        <circle cx="174" cy="330" r="4" /><circle cx="186" cy="330" r="4" />
+        <path d="M132 244C156 258 204 258 228 244" strokeWidth="1.3" />
+        {toran.map(([x, y], i) => (i % 2 ? <circle key={i} cx={x} cy={y + 6} r="5.5" /> : <path key={i} d={leaf(x, y)} strokeWidth="1.4" />))}
+        <path d="M250 352C238 358 238 382 264 386C290 382 290 358 278 352ZM254 344H274V352H254Z" />
+        <circle cx="264" cy="334" r="10" />
+        <path d="M256 344C244 338 238 328 240 320M272 344C284 338 290 328 288 320" strokeWidth="1.4" />
+        <path d="M80 344H116L112 380H84Z" />
+        <path d="M98 344C88 330 90 316 98 308C106 316 108 330 98 344ZM98 344V320" strokeWidth="1.4" />
+      </Ink>
+      <Ink d={1.6} w={1.6}>
+        {[[138, 388], [222, 388]].map(([x, y]) => <g key={x}><path d={`M${x - 10} ${y - 2}C${x - 8} ${y + 6} ${x + 8} ${y + 6} ${x + 10} ${y - 2}Z`} /><path d={`M${x} ${y - 4}C${x - 5} ${y - 10} ${x - 2} ${y - 16} ${x} ${y - 21}C${x + 2} ${y - 16} ${x + 5} ${y - 10} ${x} ${y - 4}Z`} /></g>)}
+        <path d="M30 380H330" />
+        <Sparkle x={40} y={100} s={0.7} />
+        <Sparkle x={322} y={92} s={0.6} />
+        <Sparkle x={300} y={300} s={0.5} />
+      </Ink>
+    </>
+  );
+}
+
+// ---------- the anniversary: two glasses of chai, their steam curling into a heart ----------
+
+function Anniversary() {
+  const bulbs = along(9, [10, 30, 120, 76, 240, 76, 350, 30]);
+  const jasmine = along(14, [70, 376, 120, 394, 240, 394, 290, 376]);
+  const heart = (x: number, y: number) => `M${x} ${y + 12}C${x - 14} ${y + 2} ${x - 14} ${y - 10} ${x - 6} ${y - 12}C${x - 2} ${y - 13} ${x} ${y - 9} ${x} ${y - 6}C${x} ${y - 9} ${x + 2} ${y - 13} ${x + 6} ${y - 12}C${x + 14} ${y - 10} ${x + 14} ${y + 2} ${x} ${y + 12}Z`;
+  return (
+    <>
+      <Wash>
+        <circle cx="180" cy="230" r="138" fill={C.blush} opacity=".3" />
+        {bulbs.map(([x, y], i) => <circle key={i} cx={x} cy={y + 12} r="7" fill={i % 2 ? C.sun : C.marigold} />)}
+        <path d="M118 104H242V196H118Z" fill={C.cream} />
+        <path d={heart(166, 150)} fill={C.red} />
+        <path d={heart(194, 150)} fill={C.pink} />
+        <ellipse cx="180" cy="352" rx="136" ry="30" fill={C.sun} opacity=".5" />
+        <path d="M112 262L118 340H158L164 262Z" fill={C.paper} />
+        <path d="M115 290L118 340H158L161 290Z" fill={C.clay} />
+        <path d="M196 262L202 340H242L248 262Z" fill={C.paper} />
+        <path d="M199 290L202 340H242L245 290Z" fill={C.clay} />
+        {jasmine.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4.5" fill={C.paper} />)}
+      </Wash>
+      <Ink d={0}>
+        <path d="M118 104H242V196H118Z" />
+        <path d="M126 112H234V188H126Z" strokeWidth="1.4" />
+        <path d="M156 104L180 82L204 104" strokeWidth="1.4" />
+        <ellipse cx="180" cy="352" rx="138" ry="31" />
+        <path d="M112 262L118 340H158L164 262ZM196 262L202 340H242L248 262Z" />
+        <path d="M126 262L128 340M150 262L148 340M210 262L212 340M234 262L232 340" strokeWidth="1.1" />
+        <path d="M115 290H161M199 290H245" strokeWidth="1.4" />
+      </Ink>
+      <Ink d={0.9} w={1.8}>
+        <path d={heart(166, 150)} />
+        <path d={heart(194, 150)} />
+        <path d="M138 252C130 238 146 230 138 216C134 208 150 204 164 210" />
+        <path d="M222 252C230 238 214 230 222 216C226 208 210 204 196 210" />
+        <path d="M180 236C164 224 156 212 164 204C170 198 178 202 180 208C182 202 190 198 196 204C204 212 196 224 180 236Z" />
+        <path d="M70 376C120 394 240 394 290 376" strokeWidth="1.2" />
+        {jasmine.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4" strokeWidth="1.2" />)}
+      </Ink>
+      <Ink d={1.6} w={1.6}>
+        <path d="M10 30C120 76 240 76 350 30" />
+        {bulbs.map(([x, y], i) => <g key={i}><path d={`M${x} ${y}V${y + 5}`} /><circle cx={x} cy={y + 12} r="6.5" /></g>)}
+        <Sparkle x={52} y={160} s={0.6} />
+        <Sparkle x={310} y={150} s={0.7} />
+        <Sparkle x={300} y={254} s={0.5} />
+      </Ink>
+    </>
+  );
+}
+
+const SCENES: Record<ArtName, () => ReactNode> = { wedding: Wedding, birthday: Birthday, garba: Garba, opening: Opening, engagement: Engagement, babyshower: BabyShower, housewarming: Housewarming, anniversary: Anniversary };

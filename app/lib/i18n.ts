@@ -16,6 +16,10 @@ export const OCCASION_GU: Record<TemplateId, { eyebrow: string; action: string; 
   birthday: { eyebrow: "વધુ એક વર્ષ, થોડો વધુ જાદુ", action: "સરપ્રાઇઝ ખોલો", hint: "ફીત ખેંચો" },
   garba: { eyebrow: "નવ રાત, અઢળક યાદો", action: "રાતની શરૂઆત કરો", hint: "દીવો પ્રગટાવો" },
   opening: { eyebrow: "એક સુંદર શરૂઆત", action: "રિબન કાપો", hint: "રિબન કાપો" },
+  engagement: { eyebrow: "પરિવારના આશીર્વાદ સાથે", action: "વીંટીનું બોક્સ ખોલો", hint: "કડી દબાવો" },
+  babyshower: { eyebrow: "નાનકડા મહેમાનના આગમનની ખુશી", action: "ઘૂઘરો વગાડો", hint: "ઘૂઘરો વગાડો" },
+  housewarming: { eyebrow: "નવું ઘર, નવી શરૂઆત", action: "દરવાજો ખોલો", hint: "સાંકળ ખોલો" },
+  anniversary: { eyebrow: "પ્રેમનાં વર્ષો, હજી ઘણાં બાકી", action: "પત્ર ખોલો", hint: "મહોર તોડો" },
 };
 
 /** Plain words, then the word that gets the hand-drawn underline. */

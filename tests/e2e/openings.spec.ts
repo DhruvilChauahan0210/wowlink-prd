@@ -6,6 +6,10 @@ const OPENINGS = [
   { id: "birthday", title: "A night for Riya", action: "Reveal the surprise", hint: "pull the bow" },
   { id: "garba", title: "Raas under the stars", action: "Let the night begin", hint: "light the diya" },
   { id: "opening", title: "A new beginning", action: "Cut the ribbon", hint: "cut the ribbon" },
+  { id: "engagement", title: "Kabir & Isha", action: "Open the ring box", hint: "press the clasp" },
+  { id: "babyshower", title: "Seemant for Priya", action: "Shake the rattle", hint: "shake the rattle" },
+  { id: "housewarming", title: "The Shahs’ new home", action: "Open the door", hint: "lift the latch" },
+  { id: "anniversary", title: "Mummy & Papa’s 25th", action: "Open the letter", hint: "break the seal" },
 ];
 
 for (const opening of OPENINGS) {

@@ -156,7 +156,8 @@ html.lenis,html.lenis body{height:auto}
 @media(prefers-reduced-motion:reduce){.art.is-drawing .ink :is(path,circle,ellipse,rect){stroke-dasharray:none!important}.art.is-drawing .wash,.art.is-drawing .ink text{opacity:1!important}.cin-pen{left:94%!important;top:94%!important}}
 
 /* ---------- Occasion reel (paper) ---------- */
-.cin-reel{height:280svh;position:relative}
+/* the reel scrolls sideways as you scroll down: about 55svh of scrolling per occasion */
+.cin-reel{height:460svh;position:relative}
 .cin-reel-sticky{position:sticky;top:0;height:100svh;display:flex;align-items:center;overflow:hidden}
 .cin-reel-intro{position:relative;z-index:5;flex:0 0 min(34vw,520px);padding:0 clamp(24px,3.5vw,56px) 0 var(--gutter);background-color:var(--bg);box-shadow:24px 0 32px var(--bg);align-self:stretch;display:flex;flex-direction:column;justify-content:center}
 .cin-reel-intro h2{font-size:clamp(34px,3.8vw,60px);line-height:1.06}
@@ -334,7 +335,7 @@ html.lenis,html.lenis body{height:auto}
   .cin-finale .doodle{display:none}
 
 
-  .cin-reel{height:280svh}
+  .cin-reel{height:460svh}
   .cin-reel-sticky{flex-direction:column;align-items:flex-start;justify-content:center;padding-top:64px}
   .cin-reel-intro{flex:none;width:100%;padding:0 var(--gutter) 28px;background:transparent;box-shadow:none;align-self:auto;display:block}
   .cin-reel-intro h2{font-size:32px;line-height:1.1}

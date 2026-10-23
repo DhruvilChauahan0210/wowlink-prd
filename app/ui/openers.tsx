@@ -7,6 +7,10 @@ import type { ArtName } from "./art";
  *  - birthday: a gift box. Pull the bow, the lid pops and confetti bursts out.
  *  - garba:    a rangoli around a diya. Light it, the dandiya clack and the petals bloom.
  *  - opening:  a ribbon and a "soon" sign. Snip the ribbon and the sign flips to "open".
+ *  - engagement:   a ring box. Press the heart clasp, the lid swings open and the rings rise and glint.
+ *  - babyshower:   a ghodiyu cradle. Shake the rattle, the cradle rocks and the little stars float up.
+ *  - housewarming: a front door with a toran. Lift the saankal, the doors swing in and footsteps lead inside.
+ *  - anniversary:  a sealed letter. Break the wax seal, the flap turns over and the letter rises out.
  * The drawing sits in an SVG; the thing you tap is a real button laid over it.
  * The movement itself lives in studio.css, keyed off .is-open on the scene.
  */
@@ -16,6 +20,10 @@ export const OPEN_HINT: Record<ArtName, string> = {
   birthday: "pull the bow",
   garba: "light the diya",
   opening: "cut the ribbon",
+  engagement: "press the clasp",
+  babyshower: "shake the rattle",
+  housewarming: "lift the latch",
+  anniversary: "break the seal",
 };
 
 const RED = "#c2412d";
@@ -172,7 +180,165 @@ function Ribbon({ label, onOpen }: { label: string; onOpen: () => void }) {
   );
 }
 
-const OPENERS: Record<ArtName, (p: { label: string; onOpen: () => void }) => ReactNode> = { wedding: Scroll, birthday: GiftBox, garba: Rangoli, opening: Ribbon };
+const BERRY = "#9c2f55";
+
+function RingBox({ label, onOpen }: { label: string; onOpen: () => void }) {
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="260" cy="262" rx="120" ry="10" />
+        <g className="o-rings">
+          <circle className="o-wash" cx="244" cy="150" r="22" fill="none" stroke={MARIGOLD} strokeWidth="8" />
+          <circle className="o-wash" cx="276" cy="146" r="22" fill="none" stroke={SUN} strokeWidth="8" />
+          <path className="o-wash" fill="#b9d3d0" d="M276 112L286 122L276 132L266 122Z" />
+          <g className="o-ink">
+            <circle cx="244" cy="150" r="22" /><circle cx="244" cy="150" r="15" strokeWidth="1.4" />
+            <circle cx="276" cy="146" r="22" /><circle cx="276" cy="146" r="15" strokeWidth="1.4" />
+            <path d="M276 112L286 122L276 132L266 122ZM266 122H286" strokeWidth="1.4" />
+          </g>
+          <g className="o-glints o-ink"><path d="M218 112l-8-8M302 104l8-10M318 138h12M202 142h-12" strokeWidth="2.4" /></g>
+        </g>
+        <g className="o-box">
+          <path className="o-wash" fill={BERRY} d="M180 170H340V240C340 248 334 254 326 254H194C186 254 180 248 180 240Z" />
+          <g className="o-ink"><path d="M180 170H340V240C340 248 334 254 326 254H194C186 254 180 248 180 240Z" /><path d="M180 186H340" strokeWidth="1.4" /></g>
+        </g>
+        <g className="o-lid">
+          <path className="o-wash" fill="#b23a63" d="M176 128C176 112 186 104 200 104H320C334 104 344 112 344 128V170H176Z" />
+          <g className="o-ink"><path d="M176 128C176 112 186 104 200 104H320C334 104 344 112 344 128V170H176Z" /><path d="M190 120H330" strokeWidth="1.4" /></g>
+        </g>
+      </svg>
+      <Trigger at={["50%", "57%", "12%"]} label={label} onOpen={onOpen} viewBox="0 0 60 60">
+        <path className="o-wash" fill={SUN} d="M30 50C14 38 8 26 16 18C22 12 28 16 30 21C32 16 38 12 44 18C52 26 46 38 30 50Z" />
+        <g className="o-ink"><path d="M30 50C14 38 8 26 16 18C22 12 28 16 30 21C32 16 38 12 44 18C52 26 46 38 30 50Z" /></g>
+      </Trigger>
+    </>
+  );
+}
+
+/** A five-pointed star centred on x, y (rounded, so server and browser print the same markup). */
+function star(x: number, y: number, r: number) {
+  return Array.from({ length: 10 }, (_, i) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const d = i % 2 ? r * 0.45 : r;
+    return `${i ? "L" : "M"}${Math.round((x + Math.cos(a) * d) * 100) / 100} ${Math.round((y + Math.sin(a) * d) * 100) / 100}`;
+  }).join("") + "Z";
+}
+
+function Cradle({ label, onOpen }: { label: string; onOpen: () => void }) {
+  const stars: [number, number][] = [[216, 80], [260, 66], [304, 82]];
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="260" cy="274" rx="150" ry="9" />
+        <g className="o-ink"><path d="M150 276L190 40M162 276L200 40M370 276L330 40M358 276L320 40M186 34H334V48H186ZM144 276H168M352 276H376" /></g>
+        <g className="o-stars">
+          {stars.map(([x, y], i) => (
+            <g key={x} className="o-star" style={vars({ "--i": i })}>
+              <path className="o-wash" fill={SUN} d={star(x, y, 10)} />
+              <g className="o-ink"><path d={star(x, y, 10)} /><path d={`M${x} 48V${y - 10}`} strokeWidth="1.2" /></g>
+            </g>
+          ))}
+        </g>
+        <g className="o-cradle">
+          <g className="o-ink"><path d="M224 48V170M296 48V170" strokeWidth="1.6" /></g>
+          <path className="o-wash" fill={MARIGOLD} d="M196 170C196 232 324 232 324 170Z" />
+          <path className="o-wash" fill="#f2b6c6" d="M206 170C212 160 308 160 314 170Z" />
+          <g className="o-ink">
+            <path d="M196 170C196 232 324 232 324 170Z" />
+            <path d="M188 170H332" />
+            <path d={`M211 194${"q7 7 14 0".repeat(7)}`} strokeWidth="1.3" />
+            <path d="M206 170C212 160 308 160 314 170" strokeWidth="1.6" />
+          </g>
+        </g>
+      </svg>
+      <Trigger at={["75%", "78%", "13%"]} label={label} onOpen={onOpen} viewBox="0 0 70 70">
+        <circle className="o-wash" fill={RED} cx="24" cy="24" r="16" />
+        <circle className="o-wash" fill={SUN} cx="24" cy="24" r="6" />
+        <g className="o-ink"><circle cx="24" cy="24" r="16" /><circle cx="24" cy="24" r="6" strokeWidth="1.4" /><path d="M36 36L58 58" strokeWidth="5" /><circle cx="61" cy="61" r="5" /></g>
+      </Trigger>
+    </>
+  );
+}
+
+function Door({ label, onOpen }: { label: string; onOpen: () => void }) {
+  const toran = Array.from({ length: 9 }, (_, i) => 182 + i * 19.5);
+  const footsteps: [number, number, number][] = [[248, 252, -8], [272, 234, 8], [250, 216, -8], [270, 198, 8]];
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="260" cy="284" rx="170" ry="9" />
+        <g className="o-inside">
+          <path className="o-wash" fill="#fbe7b5" d="M180 52H340V276H180Z" />
+          <circle className="o-wash" fill={SUN} cx="260" cy="140" r="44" opacity=".8" />
+          {footsteps.map(([x, y, a], i) => (
+            <g key={i} className="o-foot" style={vars({ "--i": i })} fill={RED} transform={`rotate(${a} ${x} ${y})`}>
+              <ellipse cx={x} cy={y} rx="5" ry="9" />
+              {[[-4, -12], [-1.5, -14], [1.5, -14.5], [4, -13]].map(([dx, dy], t) => <circle key={t} cx={x + dx} cy={y + dy} r="1.5" />)}
+            </g>
+          ))}
+        </g>
+        <g className="o-door-l">
+          <path className="o-wash" fill={BERRY} d="M180 52H260V276H180Z" />
+          <g className="o-ink"><path d="M180 52H260V276H180Z" /><path d="M194 72H246V154H194ZM194 172H246V258H194Z" strokeWidth="1.5" /><circle cx="250" cy="164" r="4" /></g>
+        </g>
+        <g className="o-door-r">
+          <path className="o-wash" fill={BERRY} d="M260 52H340V276H260Z" />
+          <g className="o-ink"><path d="M260 52H340V276H260Z" /><path d="M274 72H326V154H274ZM274 172H326V258H274Z" strokeWidth="1.5" /><circle cx="270" cy="164" r="4" /></g>
+        </g>
+        <g className="o-ink"><path d="M168 276V40H352V276M140 276H380" /></g>
+        {toran.map((x, i) => (i % 2
+          ? <circle key={x} className="o-wash" fill={MARIGOLD} cx={x} cy="66" r="6" />
+          : <path key={x} className="o-wash" fill="#6f8f4e" d={`M${x} 58C${x - 6} 66 ${x - 4} 76 ${x} 82C${x + 4} 76 ${x + 6} 66 ${x} 58Z`} />))}
+        <g className="o-ink">
+          <path d="M172 56C220 68 300 68 348 56" strokeWidth="1.3" />
+          {toran.map((x, i) => (i % 2 ? <circle key={x} cx={x} cy="66" r="5.5" /> : <path key={x} d={`M${x} 58C${x - 6} 66 ${x - 4} 76 ${x} 82C${x + 4} 76 ${x + 6} 66 ${x} 58Z`} strokeWidth="1.4" />))}
+        </g>
+      </svg>
+      <Trigger at={["50%", "55%", "8%"]} label={label} onOpen={onOpen} viewBox="0 0 40 80">
+        <circle className="o-wash" cx="20" cy="58" r="12" fill="none" stroke={MARIGOLD} strokeWidth="5" />
+        <g className="o-ink"><ellipse cx="20" cy="12" rx="4" ry="7" /><ellipse cx="20" cy="26" rx="4" ry="7" /><ellipse cx="20" cy="40" rx="4" ry="7" /><circle cx="20" cy="58" r="12" /></g>
+      </Trigger>
+    </>
+  );
+}
+
+function Letter({ label, onOpen }: { label: string; onOpen: () => void }) {
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="260" cy="272" rx="150" ry="9" />
+        <path className="o-wash" fill="#d9b48a" d="M150 100H370V260H150Z" />
+        {/* the flap once it's turned up, behind the letter */}
+        <g className="o-flap-back">
+          <path className="o-wash" fill="#e8c9a0" d="M150 100L260 24L370 100Z" />
+          <g className="o-ink"><path d="M150 100L260 24L370 100" /></g>
+        </g>
+        <g className="o-letter">
+          <path className="o-wash" fill="#fbf6ec" d="M172 110H348V250H172Z" />
+          <g className="o-ink">
+            <path d="M172 110H348V250H172Z" />
+            <path d="M192 140C230 136 270 142 300 138M192 160C240 156 290 162 328 158M192 180C228 176 262 182 290 178" strokeWidth="1.3" />
+            <path d="M310 206C302 198 302 190 310 192C318 190 318 198 310 206Z" fill={RED} />
+          </g>
+        </g>
+        {/* the front of the envelope, in front of the letter (a solid layer under the wash, so the letter doesn't show through) */}
+        <path fill="#ecd2ac" d="M154 108L260 186L366 108V256H154Z" />
+        <path className="o-wash" fill="#ecd2ac" d="M150 100L260 182L370 100V260H150Z" />
+        <g className="o-ink"><path d="M150 100V260H370V100M150 260L246 176M370 260L274 176" /></g>
+        <g className="o-flap-front">
+          <path className="o-wash" fill="#e8c9a0" d="M150 100L260 182L370 100Z" />
+          <g className="o-ink"><path d="M150 100L260 182L370 100Z" /></g>
+        </g>
+      </svg>
+      <Trigger at={["50%", "60%", "12%"]} label={label} onOpen={onOpen} viewBox="0 0 60 60">
+        <path className="o-wash" fill={RED} d="M30 8C36 6 40 12 46 12S52 22 54 28 50 40 50 44 40 50 34 54 24 52 18 52 8 44 6 38 6 28 8 22 14 12 24 10 30 8Z" />
+        <g className="o-ink"><path d="M30 8C36 6 40 12 46 12S52 22 54 28 50 40 50 44 40 50 34 54 24 52 18 52 8 44 6 38 6 28 8 22 14 12 24 10 30 8Z" /><path d="M30 40C20 32 18 24 24 22C27 21 29 23 30 26C31 23 33 21 36 22C42 24 40 32 30 40Z" strokeWidth="1.6" /></g>
+      </Trigger>
+    </>
+  );
+}
+
+const OPENERS: Record<ArtName, (p: { label: string; onOpen: () => void }) => ReactNode> = { wedding: Scroll, birthday: GiftBox, garba: Rangoli, opening: Ribbon, engagement: RingBox, babyshower: Cradle, housewarming: Door, anniversary: Letter };
 
 export function Opener({ name, label, onOpen }: { name: ArtName; label: string; onOpen: () => void }) {
   const Drawing = OPENERS[name];

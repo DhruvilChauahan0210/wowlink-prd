@@ -15,8 +15,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## What's here
 
-- **A hand-drawn product.** There's no photography. Each occasion (wedding, birthday, Garba, grand opening) has an ink-and-watercolour illustration in `app/ui/art.tsx`. The home page hero is a sketchbook that draws itself.
-- **A different opening for each occasion** (`app/ui/openers.tsx`). Untie a kankotri scroll, pull a gift's bow, light a diya so the rangoli blooms, or cut a ribbon.
+- **A hand-drawn product.** There's no photography. Each of the eight occasions (wedding, engagement, birthday, Garba, baby shower, housewarming, anniversary, grand opening) has an ink-and-watercolour illustration in `app/ui/art.tsx`. The home page hero is a sketchbook that draws itself.
+- **A different opening for each occasion** (`app/ui/openers.tsx`). Untie a kankotri scroll, open a ring box, pull a gift's bow, light a diya so the rangoli blooms, shake a rattle to rock the cradle, lift the latch on a front door, break the seal on a letter, or cut a ribbon.
 - **The studio** (`/create`): edit the details with a live preview, then publish.
 - **Publishing:** a short public link (`/e/<slug>`), with sharing by link, WhatsApp, the native share sheet or a printable QR code. Each link gets its own share preview image for WhatsApp and social apps.
 - **Guests** open the link, play the opening, see a countdown, add the event to their calendar (Google or `.ics`), and RSVP without an account. With a schedule, they tick which celebrations they're coming to, and can give a different number of people for each.
