@@ -58,9 +58,9 @@ test("RSVPs are rate-limited per guest", async ({ request }) => {
   expect(statuses).toEqual([201, 201, 201, 201, 201, 429]);
 });
 
-test("an invitation takes at most 100 replies on the free plan", async ({ request }) => {
-  const { slug } = await publish(request);
-  for (let i = 0; i < 100; i++) {
+test("a free invitation takes at most 50 replies", async ({ request }) => {
+  const { slug } = await publish(request, "wedding", {}, "free");
+  for (let i = 0; i < 50; i++) {
     const response = await request.post(`/api/experiences/${slug}/rsvps`, { headers: headers(), data: { attendance: "Attending", name: `Guest ${i}` } });
     expect(response.status()).toBe(201);
   }

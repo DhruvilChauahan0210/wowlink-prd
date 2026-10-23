@@ -25,7 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const name = typeof body.name === "string" ? body.name.trim().slice(0, LIMITS.guestName) : "";
   const count = Number(body.guestCount);
   const guestCount = attendance === "Not attending" ? 0 : Number.isInteger(count) && count >= 1 && count <= LIMITS.guests ? count : 1;
-  const result = await addRsvp(slug, { name, attendance, guestCount, events: body.events, shown: body.shown, counts: body.counts, guestId, wish: cleanWish(body.wish) });
+  const result = await addRsvp(slug, { name, attendance, guestCount, events: body.events, shown: body.shown, counts: body.counts, guestId, wish: cleanWish(body.wish), extras: { diet: body.diet, dietNote: body.dietNote, song: body.song, pick: body.pick } });
   if (result.ok) return Response.json({ ok: true, updated: result.updated }, { status: result.updated ? 200 : 201 });
   switch (result.reason) {
     case "invalid": return Response.json({ error: result.error }, { status: 422 });

@@ -30,7 +30,7 @@ export const PALETTES = {
 export type PaletteId = keyof typeof PALETTES;
 
 /** Each occasion's own tone (as in studio.css), for the "occasion's own colours" swatch. */
-export const OCCASION_TONES: Record<string, string> = { wedding: "#c2412d", engagement: "#9c2f55", birthday: "#c9506d", garba: "#b8552c", babyshower: "#3d7f79", housewarming: "#a24a24", anniversary: "#b8405f", opening: "#4f7a3c" };
+export const OCCASION_TONES: Record<string, string> = { wedding: "#c2412d", engagement: "#9c2f55", birthday: "#c9506d", garba: "#b8552c", babyshower: "#3d7f79", housewarming: "#a24a24", anniversary: "#b8405f", opening: "#4f7a3c", diwali: "#b8441a", janoi: "#b0580f", puja: "#b23a1e", naming: "#b83a72" };
 export const PALETTE_IDS = Object.keys(PALETTES) as PaletteId[];
 
 const HEX = /^#[0-9a-f]{6}$/i;

@@ -1,14 +1,14 @@
 import type { CSSProperties, ReactNode } from "react";
 
 /*
- * The eight hand-drawn occasion illustrations. Every one is ink line work over loose colour washes,
+ * The twelve hand-drawn occasion illustrations. Every one is ink line work over loose colour washes,
  * drawn on a 360 × 440 sheet.
  *  - `.wash` groups are the colour, roughened by the #wash filter and set slightly off the lines.
  *  - `.ink` groups are the line work. With `drawing`, each group draws itself in order like a pen
  *    going over the page, and the washes bleed in afterwards.
  */
 
-export const ART_NAMES = ["wedding", "birthday", "garba", "opening", "engagement", "babyshower", "housewarming", "anniversary"] as const;
+export const ART_NAMES = ["wedding", "birthday", "garba", "opening", "engagement", "babyshower", "housewarming", "anniversary", "diwali", "janoi", "puja", "naming"] as const;
 export type ArtName = (typeof ART_NAMES)[number];
 export const isArtName = (value: unknown): value is ArtName => ART_NAMES.includes(value as ArtName);
 
@@ -39,6 +39,10 @@ const LABELS: Record<ArtName, string> = {
   babyshower: "A hand-drawn wooden cradle hung with little toys, under a crescent moon and stars",
   housewarming: "A hand-drawn front door with a mango-leaf toran, a kalash, a tulsi pot and kumkum footprints leading in",
   anniversary: "Two hand-drawn glasses of chai with their steam curling into a heart, under a string of fairy lights",
+  diwali: "A hand-drawn row of lit clay diyas on a rangoli, with star lanterns, a marigold toran and an open box of mithai",
+  janoi: "A hand-drawn brass thali with the sacred thread coiled on it beside kumkum and rice, a small havan kund in flame and a kalash with mango leaves and a coconut",
+  puja: "A hand-drawn puja chowki in red cloth between two banana plants, with a kalash topped by a coconut and mango leaves, a conch, a bowl of sheera prasad, and an aarti thali with a lit diya beside curling incense",
+  naming: "A hand-drawn brass thali of rice with a swirl traced in it, a pipal leaf, silver payal and a wooden toy elephant, under strings of little bells",
 };
 
 export function Art({ name, className = "", drawing = false, fit = "meet", label, decorative = false }: Props) {
@@ -570,4 +574,402 @@ function Anniversary() {
   );
 }
 
-const SCENES: Record<ArtName, () => ReactNode> = { wedding: Wedding, birthday: Birthday, garba: Garba, opening: Opening, engagement: Engagement, babyshower: BabyShower, housewarming: Housewarming, anniversary: Anniversary };
+// ---------- diwali: clay diyas lit along a rangoli, star lanterns, a marigold toran and a box of mithai ----------
+
+function Diwali() {
+  const toran = along(13, [-6, 22, 110, 46, 250, 46, 366, 22]);
+  const leaf = (x: number, y: number) => `M${x} ${y}C${x - 6} ${y + 8} ${x - 4} ${y + 18} ${x} ${y + 24}C${x + 4} ${y + 18} ${x + 6} ${y + 8} ${x} ${y}Z`;
+  const kandils: [number, number, number, string][] = [[72, 134, 34, C.red], [290, 116, 28, C.marigold]];
+  const facets = (x: number, y: number, r: number) => Array.from({ length: 5 }, (_, i) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+    return `M${x} ${y}L${r2(x + Math.cos(a) * r)} ${r2(y + Math.sin(a) * r)}`;
+  }).join("");
+  const tails = (x: number, y: number) => `M${x - 6} ${y}c-3 12 3 22-1 34M${x} ${y + 1}c-3 14 3 26 0 40M${x + 6} ${y}c3 12-3 22 1 34`;
+  const petals = Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * Math.PI * 2;
+    return [r2(180 + Math.cos(a) * 138), r2(352 + Math.sin(a) * 39), r2((a * 180) / Math.PI)] as const;
+  });
+  const dots = Array.from({ length: 14 }, (_, i) => {
+    const a = (i / 14) * Math.PI * 2;
+    return `M${r2(180 + Math.cos(a) * 98)} ${r2(352 + Math.sin(a) * 27)}h1`;
+  }).join("");
+  const diyas: [number, number][] = [[69, 370], [116, 383], [180, 388], [244, 383], [291, 370]];
+  const bowl = (x: number, y: number) => `M${x - 16} ${y - 4}C${x - 14} ${y + 9} ${x + 10} ${y + 10} ${x + 16} ${y - 1}L${x + 23} ${y - 7}C${x + 12} ${y - 9} ${x - 6} ${y - 9} ${x - 16} ${y - 4}Z`;
+  const flame = (x: number, y: number) => `M${x + 21} ${y - 9}C${x + 15} ${y - 15} ${x + 18} ${y - 23} ${x + 21} ${y - 30}C${x + 24} ${y - 23} ${x + 27} ${y - 15} ${x + 21} ${y - 9}Z`;
+  const core = (x: number, y: number) => `M${x + 21} ${y - 11}C${x + 18} ${y - 14} ${x + 20} ${y - 18} ${x + 21} ${y - 21}C${x + 22} ${y - 18} ${x + 24} ${y - 14} ${x + 21} ${y - 11}Z`;
+  const laddoos: [number, number][] = [[146, 211], [162, 211], [138, 221], [154, 221], [170, 221]];
+  const katli: [number, number][] = [[199, 211], [217, 211], [190, 221], [208, 221], [226, 221]];
+  const diamond = (x: number, y: number) => `M${x} ${y - 5}L${x + 8} ${y}L${x} ${y + 5}L${x - 8} ${y}Z`;
+  const flower = "M180 162C175 167 175 172 180 174C185 172 185 167 180 162ZM180 186C175 181 175 176 180 174C185 176 185 181 180 186ZM168 174C173 169 178 169 180 174C178 179 173 179 168 174ZM192 174C187 169 182 169 180 174C182 179 187 179 192 174Z";
+  return (
+    <>
+      <Wash>
+        <circle cx="180" cy="230" r="138" fill={C.sun} opacity=".3" />
+        {kandils.map(([x, y, r]) => <circle key={`g${x}`} cx={x} cy={y} r={r + 12} fill={C.sun} opacity=".4" />)}
+        {kandils.map(([x, y, r], i) => <path key={`t${x}`} d={tails(x, y + Math.round(r * 0.45))} fill="none" stroke={i ? C.red : C.sun} strokeWidth="4" />)}
+        {kandils.map(([x, y, r, f]) => <path key={x} d={star(x, y, r)} fill={f} />)}
+        {kandils.map(([x, y, r]) => <circle key={`c${x}`} cx={x} cy={y} r={Math.round(r / 3)} fill={C.sun} />)}
+        {toran.map(([x, y], i) => (i % 2 ? <path key={i} d={leaf(x, y)} fill={C.leaf} /> : <circle key={i} cx={x} cy={y + 7} r="8" fill={i % 4 ? C.sun : C.marigold} />))}
+        <path d="M128 204L136 140H224L232 204Z" fill={C.berry} />
+        <path d="M140 196L146 152H214L220 196Z" fill={C.blush} />
+        <path d={flower} fill={C.red} />
+        <path d="M112 228L128 204H232L248 228Z" fill={C.sun} />
+        {laddoos.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="7" fill={C.marigold} />)}
+        {katli.map(([x, y]) => <path key={`${x}-${y}`} d={diamond(x, y)} fill={C.paper} />)}
+        <path d="M112 228H248V280H112Z" fill={C.berry} opacity=".85" />
+        <path d="M112 244H248V256H112Z" fill={C.sun} />
+        <ellipse cx="180" cy="352" rx="150" ry="44" fill={C.blush} opacity=".45" />
+        {petals.map(([x, y, a], i) => <ellipse key={i} cx={x} cy={y} rx="12" ry="5" fill={i % 2 ? C.marigold : C.red} transform={`rotate(${a + 90} ${x} ${y})`} />)}
+        <ellipse cx="180" cy="352" rx="98" ry="27" fill="none" stroke={C.teal} strokeWidth="16" opacity=".6" />
+        <ellipse cx="180" cy="352" rx="56" ry="15" fill={C.sun} />
+        <ellipse cx="180" cy="352" rx="16" ry="5" fill={C.red} />
+        {diyas.map(([x, y]) => <circle key={`g${x}`} cx={x + 21} cy={y - 19} r="15" fill={C.sun} opacity=".5" />)}
+        {diyas.map(([x, y]) => <path key={x} d={bowl(x, y)} fill={C.clay} />)}
+        {diyas.map(([x, y]) => <path key={`f${x}`} d={flame(x, y)} fill={C.sun} />)}
+        {diyas.map(([x, y]) => <path key={`c${x}`} d={core(x, y)} fill={C.marigold} />)}
+      </Wash>
+      <Ink d={0}>
+        <path d="M128 204L136 140H224L232 204" />
+        <path d="M112 228L128 204H232L248 228" />
+        <path d="M112 228H248V280H112Z" />
+        <ellipse cx="180" cy="352" rx="152" ry="45" />
+        {diyas.map(([x, y]) => <path key={x} d={bowl(x, y)} />)}
+      </Ink>
+      <Ink d={0.9} w={1.8}>
+        <path d="M140 196L146 152H214L220 196Z" strokeWidth="1.4" />
+        <path d={flower} strokeWidth="1.4" />
+        <circle cx="180" cy="174" r="2.5" />
+        <path d="M112 244H248M112 256H248" strokeWidth="1.4" />
+        <path d={Array.from({ length: 8 }, (_, i) => `M${124 + i * 16} 250h1`).join("")} strokeWidth="3" />
+        {laddoos.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="6.5" strokeWidth="1.5" />)}
+        {katli.map(([x, y]) => <path key={`${x}-${y}`} d={diamond(x, y)} strokeWidth="1.4" />)}
+        <ellipse cx="180" cy="352" rx="112" ry="31" strokeWidth="1.4" />
+        <ellipse cx="180" cy="352" rx="84" ry="23" strokeWidth="1.4" />
+        <ellipse cx="180" cy="352" rx="56" ry="15" />
+        <ellipse cx="180" cy="352" rx="16" ry="5" strokeWidth="1.4" />
+        {petals.map(([x, y, a], i) => <ellipse key={i} cx={x} cy={y} rx="12" ry="5" transform={`rotate(${a + 90} ${x} ${y})`} strokeWidth="1.3" />)}
+        <path d={dots} strokeWidth="3" />
+        {diyas.map(([x, y]) => <g key={x}><path d={`M${x - 16} ${y - 4}C${x - 8} ${y} ${x + 8} ${y} ${x + 17} ${y - 3}`} strokeWidth="1.3" /><path d={flame(x, y)} /><path d={`M${x - 8} ${y + 3}h1M${x} ${y + 5}h1M${x + 8} ${y + 3}h1`} strokeWidth="2.5" /></g>)}
+      </Ink>
+      <Ink d={1.6} w={1.6}>
+        <path d="M-6 22C110 46 250 46 366 22" strokeWidth="1.3" />
+        {toran.map(([x, y], i) => (i % 2 ? <path key={i} d={leaf(x, y)} strokeWidth="1.4" /> : <g key={i}><circle cx={x} cy={y + 7} r="7.5" /><circle cx={x} cy={y + 7} r="3" strokeWidth="1.2" /></g>))}
+        {kandils.map(([x, y, r]) => <g key={x}><path d={`M${x} 33V${y - r}`} strokeWidth="1.2" /><path d={star(x, y, r)} /><path d={facets(x, y, r)} strokeWidth="1.2" /><path d={tails(x, y + Math.round(r * 0.45))} strokeWidth="1.3" /></g>)}
+        <path d="M30 116l-9-5M32 134h-10M114 116l9-5M112 134h10M326 100l8-5M324 116h9M254 100l-8-5M256 116h-9" strokeWidth="1.4" />
+        <path d="M24 280H112M248 280H336" />
+        <Sparkle x={180} y={104} s={0.8} />
+        <Sparkle x={230} y={82} s={0.5} />
+        <Sparkle x={330} y={236} s={0.6} />
+        <Sparkle x={28} y={250} s={0.5} />
+      </Ink>
+    </>
+  );
+}
+
+// ---------- the janoi: the sacred thread coiled on a brass thali, by the havan and the kalash ----------
+
+function Janoi() {
+  const toran = along(13, [8, 28, 120, 70, 240, 70, 352, 28]);
+  const leaf = (x: number, y: number) => `M${x} ${y}C${x - 6} ${y + 8} ${x - 4} ${y + 18} ${x} ${y + 24}C${x + 4} ${y + 18} ${x + 6} ${y + 8} ${x} ${y}Z`;
+  /** a marigold head: nine ruffled petals round a centre */
+  const bloom = (x: number, y: number, r: number) => Array.from({ length: 9 }, (_, i) => {
+    const at = (a: number, d: number) => `${r2(x + Math.cos(a) * d)} ${r2(y + Math.sin(a) * d)}`;
+    const a = (i * 2 * Math.PI) / 9;
+    return `${i ? "" : `M${at(a, r)}`}Q${at(a + Math.PI / 9, r * 1.4)} ${at(a + (2 * Math.PI) / 9, r)}`;
+  }).join("") + "Z";
+  const flowers: [number, number, number, string][] = [[34, 386, 9, C.marigold], [330, 386, 8, C.sun], [128, 370, 7, C.marigold], [214, 368, 7, C.marigold]];
+  // the janoi, coiled in two loops of three strands each: [cx, cy, rx, ry, tilt]
+  const coils: [number, number, number, number, number][] = [[174, 342, 50, 14, -5], [188, 338, 42, 11, 6]];
+  const mango = "M272 226C262 214 263 196 272 184C281 196 282 214 272 226Z";
+  const flame = "M62 248C52 230 60 210 70 200C70 214 76 220 82 216C80 196 88 174 96 154C104 174 116 190 110 214C116 210 120 202 120 194C130 210 132 232 122 248Z";
+  const core = "M76 248C70 234 78 220 84 212C86 224 92 226 94 218C96 206 100 194 102 186C110 202 114 228 108 248Z";
+  const kund = "M40 248H144V260H136V274H126V288H116V300H68V288H58V274H48V260H40Z";
+  const body = "M262 238C230 246 226 296 252 302H292C318 296 314 246 282 238";
+  return (
+    <>
+      <Wash>
+        <circle cx="180" cy="230" r="138" fill={C.marigold} opacity=".22" />
+        {toran.map(([x, y], i) => (i % 2 ? <circle key={i} cx={x} cy={y + 6} r="6" fill={i % 4 === 1 ? C.red : C.marigold} /> : <path key={i} d={leaf(x, y)} fill={C.leaf} />))}
+        <path d={kund} fill={C.clay} />
+        <path d={flame} fill={C.marigold} />
+        <path d={core} fill={C.sun} />
+        {[-66, -34, 34, 66].map((a) => <path key={a} d={mango} fill={C.leaf} transform={`rotate(${a} 272 226)`} />)}
+        <path d={`${body}Z`} fill={C.marigold} />
+        <ellipse cx="272" cy="228" rx="18" ry="5" fill={C.marigold} />
+        <path d="M262 232H282V238H262Z" fill={C.red} />
+        <circle cx="272" cy="280" r="5" fill={C.red} />
+        <ellipse cx="272" cy="206" rx="15" ry="19" fill={C.clay} />
+        <path d="M44 342C46 408 314 408 316 342C316 398 44 398 44 342Z" fill={C.marigold} />
+        <ellipse cx="180" cy="340" rx="134" ry="42" fill={C.sun} opacity=".6" />
+        <path d="M84 334C86 346 114 346 116 334ZM244 334C246 346 274 346 276 334Z" fill={C.marigold} />
+        <path d="M86 334C90 324 110 324 114 334Z" fill={C.red} />
+        <path d="M246 334C250 324 270 324 274 334Z" fill={C.paper} />
+        {[[126, 320], [136, 316], [232, 318]].map(([x, y]) => <circle key={x} cx={x} cy={y} r="2" fill={C.red} />)}
+        {coils.map(([cx, cy, rx, ry, a]) => <g key={cx} transform={`rotate(${a} ${cx} ${cy})`} fill="none" strokeWidth="10"><ellipse cx={cx} cy={cy} rx={rx} ry={ry} stroke={C.paper} /><ellipse cx={cx} cy={cy} rx={rx} ry={ry} stroke={C.marigold} strokeDasharray="9 27" /></g>)}
+        <circle cx="175" cy="356" r="6.5" fill={C.marigold} />
+        <circle cx="175" cy="356" r="2.2" fill={C.red} />
+        {flowers.map(([x, y, r, f]) => <path key={x} d={bloom(x, y, r)} fill={f} />)}
+      </Wash>
+      <Ink d={0}>
+        <ellipse cx="180" cy="340" rx="136" ry="43" />
+        <ellipse cx="180" cy="336" rx="110" ry="30" strokeWidth="1.4" />
+        <path d="M44 342C46 408 314 408 316 342" />
+        <path d={kund} />
+        <path d="M48 260H136M58 274H126M68 288H116" strokeWidth="1.6" />
+        <path d={body} />
+        <path d="M262 238V231M282 238V231" />
+        <ellipse cx="272" cy="228" rx="18" ry="5" />
+      </Ink>
+      <Ink d={0.9} w={1.8}>
+        <path d={flame} />
+        <path d={core} strokeWidth="1.4" />
+        <path d="M50 248L70 236M134 248L114 236" />
+        <path d="M50 254h1M64 254h1M78 254h1M92 254h1M106 254h1M120 254h1M134 254h1" strokeWidth="2.6" />
+        {[-66, -34, 34, 66].map((a) => <g key={a} transform={`rotate(${a} 272 226)`}><path d={mango} /><path d="M272 222V190" strokeWidth="1.2" /></g>)}
+        <ellipse cx="272" cy="206" rx="15" ry="19" />
+        <path d="M267 189L262 177M272 187V173M277 189L282 177" strokeWidth="1.6" />
+        <path d="M263 198C267 206 267 214 265 220M281 198C277 206 277 214 279 220" strokeWidth="1.2" />
+        <path d="M262 235H282M282 235L290 247M283 236L285 249" strokeWidth="1.4" />
+        <path d="M240 262C258 270 286 270 304 262" strokeWidth="1.3" />
+        <circle cx="272" cy="280" r="5" strokeWidth="1.4" />
+        <path d="M262 282h1M282 282h1M272 291h1" strokeWidth="2.4" />
+        <path d="M82 334H118M84 334C86 346 114 346 116 334M242 334H278M244 334C246 346 274 346 276 334" />
+        <path d="M86 334C90 324 110 324 114 334M246 334C250 324 270 324 274 334M254 330h3M261 327h3M266 331h2M257 332h2" strokeWidth="1.4" />
+        {coils.map(([cx, cy, rx, ry, a]) => <g key={cx} transform={`rotate(${a} ${cx} ${cy})`}>{[-3.5, 0, 3.5].map((o) => <ellipse key={o} cx={cx} cy={cy} rx={rx + o} ry={ry + o} strokeWidth="1.2" />)}</g>)}
+        <circle cx="175" cy="356" r="6" />
+        <path d="M170 353C173 356 177 356 180 353" strokeWidth="1.2" />
+      </Ink>
+      <Ink d={1.6} w={1.6}>
+        <path d="M8 28C120 70 240 70 352 28" strokeWidth="1.3" />
+        {toran.map(([x, y], i) => (i % 2 ? <circle key={i} cx={x} cy={y + 6} r="5.5" /> : <path key={i} d={leaf(x, y)} strokeWidth="1.4" />))}
+        <path d="M14 398C110 392 250 402 346 394" />
+        {flowers.map(([x, y, r]) => <g key={x}><path d={bloom(x, y, r)} /><circle cx={x} cy={y} r={r2(r * 0.35)} strokeWidth="1.2" /></g>)}
+        <path d="M100 150C92 136 108 128 100 114C94 102 106 90 124 94C140 98 146 116 164 114C176 112 180 102 176 94M72 182C66 172 74 164 70 156" strokeWidth="1.3" />
+        <path d="M128 170h1M140 152h1M116 140h1" strokeWidth="3" />
+        <path d="M150 372l3 1M170 376l3-1M196 374l3 1M236 360l3-1M108 352l3 0" strokeWidth="2" />
+        <Sparkle x={186} y={150} s={0.8} />
+        <Sparkle x={322} y={124} s={0.6} />
+        <Sparkle x={210} y={236} s={0.5} />
+        <Sparkle x={34} y={148} s={0.5} />
+      </Ink>
+    </>
+  );
+}
+
+// ---------- the puja: a red chowki between banana plants, with the kalash, a conch, sheera prasad and the aarti thali ----------
+
+/** A pointed leaf or petal from x0, y0 to x1, y1, w across at its widest. */
+function lens(x0: number, y0: number, x1: number, y1: number, w: number) {
+  const l = Math.hypot(x1 - x0, y1 - y0);
+  const nx = ((y0 - y1) / l) * w;
+  const ny = ((x1 - x0) / l) * w;
+  const mx = (x0 + x1) / 2;
+  const my = (y0 + y1) / 2;
+  return `M${x0} ${y0}Q${r2(mx + nx)} ${r2(my + ny)} ${x1} ${y1}Q${r2(mx - nx)} ${r2(my - ny)} ${x0} ${y0}Z`;
+}
+
+/** A banana plant standing by the chowki: its stem and three big leaves. s is 1 for the one on the left, -1 for its mirror on the right. */
+function banana(x: number, s: 1 | -1) {
+  const X = (dx: number) => x + s * dx;
+  const ribs: [number, number, number, number, number, number, number, number][] = [
+    [X(0), 120, X(-8), 86, X(-12), 50, X(-14), 14],
+    [X(-2), 132, X(-20), 104, X(-40), 104, X(-40), 158],
+    [X(2), 128, X(18), 84, X(62), 66, X(96), 86],
+  ];
+  const vein: [number, number][] = [[-9, -4], [-2, -6], [3, -7]];
+  return {
+    stem: `M${X(-9)} 364C${X(-7)} 300 ${X(-7)} 200 ${X(-6)} 116H${X(6)}C${X(7)} 200 ${X(7)} 300 ${X(9)} 364Z`,
+    edges: `M${X(-9)} 364C${X(-7)} 300 ${X(-7)} 200 ${X(-6)} 118M${X(9)} 364C${X(7)} 300 ${X(7)} 200 ${X(6)} 124`,
+    sheaths: `M${X(-7)} 320L${X(7)} 302M${X(-7)} 250L${X(7)} 232M${X(-6)} 180L${X(6)} 164`,
+    leaves: [
+      `M${X(0)} 120C${X(-26)} 92 ${X(-30)} 50 ${X(-14)} 14C${X(4)} 48 ${X(14)} 90 ${X(0)} 120Z`,
+      `M${X(-2)} 128C${X(-18)} 94 ${X(-46)} 92 ${X(-40)} 158C${X(-34)} 126 ${X(-20)} 116 ${X(-2)} 138Z`,
+      `M${X(2)} 122C${X(14)} 70 ${X(66)} 54 ${X(96)} 86C${X(70)} 84 ${X(28)} 100 ${X(4)} 136Z`,
+    ],
+    ribs: ribs.map((p) => `M${p[0]} ${p[1]}C${p[2]} ${p[3]} ${p[4]} ${p[5]} ${p[6]} ${p[7]}`).join(""),
+    veins: ribs.map((p, k) => along(5, p).slice(1, -1).map(([vx, vy]) => `M${vx} ${vy}l${s * vein[k][0]} ${vein[k][1]}${k ? "" : `M${vx} ${vy}l${s * 7} -5`}`).join("")).join(""),
+  };
+}
+
+function Puja() {
+  const plants = [banana(50, 1), banana(310, -1)];
+  const garland = along(13, [52, 108, 120, 142, 240, 142, 308, 108]);
+  const strands: [number, number][] = [[124, 3], [152, 5], [180, 7], [208, 5], [236, 3]];
+  const beads = (n: number) => Array.from({ length: n }, (_, j) => 8 + j * 13);
+  const tassel = (x: number, n: number) => lens(x, 14 + (n - 1) * 13, x, 26 + (n - 1) * 13, 8);
+  const mango = [lens(166, 200, 136, 186, 10), lens(164, 190, 146, 166, 10), lens(196, 190, 214, 166, 10), lens(194, 200, 224, 186, 10)];
+  const tulsi = [lens(234, 246, 227, 237, 6), lens(234, 246, 242, 238, 6)];
+  const petals: [string, string][] = [[lens(212, 404, 222, 398, 6), C.marigold], [lens(230, 410, 240, 412, 6), C.red], [lens(236, 394, 244, 388, 6), C.marigold]];
+  const leg = (x: number) => `M${x} 324H${x + 16}L${x + 14} 338C${x + 19} 344 ${x + 19} 352 ${x + 14} 356L${x + 16} 364H${x}L${x + 2} 356C${x - 3} 352 ${x - 3} 344 ${x + 2} 338Z`;
+  const kalash = "M166 206C166 212 170 214 170 216C146 222 142 262 160 270H200C218 262 214 222 190 216C190 214 194 212 194 206";
+  const conch = "M104 256C110 246 126 240 140 245C150 249 151 260 144 266C132 271 114 268 104 256Z";
+  const flame = "M140 388C134 382 137 374 140 366C143 374 146 382 140 388Z";
+  return (
+    <>
+      <Wash>
+        <circle cx="180" cy="230" r="138" fill={C.sun} opacity=".3" />
+        <path d="M18 362C110 356 250 368 342 360L342 420L18 420Z" fill={C.marigold} opacity=".22" />
+        {strands.map(([x, n]) => <g key={x}>{beads(n).map((y, j) => <circle key={y} cx={x} cy={y} r="6" fill={j % 2 ? C.sun : C.marigold} />)}<path d={tassel(x, n)} fill={C.leaf} /></g>)}
+        {plants.map((b, i) => <g key={i}><path d={b.stem} fill={C.leaf} opacity=".55" />{b.leaves.map((d) => <path key={d} d={d} fill={C.leaf} />)}</g>)}
+        {garland.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="7" fill={i % 3 === 1 ? C.red : C.marigold} />)}
+        <path d="M114 262H246L260 276H100Z" fill={C.red} />
+        <path d="M100 276H260V316H100Z" fill={C.red} />
+        <path d={`M260 316${"l-10 10l-10-10".repeat(8)}Z`} fill={C.sun} />
+        <path d={`${leg(106)}${leg(238)}`} fill={C.clay} />
+        <ellipse cx="180" cy="269" rx="28" ry="5" fill={C.cream} />
+        <path d={`${kalash}Z`} fill={C.marigold} />
+        <path d="M167 209H193V214H167Z" fill={C.red} />
+        {mango.map((d) => <path key={d} d={d} fill={C.leaf} />)}
+        <ellipse cx="180" cy="205" rx="17" ry="4" fill={C.marigold} />
+        <ellipse cx="180" cy="186" rx="15" ry="19" fill={C.clay} />
+        <circle cx="180" cy="248" r="3.5" fill={C.red} /><circle cx="169" cy="252" r="2.5" fill={C.red} /><circle cx="191" cy="252" r="2.5" fill={C.red} />
+        <path d={conch} fill={C.cream} />
+        <path d="M216 258C218 272 250 272 252 258Z" fill={C.sky} />
+        <path d="M218 258C220 242 248 242 250 258Z" fill={C.sun} />
+        {tulsi.map((d) => <path key={d} d={d} fill={C.leaf} />)}
+        <ellipse cx="140" cy="394" rx="56" ry="13" fill={C.sun} />
+        <circle cx="140" cy="376" r="17" fill={C.sun} opacity=".6" />
+        <path d="M98 392C99 400 115 400 116 392Z" fill={C.red} />
+        <path d="M126 390C128 400 152 400 154 390Z" fill={C.clay} />
+        <path d={flame} fill={C.sun} />
+        <circle cx="170" cy="392" r="6" fill={C.marigold} /><circle cx="183" cy="398" r="5" fill={C.red} />
+        <path d="M268 400C268 392 284 392 284 400Z" fill={C.marigold} />
+        <circle cx="268" cy="349" r="2.5" fill={C.red} /><circle cx="286" cy="351" r="2.5" fill={C.red} />
+        {petals.map(([d, f]) => <path key={d} d={d} fill={f} />)}
+      </Wash>
+      <Ink d={0}>
+        {plants.map((b, i) => <path key={i} d={b.edges} />)}
+        <path d="M100 276L114 262H246L260 276ZM100 276V316M260 276V316" />
+        <path d={`M260 316${"l-10 10l-10-10".repeat(8)}`} />
+        <path d={leg(106)} /><path d={leg(238)} />
+        <path d={kalash} />
+        <ellipse cx="180" cy="205" rx="17" ry="4" />
+        <path d="M16 364C110 358 250 370 344 362" />
+      </Ink>
+      <Ink d={0.9} w={1.8}>
+        {plants.map((b, i) => <g key={i}>{b.leaves.map((d) => <path key={d} d={d} />)}<path d={b.ribs} strokeWidth="1.4" /><path d={b.veins} strokeWidth="1.1" /><path d={b.sheaths} strokeWidth="1.3" /></g>)}
+        <path d="M100 316H260M100 306H260" strokeWidth="1.3" />
+        <path d={Array.from({ length: 9 }, (_, i) => `M${112 + i * 17} 294h1`).join("")} strokeWidth="3" />
+        <path d="M151 271C154 266 158 265 161 267M199 267C202 265 206 266 209 271" strokeWidth="1.3" />
+        <path d="M167 209H193M167 214H193M190 214l3 7M192 214l6 4M151 236C164 232 196 232 209 236" strokeWidth="1.3" />
+        {mango.map((d) => <path key={d} d={d} />)}
+        <path d="M166 200L136 186M164 190L146 166M196 190L214 166M194 200L224 186" strokeWidth="1.1" />
+        <ellipse cx="180" cy="186" rx="15" ry="19" />
+        <path d="M172 173C176 180 176 193 172 200M188 173C184 180 184 193 188 200" strokeWidth="1.2" />
+        <path d="M178 167C176 162 180 158 179 154M182 167C184 162 188 160 188 156" strokeWidth="1.4" />
+        <path d={conch} />
+        <path d="M120 266C128 259 140 257 147 262M110 250C113 254 113 259 109 262M117 246C121 252 121 260 116 266" strokeWidth="1.4" />
+        <path d="M127 242l1-5M136 244l3-4" strokeWidth="1.6" />
+        <path d="M216 258C218 272 250 272 252 258M213 258H255" />
+        <path d="M218 258C220 242 248 242 250 258" strokeWidth="1.5" />
+        {tulsi.map((d) => <path key={d} d={d} strokeWidth="1.3" />)}
+        <path d="M225 252h1M243 252h1M232 255h1" strokeWidth="3" />
+      </Ink>
+      <Ink d={1.6} w={1.6}>
+        <path d="M52 108C120 142 240 142 308 108" strokeWidth="1.3" />
+        {garland.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="6.5" />)}
+        {strands.map(([x, n]) => <g key={x}><path d={`M${x} 0V${8 + (n - 1) * 13}`} strokeWidth="1.2" />{beads(n).map((y) => <circle key={y} cx={x} cy={y} r="5.5" />)}<path d={tassel(x, n)} strokeWidth="1.3" /></g>)}
+        <ellipse cx="140" cy="394" rx="57" ry="13.5" />
+        <path d="M98 392C99 400 115 400 116 392ZM126 390C128 400 152 400 154 390Z" />
+        <path d={flame} />
+        <path d="M122 372l-7-3M158 372l7-3M140 358v-7" strokeWidth="1.4" />
+        <circle cx="170" cy="392" r="5.5" /><circle cx="170" cy="392" r="2" strokeWidth="1.2" />
+        <circle cx="183" cy="398" r="4.5" /><circle cx="183" cy="398" r="1.6" strokeWidth="1.2" />
+        <path d="M268 400C268 392 284 392 284 400M264 400H288M274 394L268 350M278 394L286 352" />
+        <path d="M268 346C260 334 276 324 268 312C260 300 278 290 272 276C268 266 278 260 284 264M286 348C292 338 280 328 288 318C296 308 284 298 292 288" strokeWidth="1.3" />
+        {petals.map(([d]) => <path key={d} d={d} strokeWidth="1.3" />)}
+        <Sparkle x={92} y={34} s={0.6} />
+        <Sparkle x={268} y={34} s={0.6} />
+        <Sparkle x={84} y={212} s={0.5} />
+        <Sparkle x={290} y={206} s={0.6} />
+      </Ink>
+    </>
+  );
+}
+
+// ---------- the naamkaran: a thali of rice with a swirl traced in it, a pipal leaf, payal and a wooden elephant ----------
+
+function Naming() {
+  const pipal = "M180 226C164 234 136 230 132 208C128 184 148 162 168 138C174 130 178 116 184 92C184 114 188 128 194 138C214 160 234 184 230 208C226 230 198 234 180 226Z";
+  const swirl = "M132 270C138 256 162 252 172 260C180 266 170 276 160 272C150 268 158 256 176 256C198 256 208 274 224 268C234 264 234 256 228 254";
+  const grains: [number, number][] = [[108, 262], [118, 276], [140, 282], [196, 282], [150, 248], [204, 248], [232, 248], [254, 266], [170, 286], [212, 284]];
+  const kumkum: [number, number][] = [[273, 273], [237, 286], [180, 291], [123, 286], [87, 273], [87, 253], [273, 253]];
+  const bells: [number, number[]][] = [[51, [62, 94, 126]], [304, [56, 86, 116]]];
+  const bell = (x: number, y: number) => `M${x} ${y - 7}C${x - 6} ${y - 7} ${x - 6} ${y + 1} ${x - 8} ${y + 6}H${x + 8}C${x + 6} ${y + 1} ${x + 6} ${y - 7} ${x} ${y - 7}Z`;
+  const anklets: [number, number][] = [[68, 376], [124, 394]];
+  const ghungroo: [number, number][] = [[26, 5.5], [15, 9.5], [0, 11], [-15, 9.5], [-26, 5.5]];
+  const head = "M272 355C266 352 251 356 251 370C251 384 264 388 272 385";
+  const ear = "M272 355C284 352 290 368 285 378C282 384 274 385 272 385";
+  const trunk = "M252 375C245 382 243 393 249 399C253 403 260 399 257 395C254 391 255 387 260 384";
+  const apron = `M80 318${"q10 10 20 0".repeat(10)}`;
+  return (
+    <>
+      <Bunting y={20} sag={14} colors={[C.pink, C.teal, C.sun, C.blush]} />
+      <Wash>
+        <circle cx="180" cy="230" r="138" fill={C.blush} opacity=".3" />
+        <path d="M20 346C110 340 250 352 340 344L344 424C250 432 110 422 16 428Z" fill={C.cream} opacity=".6" />
+        {bells.flatMap(([x, ys]) => ys.map((y) => <path key={`${x}-${y}`} d={bell(x, y)} fill={C.sun} />))}
+        <path d={pipal} fill={C.leaf} />
+        <ellipse cx="180" cy="268" rx="108" ry="32" fill={C.marigold} />
+        <ellipse cx="180" cy="262" rx="108" ry="32" fill={C.sun} />
+        <ellipse cx="180" cy="265" rx="88" ry="23" fill={C.cream} />
+        <path d={swirl} fill="none" stroke={C.clay} strokeWidth="5" opacity=".35" />
+        {kumkum.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="2.4" fill={C.red} />)}
+        <path d="M56 304H304V318H56ZM64 318H80L78 344H66ZM280 318H296L294 344H282Z" fill={C.berry} opacity=".7" />
+        <path d={`${apron}Z`} fill={C.pink} />
+        {[76, 112, 146, 180, 214, 248, 284].map((x) => <circle key={x} cx={x} cy="311" r="3" fill={C.sun} />)}
+        <path d="M276 362C286 356 296 356 304 356C320 356 330 364 330 380V394H276ZM280 394H292V400H280ZM316 394H328V400H316Z" fill={C.teal} opacity=".75" />
+        <ellipse cx="266" cy="370" rx="15" ry="16" fill={C.teal} opacity=".75" />
+        <path d={`${trunk}Z`} fill={C.teal} opacity=".75" />
+        <path d={`${ear}Z`} fill={C.blush} />
+        <path d="M294 358C304 355 314 355 322 360L320 382Q314 388 308 382Q302 388 296 382Z" fill={C.pink} />
+        {[[302, 368], [314, 368], [308, 376]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="2.5" fill={C.sun} />)}
+        <path d="M262 400H338V408H262Z" fill={C.clay} />
+        <circle cx="276" cy="415" r="7" fill={C.marigold} />
+        <circle cx="324" cy="415" r="7" fill={C.marigold} />
+        {anklets.map(([cx, cy]) => <g key={cx}><ellipse cx={cx} cy={cy} rx="30" ry="11" fill="none" stroke={C.sky} strokeWidth="5" />{ghungroo.map(([dx, dy], i) => <circle key={i} cx={cx + dx} cy={cy + dy + 5} r="3.4" fill={C.sky} />)}</g>)}
+      </Wash>
+      <Ink d={0}>
+        <path d={pipal} />
+        <ellipse cx="180" cy="262" rx="108" ry="32" />
+        <path d="M72 262V268C72 311 288 311 288 268V262" />
+        <path d="M56 304H304V318H56Z" />
+        <path d="M64 318L66 344H78L80 318M280 318L282 344H294L296 318" />
+      </Ink>
+      <Ink d={0.9} w={1.8}>
+        <path d="M180 226C181 194 182 154 184 96" strokeWidth="1.4" />
+        <path d="M181 210C168 202 154 200 142 202M181 210C194 202 208 200 220 202M181 188C171 178 160 174 150 175M181 188C191 178 202 174 212 175M182 166C176 156 170 152 164 150M182 166C188 156 194 152 200 150" strokeWidth="1.2" />
+        <ellipse cx="180" cy="264" rx="90" ry="25" strokeWidth="1.4" />
+        <path d={swirl} />
+        <path d="M240 274h1" strokeWidth="3" />
+        <path d={grains.map(([x, y]) => `M${x} ${y}l4 -1`).join("")} strokeWidth="1.3" />
+        <path d={apron} strokeWidth="1.5" />
+        {/* the wooden elephant on wheels */}
+        <path d={head} />
+        <path d={ear} strokeWidth="1.6" />
+        <path d={trunk} />
+        <path d="M287 358C292 356 298 356 304 356C320 356 330 364 330 380V394H278V385" />
+        <path d="M294 358L296 382Q302 388 308 382Q314 388 320 382L322 361" strokeWidth="1.4" />
+        <path d="M280 400V394M292 394V400M316 400V394M328 394V400" />
+        <path d="M262 400H338V408H262Z" />
+        <circle cx="276" cy="415" r="7" /><circle cx="324" cy="415" r="7" />
+        <path d="M276 415h1M324 415h1M262 364h1" strokeWidth="3" />
+        <path d="M264 386C262 390 264 393 268 392M330 370C337 372 339 378 336 384M336 384l-3 4M336 384l2 4" strokeWidth="1.4" />
+        {/* a pair of silver payal with their little ghungroo */}
+        {anklets.map(([cx, cy]) => <g key={cx}><ellipse cx={cx} cy={cy} rx="30" ry="11" /><ellipse cx={cx} cy={cy} rx="26" ry="8" strokeWidth="1.1" />{ghungroo.map(([dx, dy], i) => <g key={i}><path d={`M${cx + dx} ${cy + dy}v2`} strokeWidth="1.2" /><circle cx={cx + dx} cy={cy + dy + 5} r="3" strokeWidth="1.4" /></g>)}</g>)}
+      </Ink>
+      <Ink d={1.6} w={1.6}>
+        <path d="M20 346C110 340 250 352 340 344" />
+        {bells.map(([x, ys]) => <path key={x} d={`M${x} 26V${ys[0] - 7}${ys.slice(1).map((y, i) => `M${x} ${ys[i] + 11}V${y - 7}`).join("")}`} strokeWidth="1.2" />)}
+        {bells.flatMap(([x, ys]) => ys.map((y) => <g key={`${x}-${y}`}><path d={bell(x, y)} /><circle cx={x} cy={y + 9} r="2" /></g>))}
+        <path d="M84 236c4-6 10-6 14 0M268 220c4-6 10-6 14 0" />
+        <Sparkle x={100} y={164} s={0.6} />
+        <Sparkle x={262} y={128} s={0.7} />
+        <Sparkle x={330} y={206} s={0.5} />
+        <Sparkle x={36} y={214} s={0.5} />
+      </Ink>
+    </>
+  );
+}
+
+const SCENES: Record<ArtName, () => ReactNode> = { wedding: Wedding, birthday: Birthday, garba: Garba, opening: Opening, engagement: Engagement, babyshower: BabyShower, housewarming: Housewarming, anniversary: Anniversary, diwali: Diwali, janoi: Janoi, puja: Puja, naming: Naming };

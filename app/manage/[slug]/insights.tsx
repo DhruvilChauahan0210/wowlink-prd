@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import Link from "next/link";
 import { SHARE_CHANNELS, dayKey, lastDays, percent } from "../../lib/insights";
 import { formatInvitationDate, formatShortDay } from "../../lib/invitations";
 import type { Experience, Rsvp } from "../../lib/store";
@@ -12,7 +13,7 @@ const DAY_MS = 86_400_000;
  * How an invitation is doing: how many people opened it, played the opening and replied, visits from the QR code,
  * visits over the last two weeks, and how the host has shared it. Plain counts (see insights.ts).
  */
-export function Insights({ experience, rsvps }: { experience: Experience; rsvps: Rsvp[] }) {
+export function Insights({ experience, rsvps, pro }: { experience: Experience; rsvps: Rsvp[]; pro: boolean }) {
   const h = useHostText();
   // Made before WowLink counted visits, and not visited since: say so, rather than "no visits yet".
   if (!experience.stats) return <>
@@ -36,17 +37,18 @@ export function Insights({ experience, rsvps }: { experience: Experience; rsvps:
         <div><dt>{h.peopleOpened}</dt><dd>{stats.visitors}</dd><span>{h.visitsN(stats.views)}</span></div>
         <div><dt>{h.playedOpening}</dt><dd>{stats.played}</dd>{stats.visitors > 0 && <span>{h.ofThem(percent(stats.played, stats.visitors))}</span>}</div>
         <div><dt>{h.repliedLabel}</dt><dd>{rsvps.length}</dd>{stats.visitors > 0 && <span>{h.ofThem(percent(repliedSince, stats.visitors))}</span>}</div>
-        {stats.viaQr > 0 && <div><dt>{h.fromQr}</dt><dd>{stats.viaQr}</dd><span>{h.qrVisits(stats.viaQr)}</span></div>}
+        {pro && stats.viaQr > 0 && <div><dt>{h.fromQr}</dt><dd>{stats.viaQr}</dd><span>{h.qrVisits(stats.viaQr)}</span></div>}
       </dl>
-      <figure className="manage-chart">
+      {pro && <figure className="manage-chart">
         <figcaption>{h.visitsChart}</figcaption>
         <ol>{days.map((day, i) => <li key={day} style={{ "--bar": `${(counts[i] / top) * 100}%` } as CSSProperties} className={counts[i] ? "" : "is-empty"}>
           <span className="studio-sr-only">{h.chartDay(formatShortDay(day, h.lang), counts[i])}</span>
         </li>)}</ol>
         <div className="manage-chart-axis" aria-hidden="true"><span>{formatShortDay(days[0], h.lang)}</span><span>{formatShortDay(days.at(-1)!, h.lang)}</span></div>
-      </figure>
+      </figure>}
     </>}
-    <p className="manage-shared">{shares.length ? `${h.sharedIt} ${shares.join(" · ")}` : h.notSharedYet}</p>
+    {pro ? <p className="manage-shared">{shares.length ? `${h.sharedIt} ${shares.join(" · ")}` : h.notSharedYet}</p>
+      : <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {h.proInsights} <Link href="/pricing">{h.seePlans}</Link></p>}
     <p className="manage-muted manage-insights-note">{h.insightsNote(since)}</p>
   </>;
 }

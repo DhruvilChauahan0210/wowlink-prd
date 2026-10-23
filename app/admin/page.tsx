@@ -74,7 +74,7 @@ export default function AdminPage() {
     if (result && found && found !== "none" && found.slug === slug) setFound(result.invitation);
     await load(key, days);
     if (!result) return setMessage("That didn’t work. Try again.");
-    setMessage(`${{ "take-down": "Taken down", restore: "Restored", dismiss: "Reports dismissed" }[action]}: ${result.invitation.title}`);
+    setMessage(`${{ "take-down": "Taken down", restore: "Restored", dismiss: "Reports dismissed", "make-pro": "Moved to the Creator studio", "make-free": "Moved to the free plan" }[action]}: ${result.invitation.title}`);
     // The list re-sorts, so focus goes back to the invitation's own heading.
     requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-admin-card="${slug}"] h3`)?.focus());
   }
@@ -150,7 +150,7 @@ function AdminCard({ invitation, onAct }: { invitation: AdminInvitation; onAct: 
         <h3 tabIndex={-1}><Link href={`/admin/view/${invitation.slug}`}>{invitation.title}</Link></h3>
         <p className="manage-muted">{formatInvitationDate(invitation.date, true)} · {invitation.venue} · made {formatShortDay(invitation.createdAt)} · {invitation.households} personal invitations · {invitation.replies} replies</p>
       </div>
-      <span className={`manage-status is-${invitation.removed ? "removed" : invitation.status}`}>{status}</span>
+      <span><span className={`manage-status is-${invitation.removed ? "removed" : invitation.status}`}>{status}</span> <span className={`manage-plan${invitation.plan === "pro" ? " is-pro" : ""}`}>{invitation.plan === "pro" ? "Creator studio" : "Free plan"}</span></span>
     </div>
     {invitation.reports.length > 0 && <ul className="admin-reports">{invitation.reports.map(report => <li key={report.id} className={report.resolvedAt ? "is-resolved" : ""}>
       <strong>{REASON_TEXT.en[report.reason]}</strong>
@@ -163,6 +163,8 @@ function AdminCard({ invitation, onAct }: { invitation: AdminInvitation; onAct: 
         : <button type="button" className="cin-cta cin-cta-outline admin-take-down" disabled={busy} onClick={() => void act("take-down")}>Take down</button>}
       {open.length > 0 && !invitation.removed && <button type="button" className="share-chip" disabled={busy} onClick={() => void act("dismiss")}>Dismiss {open.length === 1 ? "the report" : `${open.length} reports`}</button>}
       <Link className="share-chip" href={`/admin/view/${invitation.slug}`}>Look at it</Link>
+      {/* Until payments exist, the Creator studio is given by hand. */}
+      <button type="button" className="share-chip" disabled={busy} onClick={() => void act(invitation.plan === "pro" ? "make-free" : "make-pro")}>{invitation.plan === "pro" ? "Move to the free plan" : "Move to the Creator studio"}</button>
     </div>
   </li>;
 }

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { customPalette } from "../../app/lib/palette";
-import { freshIp, ownerHeaders, publish } from "../helpers";
+import { freshIp, openInStudio, ownerHeaders, publish } from "../helpers";
 
 /*
  * Hosts can tint an invitation with a palette or a colour of their own. The drawings keep their watercolours; the
@@ -11,8 +11,10 @@ const rgb = (hex: string) => `rgb(${[1, 3, 5].map(i => parseInt(hex.slice(i, i +
 
 test("a palette chosen in the studio shows in the preview and on the published invitation", async ({ browser }) => {
   const context = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp() } });
+  // Own colours are the Creator studio's.
+  const { slug, key } = await publish(context.request, "birthday", { title: "Riya turns 7" });
   const page = await context.newPage();
-  await page.goto("/create?template=birthday");
+  await openInStudio(page, slug, key);
   const preview = page.locator(".inv-scene").first();
   await expect(page.getByRole("radio", { name: "The occasion’s own" })).toBeChecked();
   await expect(preview).not.toHaveClass(/has-palette/);
@@ -22,13 +24,11 @@ test("a palette chosen in the studio shows in the preview and on the published i
   await expect(page.locator(".studio-palette-name")).toHaveText("Peacock");
   await expect(preview).toHaveClass(/has-palette/);
   await expect(preview.locator(".inv-intro .inv-overline")).toHaveCSS("color", rgb("#237a83"));
-
-  await page.locator("#title").fill("Riya turns 7");
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
-  const url = await page.locator(".publish-dialog[open] .share-tools input").inputValue();
+  await page.getByRole("button", { name: "Update", exact: true }).click();
+  await expect(page.locator(".publish-dialog[open]")).toBeVisible();
 
   const guest = await context.newPage();
-  await guest.goto(url);
+  await guest.goto(`/e/${slug}`);
   await expect(guest.locator(".invitation-page")).toHaveClass(/has-palette/);
   await expect(guest.locator(".inv-intro .inv-overline")).toHaveCSS("color", rgb("#237a83"));
   // Words on the dark message section take the palette's light shade.
@@ -38,24 +38,25 @@ test("a palette chosen in the studio shows in the preview and on the published i
   await context.close();
 });
 
-test("a colour of the host's own, kept in a saved draft, and back to the occasion's own", async ({ page }) => {
-  await page.goto("/create?template=wedding");
+test("a colour of the host's own, and back to the occasion's own", async ({ page, request }) => {
+  const { slug, key } = await publish(request, "wedding");
+  await openInStudio(page, slug, key);
   await page.getByLabel("Your own colour").fill("#ffff00");
   await expect(page.locator(".studio-own-colour")).toHaveClass(/is-selected/);
   await expect(page.getByRole("radiogroup", { name: "Colours" }).getByRole("radio", { checked: true })).toHaveCount(0);
   const preview = page.locator(".inv-scene").first();
   // Bright yellow can't be read on paper, so it's deepened until it can.
-  const tone = customPalette("#ffff00").tone;
-  await expect(preview.locator(".inv-intro .inv-overline")).toHaveCSS("color", rgb(tone));
-
-  await page.getByRole("button", { name: "Save draft" }).click();
-  await page.reload();
-  await expect(page.getByLabel("Your own colour")).toHaveValue("#ffff00");
-  await expect(preview.locator(".inv-intro .inv-overline")).toHaveCSS("color", rgb(tone));
+  await expect(preview.locator(".inv-intro .inv-overline")).toHaveCSS("color", rgb(customPalette("#ffff00").tone));
 
   await page.getByRole("radio", { name: "The occasion’s own" }).check();
   await expect(preview).not.toHaveClass(/has-palette/);
   await expect(preview.locator(".inv-intro .inv-overline")).toHaveCSS("color", rgb("#c2412d"));
+});
+
+test("a free invitation keeps the occasion's colours", async ({ page }) => {
+  await page.goto("/create?template=birthday");
+  await expect(page.locator(".studio-fieldset").filter({ has: page.locator("legend", { hasText: "Colours" }) })).toContainText("Your own colours are part of the Creator studio.");
+  await expect(page.getByRole("radiogroup", { name: "Colours" })).toHaveCount(0);
 });
 
 test("the link preview image uses the host's colour", async ({ request }) => {

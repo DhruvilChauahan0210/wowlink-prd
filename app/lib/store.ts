@@ -3,8 +3,10 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { answersFor, isGuestId, repliesUsed, validateGuest, validateGuestList, validatePublicEvents, viewFor, type AudienceView, type ByEvent, type EventFilter, type Guest, type GuestErrors } from "./guests";
 import { INVITATION_DAYS, METRIC_DAYS, bump, dayKey, emptyStats, summarise, trimDays, type InvitationStats, type Metrics, type PageMetric, type ShareChannel } from "./insights";
-import { LIMITS, type Attendance, type InvitationDraft, type TemplateId } from "./invitations";
+import { LIMITS, draftOf, type Attendance, type InvitationDraft, type TemplateId } from "./invitations";
 import type { Removal, Report, ReportReason } from "./reports";
+import { cleanExtras, type Diet } from "./extras";
+import { freeDraft, hasEnded, planOf, proFeaturesIn, repliesLimit, type Plan, type ProFeature } from "./plans";
 
 /*
  * Where published invitations and RSVPs live.
@@ -31,6 +33,8 @@ export type Experience = InvitationDraft & {
   publicEvents: EventFilter;
   /** Whether guests' wishes are shown on the invitation (the host always sees them). */
   showWishes: boolean;
+  /** Free or the Creator studio (plans.ts). Missing on invitations made before plans existed, which keep everything. */
+  plan?: Plan;
   /** Set when WowLink took it down after a report: guests can't open it and it can't be published again. */
   removed?: Removal;
   /** Plain counts of visits, openings and shares (see insights.ts). Missing until the first one. */
@@ -51,6 +55,11 @@ export type Rsvp = {
   byEvent?: ByEvent;
   /** A wish or blessing left with the reply, and whether the host has hidden it from the invitation. */
   wish?: string;
+  /** Extras the invitation asked for (extras.ts): food needs, a song, the poll answer (its option's index). */
+  diet?: Diet[];
+  dietNote?: string;
+  song?: string;
+  pick?: number;
   wishHidden?: boolean;
 };
 /** A wish as guests see it on the invitation: the words, and the name its writer typed (if any). */
@@ -61,7 +70,7 @@ export type PublicWish = { name: string; text: string };
  */
 export type PublicExperience = AudienceView & Pick<Experience, "slug" | "templateId"> & { wishes: PublicWish[] | null };
 /** A household's reply as their link shows it back to them: who sent it, when, and what it said. */
-export type HouseholdReply = Pick<Rsvp, "name" | "attendance" | "guestCount" | "byEvent" | "wish"> & { at: string };
+export type HouseholdReply = Pick<Rsvp, "name" | "attendance" | "guestCount" | "byEvent" | "wish" | "diet" | "dietNote" | "song" | "pick"> & { at: string };
 /** A personal link's household, and their reply so far. */
 export type GuestView = { experience: PublicExperience; guest: Pick<Guest, "id" | "name">; reply: HouseholdReply | null };
 
@@ -130,7 +139,7 @@ function newSlug(taken: Set<string>, length = 7) {
   }
 }
 
-const draftOf = ({ title, date, time, venue, message, events, language, thanks, palette, rsvp, countdown, mapUrl }: Experience): InvitationDraft => ({ title, date, time, venue, message, events, language, thanks, palette, rsvp, countdown, mapUrl });
+
 /** The most wishes an invitation shows (the latest ones). */
 const SHOWN_WISHES = 30;
 /**
@@ -144,14 +153,15 @@ const publicWishes = (db: Db, e: Experience): PublicWish[] | null =>
     .slice(0, SHOWN_WISHES)
     .map((r) => ({ name: r.name, text: r.wish! }));
 /** The invitation as one link shows it: only the fields a guest may see, and only their celebrations. */
-const toPublic = (db: Db, e: Experience, filter: EventFilter): PublicExperience => ({ slug: e.slug, templateId: e.templateId, ...viewFor(draftOf(e), filter), wishes: publicWishes(db, e) });
+// A free invitation never shows the Creator studio's parts, whatever is stored.
+const toPublic = (db: Db, e: Experience, filter: EventFilter): PublicExperience => ({ slug: e.slug, templateId: e.templateId, ...viewFor(planOf(e) === "pro" ? draftOf(e) : freeDraft(draftOf(e)), filter), wishes: publicWishes(db, e) });
 const strip = ({ keyHash: _keyHash, ...experience }: StoredExperience): Experience => experience;
 /** What guests can reach: published, and not taken down. */
-const isLive = (e: Experience) => e.status === "published" && !e.removed;
+const isLive = (e: Experience) => e.status === "published" && !e.removed && !hasEnded(e);
 
 // ---------- experiences ----------
 
-export function createExperience(templateId: TemplateId, draft: InvitationDraft) {
+export function createExperience(templateId: TemplateId, draft: InvitationDraft, plan: Plan = "free") {
   return write((db) => {
     const key = randomBytes(24).toString("base64url");
     const now = new Date().toISOString();
@@ -169,6 +179,7 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft)
       publicEvents: "all",
       showWishes: false,
       stats: emptyStats(now),
+      plan,
       keyHash: hash(key),
     };
     db.experiences.push(stored);
@@ -198,7 +209,7 @@ export function getGuestView(slug: string, guestId: string) {
     return {
       experience,
       guest: { id: guest.id, name: guest.name },
-      reply: reply ? { name: reply.name, attendance: reply.attendance, guestCount: reply.guestCount, ...(byEvent && { byEvent }), ...(reply.wish && { wish: reply.wish }), at: reply.updatedAt ?? reply.createdAt } : null,
+      reply: reply ? { name: reply.name, attendance: reply.attendance, guestCount: reply.guestCount, ...(byEvent && { byEvent }), ...(reply.wish && { wish: reply.wish }), ...(reply.diet && { diet: reply.diet }), ...(reply.dietNote && { dietNote: reply.dietNote }), ...(reply.song && { song: reply.song }), ...(reply.pick !== undefined && { pick: reply.pick }), at: reply.updatedAt ?? reply.createdAt } : null,
     };
   });
 }
@@ -215,7 +226,7 @@ export function getOwned(slug: string, key: string) {
 }
 
 type Patch = { templateId?: TemplateId; draft?: InvitationDraft; status?: Experience["status"]; publicEvents?: unknown; showWishes?: boolean };
-type UpdateResult = { ok: true; experience: Experience } | { ok: false; reason: "not-yours" | "invalid" | "removed" };
+type UpdateResult = { ok: true; experience: Experience } | { ok: false; reason: "not-yours" | "invalid" | "removed" } | { ok: false; reason: "pro"; features: ProFeature[] };
 
 /** Edit an invitation. `publicEvents` is checked here, against the schedule as it is after this edit. */
 export function updateOwned(slug: string, key: string, patch: Patch) {
@@ -224,6 +235,10 @@ export function updateOwned(slug: string, key: string, patch: Patch) {
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     // A taken-down invitation can't be put back in front of guests (its host can still delete it).
     if (found.removed && patch.status === "published") return { ok: false, reason: "removed" };
+    if (planOf(found) === "free" && (patch.draft || patch.templateId)) {
+      const features = proFeaturesIn(patch.templateId ?? found.templateId, patch.draft ?? draftOf(found));
+      if (features.length) return { ok: false, reason: "pro", features };
+    }
     const publicEvents = patch.publicEvents === undefined ? undefined : validatePublicEvents(patch.publicEvents, patch.draft?.events ?? found.events);
     if (publicEvents === null) return { ok: false, reason: "invalid" };
     if (patch.templateId) found.templateId = patch.templateId;
@@ -255,7 +270,7 @@ export function deleteOwned(slug: string, key: string) {
 
 // ---------- personal invitations (owner only) ----------
 
-type GuestResult = { ok: true; guest: Guest } | { ok: false; reason: "not-yours" | "missing" | "full" } | { ok: false; reason: "invalid"; errors: GuestErrors };
+type GuestResult = { ok: true; guest: Guest } | { ok: false; reason: "not-yours" | "missing" | "full" | "pro" } | { ok: false; reason: "invalid"; errors: GuestErrors };
 
 const rsvpsOf = (db: Db, experience: Experience) => db.rsvps.filter((r) => r.experienceId === experience.id);
 /** A fresh link id, never one this invitation has used before (a removed household's id must not come back). */
@@ -265,7 +280,8 @@ export function addGuest(slug: string, key: string, input: unknown) {
   return write((db): GuestResult => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
-    if (found.guests.length >= LIMITS.guestList || repliesUsed(rsvpsOf(db, found), found.guests) >= LIMITS.rsvpsPerEvent) return { ok: false, reason: "full" };
+    if (planOf(found) === "free") return { ok: false, reason: "pro" };
+    if (found.guests.length >= LIMITS.guestList || repliesUsed(rsvpsOf(db, found), found.guests) >= repliesLimit(planOf(found))) return { ok: false, reason: "full" };
     const checked = validateGuest(input, found.events);
     if (!checked.ok) return { ok: false, reason: "invalid", errors: checked.errors };
     const { name, events, phone } = checked.value;
@@ -275,7 +291,7 @@ export function addGuest(slug: string, key: string, input: unknown) {
   });
 }
 
-type GuestListResult = { ok: true; guests: Guest[]; skipped: string[] } | { ok: false; reason: "not-yours" } | { ok: false; reason: "full"; room: number } | { ok: false; reason: "invalid"; errors: GuestErrors };
+type GuestListResult = { ok: true; guests: Guest[]; skipped: string[] } | { ok: false; reason: "not-yours" | "pro" } | { ok: false; reason: "full"; room: number } | { ok: false; reason: "invalid"; errors: GuestErrors };
 
 /** Add several households at once (a pasted list), all with the same celebrations. All or nothing. */
 export function addGuests(slug: string, key: string, input: unknown) {
@@ -284,7 +300,8 @@ export function addGuests(slug: string, key: string, input: unknown) {
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     const checked = validateGuestList(input, found.events, found.guests);
     if (!checked.ok) return { ok: false, reason: "invalid", errors: checked.errors };
-    const room = Math.max(0, Math.min(LIMITS.guestList - found.guests.length, LIMITS.rsvpsPerEvent - repliesUsed(rsvpsOf(db, found), found.guests)));
+    if (planOf(found) === "free") return { ok: false, reason: "pro" };
+    const room = Math.max(0, Math.min(LIMITS.guestList - found.guests.length, repliesLimit(planOf(found)) - repliesUsed(rsvpsOf(db, found), found.guests)));
     if (checked.value.guests.length > room) return { ok: false, reason: "full", room };
     const now = new Date().toISOString();
     const added = checked.value.guests.map(({ name, phone }) => {
@@ -359,7 +376,7 @@ export function removeGuest(slug: string, key: string, guestId: string) {
 
 // ---------- RSVPs ----------
 
-type RsvpInput = { name: string; attendance: Attendance; guestCount: number; events?: unknown; shown?: unknown; counts?: unknown; guestId?: string; wish?: string };
+type RsvpInput = { name: string; attendance: Attendance; guestCount: number; events?: unknown; shown?: unknown; counts?: unknown; guestId?: string; wish?: string; extras?: Record<string, unknown> };
 type RsvpResult = { ok: true; updated: boolean } | { ok: false; reason: "missing" | "full" | "guest" | "closed" } | { ok: false; reason: "invalid"; error: string };
 
 /**
@@ -379,15 +396,19 @@ export function addRsvp(slug: string, input: RsvpInput) {
     const now = new Date().toISOString();
     const earlier = guest && db.rsvps.find((r) => r.experienceId === found.id && r.guestId === guest.id);
     const kept = Object.fromEntries(Object.entries(earlier?.byEvent ?? {}).filter(([id]) => view.events.some((e) => e.id === id)));
-    const reply = { name: input.name, attendance: input.attendance, guestCount: answers.guestCount, byEvent: { ...kept, ...answers.byEvent }, ...(input.wish && { wish: input.wish }) };
+    // Extras only for what this invitation asks (song and poll are the Creator studio's), and none for "can't make it".
+    const pro = planOf(found) === "pro";
+    const extras = input.attendance === "Not attending" ? {} : cleanExtras(input.extras ?? {}, { diet: !!found.askDiet, song: pro && !!found.askSong, poll: pro ? found.poll ?? null : null });
+    const reply = { name: input.name, attendance: input.attendance, guestCount: answers.guestCount, byEvent: { ...kept, ...answers.byEvent }, ...(input.wish && { wish: input.wish }), ...extras };
     if (earlier) {
       // A wish taken out of the reply is removed (whether the host hid it stays as it was).
       if (!input.wish) delete earlier.wish;
+      for (const field of ["diet", "dietNote", "song", "pick"] as const) delete earlier[field];
       Object.assign(earlier, reply, { updatedAt: now });
       return { ok: true, updated: true };
     }
     // Households with a personal link always get through: their place was kept when the host added them.
-    if (!guest && repliesUsed(rsvpsOf(db, found), found.guests) >= LIMITS.rsvpsPerEvent) return { ok: false, reason: "full" };
+    if (!guest && repliesUsed(rsvpsOf(db, found), found.guests) >= repliesLimit(planOf(found))) return { ok: false, reason: "full" };
     bump(db.metrics, "reply", Date.now());
     db.rsvps.push({ id: randomUUID(), experienceId: found.id, ...reply, ...(guest && { guestId: guest.id }), createdAt: now });
     return { ok: true, updated: false };
@@ -512,10 +533,10 @@ export function addReport(slug: string, reason: ReportReason, details: string) {
 }
 
 /** What the admin sees of an invitation: enough to judge a report, not its guest list or replies. */
-export type AdminInvitation = Pick<Experience, "slug" | "templateId" | "title" | "date" | "venue" | "status" | "createdAt" | "removed"> & { households: number; replies: number; reports: Report[] };
+export type AdminInvitation = Pick<Experience, "slug" | "templateId" | "title" | "date" | "venue" | "status" | "createdAt" | "removed"> & { plan: Plan; households: number; replies: number; reports: Report[] };
 
 const forAdmin = (db: Db, e: StoredExperience): AdminInvitation => ({
-  slug: e.slug, templateId: e.templateId, title: e.title, date: e.date, venue: e.venue, status: e.status, createdAt: e.createdAt, removed: e.removed,
+  slug: e.slug, templateId: e.templateId, title: e.title, date: e.date, venue: e.venue, status: e.status, createdAt: e.createdAt, removed: e.removed, plan: planOf(e),
   households: e.guests.length,
   replies: rsvpsOf(db, e).length,
   reports: db.reports.filter((r) => r.experienceId === e.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
@@ -545,7 +566,7 @@ export function adminView(slug: string) {
   });
 }
 
-export type Moderation = "take-down" | "restore" | "dismiss";
+export type Moderation = "take-down" | "restore" | "dismiss" | "make-pro" | "make-free";
 
 /** Take an invitation down (its open reports count as acted on), put it back, or dismiss its open reports. */
 export function moderate(slug: string, action: Moderation) {
@@ -562,6 +583,9 @@ export function moderate(slug: string, action: Moderation) {
       found.removed = { at: now, ...(reason && { reason }) };
       for (const report of open) Object.assign(report, { resolvedAt: now, outcome: "taken-down" });
       bump(db.metrics, "taken-down", Date.now());
+    } else if (action === "make-pro" || action === "make-free") {
+      // Until payments exist, WowLink moves an invitation to the Creator studio (or back) by hand.
+      found.plan = action === "make-pro" ? "pro" : "free";
     } else if (action === "restore") {
       delete found.removed;
     } else {
@@ -582,6 +606,7 @@ export function appNumbers(days: number) {
         live,
         unpublished: db.experiences.filter((e) => e.status === "unpublished" && !e.removed).length,
         takenDown: db.experiences.filter((e) => e.removed).length,
+        pro: db.experiences.filter((e) => planOf(e) === "pro").length,
         replies: db.rsvps.length,
         openReports: db.reports.filter((r) => !r.resolvedAt).length,
       },

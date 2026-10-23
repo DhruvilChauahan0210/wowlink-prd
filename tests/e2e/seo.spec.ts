@@ -6,7 +6,7 @@ import { publish } from "../helpers";
  * the privacy page. People's invitations, the studio and the manage pages stay out of search.
  */
 
-const OCCASIONS = ["wedding", "engagement", "birthday", "garba", "babyshower", "housewarming", "anniversary", "opening"];
+const OCCASIONS = ["wedding", "engagement", "birthday", "garba", "babyshower", "housewarming", "anniversary", "opening", "diwali", "janoi", "puja", "naming"];
 
 test("the sitemap lists the public pages and nothing private", async ({ request }) => {
   const response = await request.get("/sitemap.xml");
@@ -42,7 +42,7 @@ test("an occasion's page: found by its words, with a sample that opens, and a wa
   await expect(scene.getByRole("button", { name: "Watch it again" })).toBeVisible();
 
   await expect(page.getByRole("link", { name: "Make yours, free" })).toHaveAttribute("href", "/create?template=garba");
-  await expect(page.locator(".occasion-others a")).toHaveCount(7);
+  await expect(page.locator(".occasion-others a")).toHaveCount(11);
   await expect(page.locator(".occasion-faq dt")).toHaveCount(5);
 
   // Its share card.
@@ -59,7 +59,7 @@ test("every occasion has a page, and unknown ones don't", async ({ request }) =>
 
 test("the catalogue leads to each occasion's page", async ({ page }) => {
   await page.goto("/templates");
-  await expect(page.locator(".cin-catalog-grid .cin-occasion-image")).toHaveCount(8);
+  await expect(page.locator(".cin-catalog-grid .cin-occasion-image")).toHaveCount(12);
   await page.getByRole("link", { name: "Housewarming & vastu puja: see how it opens" }).click();
   await expect(page).toHaveURL(/\/templates\/housewarming$/);
   await expect(page.locator("h1")).toHaveText("A housewarming invitation with a door to open");

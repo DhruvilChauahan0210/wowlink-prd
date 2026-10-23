@@ -8,6 +8,7 @@ import { ArtImage, type ArtName } from "../ui/art";
 import { WowLinkBrand } from "../ui/brand";
 import type { HostText } from "../lib/host-i18n";
 import { HostLangSwitch, useHostLang } from "../ui/host-lang";
+import { planOf } from "../lib/plans";
 
 /*
  * Every invitation this device can manage: the ones whose private manage key is saved here (the studio saves it on
@@ -163,7 +164,7 @@ export default function MyInvitations() {
               <Link className="share-chip" href={`/manage/${o.slug}`}>{h.repliesAndGuests}</Link>
               {o.experience.status === "published" && !o.experience.removed && <a className="share-chip" href={`/e/${o.slug}`} target="_blank" rel="noreferrer">{h.open}</a>}
               {!o.experience.removed && <Link className="share-chip" href={`/create?edit=${o.slug}`}>{h.edit}</Link>}
-              <Link className="share-chip" href={`/create?copy=${o.slug}`} aria-label={h.copyFor(o.experience.title)}>{h.copyShort}</Link>
+              {planOf(o.experience) === "pro" && <Link className="share-chip" href={`/create?copy=${o.slug}`} aria-label={h.copyFor(o.experience.title)}>{h.copyShort}</Link>}
             </div>
           </>}
           {o.state === "gone" && <>

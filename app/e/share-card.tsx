@@ -3,6 +3,7 @@ import path from "node:path";
 import { ImageResponse } from "next/og";
 import { formatInvitationDate, formatInvitationTime, getInvitationTemplate, sortSchedule, type TemplateId } from "../lib/invitations";
 import { OCCASION_PAGES } from "../lib/occasion-pages";
+import { STARTER_OCCASIONS } from "../lib/plans";
 import type { PublicExperience } from "../lib/store";
 import { paletteFor } from "../lib/palette";
 import { renderSvg } from "../lib/svg-string";
@@ -27,7 +28,7 @@ const svgData = (svg: string) => `data:image/svg+xml;base64,${Buffer.from(svg).t
  */
 const drawable = (text: string) => text.replace(/((?:[ક-હ]઼?્)*[ક-હ]઼?)િ/g, "િ$1").replace(/((?:[क-ह]़?्)*[क-ह]़?)ि/g, "ि$1");
 
-const TONE: Record<ArtName, string> = { wedding: "#a8341f", birthday: "#c9506d", garba: "#b8552c", opening: "#4f7a3c", engagement: "#9c2f55", babyshower: "#3d7f79", housewarming: "#a24a24", anniversary: "#b8405f" };
+const TONE: Record<ArtName, string> = { wedding: "#a8341f", birthday: "#c9506d", garba: "#b8552c", opening: "#4f7a3c", engagement: "#9c2f55", babyshower: "#3d7f79", housewarming: "#a24a24", anniversary: "#b8405f", diwali: "#b8441a", janoi: "#b0580f", puja: "#b23a1e", naming: "#b83a72" };
 const INK = "#241a13";
 const PAPER = "#f3ebdc";
 
@@ -124,6 +125,6 @@ export function occasionCard(id: TemplateId) {
     eyebrow: template.category,
     title: `${heading[0]} ${heading[1]}`,
     lines: ["Hand-drawn, in Gujarati, Hindi or English", "One link for WhatsApp, with replies"],
-    cta: "make yours free →",
+    cta: STARTER_OCCASIONS.includes(template.id) ? "make yours free →" : "make yours →",
   });
 }

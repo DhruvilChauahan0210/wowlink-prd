@@ -226,11 +226,11 @@ test("only a real visit counts as opened: not a link preview, not the host's pre
   await context.close();
 });
 
-test("personal invitations keep their place under the free plan's limit", async ({ request }) => {
+test("personal invitations keep their place under the reply limit", async ({ request }) => {
   const { slug, key } = await publish(request);
   const patel = await addGuest(request, slug, key, "the Patel family");
   const shah = await addGuest(request, slug, key, "the Shah family");
-  // 100 replies: 98 from the general link, plus a place kept for each of the two households.
+  // The test server's Creator studio limit is 100 replies: 98 from the general link, plus a place kept for each household.
   for (let i = 0; i < 98; i++) expect((await request.post(`/api/experiences/${slug}/rsvps`, { headers: general(), data: { attendance: "Attending", name: `Guest ${i}` } })).status()).toBe(201);
   expect((await request.post(`/api/experiences/${slug}/rsvps`, { headers: general(), data: { attendance: "Attending" } })).status()).toBe(409);
   for (const guest of [patel, shah]) expect((await request.post(`/api/experiences/${slug}/rsvps`, { headers: general(), data: { attendance: "Attending", guest: guest.id } })).status()).toBe(201);

@@ -10,6 +10,10 @@ const OPENINGS = [
   { id: "babyshower", title: "Seemant for Priya", action: "Shake the rattle", hint: "shake the rattle" },
   { id: "housewarming", title: "The Shahs’ new home", action: "Open the door", hint: "lift the latch" },
   { id: "anniversary", title: "Mummy & Papa’s 25th", action: "Open the letter", hint: "break the seal" },
+  { id: "diwali", title: "Diwali at the Mehtas", action: "Light the sparkler", hint: "light the diyas" },
+  { id: "janoi", title: "Aarav’s janoi", action: "Tie the janoi", hint: "tie the thread" },
+  { id: "puja", title: "Satyanarayan katha at home", action: "Ring the bell", hint: "ring the bell" },
+  { id: "naming", title: "Naamkaran for baby Patel", action: "Lift the cloth", hint: "lift the cloth" },
 ];
 
 for (const opening of OPENINGS) {

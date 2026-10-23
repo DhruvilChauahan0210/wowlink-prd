@@ -7,6 +7,7 @@ import { ArtImage } from "../../ui/art";
 import { WowLinkBrand } from "../../ui/brand";
 import { OPEN_HINT } from "../../ui/openers";
 import { OccasionDemo } from "./demo";
+import { STARTER_OCCASIONS } from "../../lib/plans";
 
 /*
  * Each occasion's own page: what its invitation does, a sample to open right here, and a way to start. These are the
@@ -32,17 +33,18 @@ export default async function OccasionPage({ params }: Props) {
   const template = getInvitationTemplate(id);
   const page = OCCASION_PAGES[id];
   const start = `/create?template=${id}`;
+  const pro = !STARTER_OCCASIONS.includes(id);
 
   return <div className="cinema cin-catalog theme-paper occasion-page">
     <header className="cin-catalog-nav"><WowLinkBrand/><Link href="/templates" className="cin-catalog-back">← All occasions</Link></header>
     <main>
       <section className="occasion-hero">
         <div className="occasion-hero-text">
-          <span className="occasion-kind">{template.category}</span>
+          <span className="occasion-kind">{template.category}</span>{pro && <span className="studio-pro-badge occasion-pro">Creator studio</span>}
           <h1>{page.heading[0]} <span className="scribble">{page.heading[1]}</span></h1>
           <p className="occasion-intro">{page.intro}</p>
           <div className="occasion-ctas">
-            <Link className="cin-cta cin-cta-light" href={start}>Make yours, free</Link>
+            <Link className="cin-cta cin-cta-light" href={start}>{pro ? "Make yours" : "Make yours, free"}</Link>
             <Link className="cin-text-link" href={`/e/preview?template=${id}`}>Open the full sample <span aria-hidden="true">→</span></Link>
           </div>
         </div>
@@ -55,7 +57,7 @@ export default async function OccasionPage({ params }: Props) {
       <section className="occasion-section" aria-labelledby="made-for">
         <h2 id="made-for">Made for your {page.noun}</h2>
         <div className="occasion-points">{page.points.map((point) => <article className="sketch-card occasion-point" key={point.title}>
-          <h3>{point.title}</h3>
+          <h3>{point.title}{point.pro && <> <span className="studio-pro-badge">Creator studio</span></>}</h3>
           <p>{point.body}</p>
         </article>)}</div>
       </section>

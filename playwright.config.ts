@@ -34,7 +34,7 @@ export default defineConfig({
     // default of 5 seconds the server can close one just as a test sends on it (ECONNRESET).
     command: `rm -f ${DATA_FILE} && npx next build && npx next start -p ${PORT} --keepAliveTimeout 120000`,
     url: `http://localhost:${PORT}`,
-    env: { NEXT_DIST_DIR: ".next-test", WOWLINK_DATA_FILE: DATA_FILE, NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`, WOWLINK_ADMIN_KEY: TEST_ADMIN_KEY },
+    env: { NEXT_DIST_DIR: ".next-test", WOWLINK_DATA_FILE: DATA_FILE, NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`, WOWLINK_ADMIN_KEY: TEST_ADMIN_KEY, NEXT_PUBLIC_WOWLINK_PRO_REPLIES: "100" },
     reuseExistingServer: false,
     timeout: 240_000,
     stdout: "ignore",

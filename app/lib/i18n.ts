@@ -1,3 +1,4 @@
+import type { Diet } from "./extras";
 import type { Attendance, Lang, TemplateId } from "./invitations";
 
 /*
@@ -21,6 +22,10 @@ export const OCCASION_GU: Record<TemplateId, OccasionWords> = {
   babyshower: { eyebrow: "નાનકડા મહેમાનના આગમનની ખુશી", action: "ઘૂઘરો વગાડો", hint: "ઘૂઘરો વગાડો" },
   housewarming: { eyebrow: "નવું ઘર, નવી શરૂઆત", action: "દરવાજો ખોલો", hint: "સાંકળ ખોલો" },
   anniversary: { eyebrow: "પ્રેમનાં વર્ષો, હજી ઘણાં બાકી", action: "પત્ર ખોલો", hint: "મહોર તોડો" },
+  diwali: { eyebrow: "દીવા, હાસ્ય અને થોડી મીઠાઈ", action: "ફૂલઝડી સળગાવો", hint: "દીવા પ્રગટાવો" },
+  janoi: { eyebrow: "વડીલોના આશીર્વાદ સાથે", action: "જનોઈ બાંધો", hint: "દોરો બાંધો" },
+  puja: { eyebrow: "શ્રદ્ધા અને આભાર સાથે", action: "ઘંટ વગાડો", hint: "ઘંટ વગાડો" },
+  naming: { eyebrow: "અમારા નાનકડાને મળશે નામ", action: "કપડું ઉઠાવો", hint: "કપડું ઉઠાવો" },
 };
 export const OCCASION_HI: Record<TemplateId, OccasionWords> = {
   wedding: { eyebrow: "दोनों परिवारों की ओर से सप्रेम निमंत्रण", action: "निमंत्रण खोलें", hint: "गाँठ खोलें" },
@@ -31,6 +36,10 @@ export const OCCASION_HI: Record<TemplateId, OccasionWords> = {
   babyshower: { eyebrow: "नन्हे मेहमान के आने की ख़ुशी", action: "झुनझुना बजाएँ", hint: "झुनझुना बजाएँ" },
   housewarming: { eyebrow: "नया घर, नई शुरुआत", action: "दरवाज़ा खोलें", hint: "कुंडी खोलें" },
   anniversary: { eyebrow: "प्यार के इतने साल, और आगे भी", action: "चिट्ठी खोलें", hint: "मोहर तोड़ें" },
+  diwali: { eyebrow: "दीये, हँसी और थोड़ी मिठाई", action: "फुलझड़ी जलाएँ", hint: "दीये जलाएँ" },
+  janoi: { eyebrow: "बड़ों के आशीर्वाद के साथ", action: "जनेऊ बाँधें", hint: "धागा बाँधें" },
+  puja: { eyebrow: "श्रद्धा और आभार के साथ", action: "घंटी बजाएँ", hint: "घंटी बजाएँ" },
+  naming: { eyebrow: "हमारे नन्हे को मिलेगा नाम", action: "कपड़ा हटाएँ", hint: "कपड़ा हटाएँ" },
 };
 
 /** Plain words, then the word that gets the hand-drawn underline. */
@@ -85,6 +94,11 @@ const en = {
   splitToggle: (split: boolean): string => (split ? "Same number for every celebration" : "Not everyone coming to everything?"),
   yourName: "Your name",
   optional: "Optional",
+  dietLegend: "Any food needs?",
+  dietNames: { jain: "Jain", swaminarayan: "Swaminarayan", "no-onion-garlic": "No onion or garlic", vegan: "Vegan", other: "Something else" } as Record<Diet, string>,
+  dietNote: "Anything else the hosts should know about food?",
+  songLabel: "A song you’d love to hear",
+  songPlaceholder: "The song, and who sings it",
   namePlaceholder: (personal: boolean): string => (personal ? "Who’s replying?" : "As we know and love you"),
   tickOne: "Tick at least one celebration, or choose Not attending.",
   offline: "Your reply didn’t go through. Check your connection and try again.",
@@ -197,6 +211,11 @@ const gu: GuestText = {
   splitToggle: (split: boolean) => (split ? "દરેક પ્રસંગ માટે સરખી સંખ્યા" : "દરેક પ્રસંગમાં બધા નથી આવતા?"),
   yourName: "આપનું નામ",
   optional: "વૈકલ્પિક",
+  dietLegend: "ભોજનમાં કંઈ ખાસ?",
+  dietNames: { jain: "જૈન", swaminarayan: "સ્વામિનારાયણ", "no-onion-garlic": "ડુંગળી-લસણ વગર", vegan: "વીગન", other: "બીજું કંઈ" },
+  dietNote: "ભોજન વિશે યજમાનને બીજું કંઈ જણાવવું છે?",
+  songLabel: "આપને ગમતું એક ગીત",
+  songPlaceholder: "ગીત, અને તે કોણે ગાયું છે",
   namePlaceholder: (personal: boolean) => (personal ? "કોણ જવાબ આપે છે?" : "જે નામથી અમે આપને ઓળખીએ"),
   tickOne: "ઓછામાં ઓછો એક પ્રસંગ પસંદ કરો, અથવા “નહીં આવી શકીએ” પસંદ કરો.",
   offline: "જવાબ પહોંચ્યો નહીં. ઇન્ટરનેટ તપાસીને ફરી પ્રયાસ કરો.",
@@ -297,6 +316,11 @@ const hi: GuestText = {
   splitToggle: (split: boolean) => (split ? "हर कार्यक्रम के लिए एक ही संख्या" : "सभी लोग हर कार्यक्रम में नहीं आ रहे?"),
   yourName: "आपका नाम",
   optional: "वैकल्पिक",
+  dietLegend: "खाने में कुछ ख़ास?",
+  dietNames: { jain: "जैन", swaminarayan: "स्वामीनारायण", "no-onion-garlic": "बिना प्याज़-लहसुन", vegan: "वीगन", other: "कुछ और" },
+  dietNote: "खाने के बारे में मेज़बानों को और कुछ बताना है?",
+  songLabel: "आपका पसंदीदा एक गाना",
+  songPlaceholder: "गाना, और किसने गाया है",
   namePlaceholder: (personal: boolean) => (personal ? "कौन जवाब दे रहा है?" : "जिस नाम से हम आपको जानते हैं"),
   tickOne: "कम से कम एक कार्यक्रम चुनें, या “नहीं आ पाएँगे” चुनें।",
   offline: "आपका जवाब नहीं पहुँचा। इंटरनेट जाँचकर फिर से कोशिश करें।",

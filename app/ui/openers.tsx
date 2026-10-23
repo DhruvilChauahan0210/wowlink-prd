@@ -11,6 +11,10 @@ import type { ArtName } from "./art";
  *  - babyshower:   a ghodiyu cradle. Shake the rattle, the cradle rocks and the little stars float up.
  *  - housewarming: a front door with a toran. Lift the saankal, the doors swing in and footsteps lead inside.
  *  - anniversary:  a sealed letter. Break the wax seal, the flap turns over and the letter rises out.
+*  - diwali:   five clay diyas and a phuljhadi. Light the sparkler, it fizzes along the row and the diyas catch one after another.
+*  - janoi:        a sacred thread lying loose on a brass thali. Tie the brahmagranthi, the three strands draw together, a haldi-kumkum dot appears and the rice hops.
+*  - puja:         a little mandir with a brass ghanti on a curved hook. Ring the bell, it swings, the sound ripples out and marigold petals drift down.
+*  - naming:       a bandhani cloth over a brass thali. Pull its tassel, the cloth slides away and little stars rise over the swirl in the rice.
  * The drawing sits in an SVG; the thing you tap is a real button laid over it.
  * The movement itself lives in studio.css, keyed off .is-open on the scene.
  */
@@ -24,6 +28,10 @@ export const OPEN_HINT: Record<ArtName, string> = {
   babyshower: "shake the rattle",
   housewarming: "lift the latch",
   anniversary: "break the seal",
+  diwali: "light the diyas",
+  janoi: "tie the thread",
+  puja: "ring the bell",
+  naming: "lift the cloth",
 };
 
 const RED = "#c2412d";
@@ -338,7 +346,256 @@ function Letter({ label, onOpen }: { label: string; onOpen: () => void }) {
   );
 }
 
-const OPENERS: Record<ArtName, (p: { label: string; onOpen: () => void }) => ReactNode> = { wedding: Scroll, birthday: GiftBox, garba: Rangoli, opening: Ribbon, engagement: RingBox, babyshower: Cradle, housewarming: Door, anniversary: Letter };
+function Diyas({ label, onOpen }: { label: string; onOpen: () => void }) {
+  const y = 232;
+  const xs = [104, 178, 252, 326, 400];
+  const at = (v: number) => Math.round(v * 10) / 10;
+  // little sparks around the phuljhadi's tip (53, 96), each flying out along its own line
+  const sparks = Array.from({ length: 10 }, (_, i) => {
+    const a = ((i * 36 + 10) * Math.PI) / 180;
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    return { d: `M${at(53 + c * 4)} ${at(96 + s * 4)}L${at(53 + c * 9)} ${at(96 + s * 9)}`, tx: Math.round(c * 18), ty: Math.round(s * 18) };
+  });
+  const coat = "M34 48L56 92A4.5 4.5 0 0 1 48 96L26 52Z";
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="258" cy="248" rx="196" ry="8" />
+        {Array.from({ length: 17 }, (_, i) => <circle key={i} className="o-wash" fill={[RED, MARIGOLD, "#e8899e"][i % 3]} cx={83 + i * 22} cy="272" r="4" />)}
+        <g className="o-ink"><path d={`M72 258${"q11 10 22 0".repeat(17)}`} strokeWidth="1.6" /></g>
+        {xs.map((x, i) => {
+          const fx = x + 32;
+          const fy = y - 14;
+          const bowl = `M${x - 24} ${y - 6}C${x - 21} ${y + 14} ${x + 15} ${y + 15} ${x + 24} ${y - 2}L${x + 35} ${y - 11}C${x + 18} ${y - 13} ${x - 9} ${y - 13} ${x - 24} ${y - 6}Z`;
+          const flame = `M${fx} ${fy}C${fx - 9} ${fy - 9} ${fx - 4} ${fy - 21} ${fx} ${fy - 32}C${fx + 4} ${fy - 21} ${fx + 9} ${fy - 9} ${fx} ${fy}Z`;
+          const core = `M${fx} ${fy - 3}C${fx - 5} ${fy - 8} ${fx - 2} ${fy - 14} ${fx} ${fy - 19}C${fx + 2} ${fy - 14} ${fx + 5} ${fy - 8} ${fx} ${fy - 3}Z`;
+          return (
+            <g key={x} className="o-diya" style={vars({ "--i": i, "--fx": `${fx}px`, "--fy": `${fy}px` })}>
+              <circle className="o-wash o-diya-glow" fill={SUN} cx={fx} cy={fy - 14} r="24" />
+              <path className="o-wash" fill="#c8693f" d={bowl} />
+              <g className="o-ink">
+                <path d={bowl} />
+                <path d={`M${x - 24} ${y - 6}C${x - 12} ${y} ${x + 12} ${y} ${x + 26} ${y - 4}`} strokeWidth="1.5" />
+                <path d={`M${fx - 3} ${fy + 4}L${fx} ${fy}`} strokeWidth="2.5" />
+                <path d={`M${x - 12} ${y + 5}h1M${x} ${y + 7}h1M${x + 12} ${y + 5}h1`} strokeWidth="3" />
+              </g>
+              <g className="o-diya-flame">
+                <path className="o-wash" fill={SUN} d={flame} />
+                <path className="o-wash o-diya-core" fill={MARIGOLD} d={core} />
+                <g className="o-ink"><path d={flame} /></g>
+              </g>
+            </g>
+          );
+        })}
+      </svg>
+      <Trigger at={["21.8%", "57%", "12%"]} label={label} onOpen={onOpen} viewBox="0 0 64 104">
+        <path className="o-wash" fill="#7d6e60" d={coat} />
+        <circle className="o-wash o-tip" fill={SUN} cx="53" cy="96" r="6" />
+        {sparks.map((s, i) => <path key={i} className="o-spark" d={s.d} fill="none" stroke={i % 2 ? SUN : MARIGOLD} strokeWidth="2.2" strokeLinecap="round" style={vars({ "--i": i, "--tx": `${s.tx}px`, "--ty": `${s.ty}px` })} />)}
+        <g className="o-ink">
+          <path d="M30 50L10 10" strokeWidth="2" />
+          <path d={coat} />
+          <path d="M31.3 58.3l4.5-2.2M34.9 65.4l4.5-2.2M38.5 72.6l4.5-2.2M42.1 79.7l4.5-2.2M45.6 86.9l4.5-2.2" strokeWidth="1.2" />
+        </g>
+        <path d="M61 89l4-4M63 99h5M57 104l3 3M48 104l-3 3" fill="none" stroke={MARIGOLD} strokeWidth="2" strokeLinecap="round" />
+      </Trigger>
+    </>
+  );
+}
+
+function Thread({ label, onOpen }: { label: string; onOpen: () => void }) {
+  // one loop, drawn once for each of the janoi's three strands; studio.css lets them lie apart until the knot is tied
+  const loop = "M260 232C202 236 140 220 138 190C136 160 198 148 256 148C322 148 384 160 382 190C380 220 318 230 260 232";
+  const tie = "M243 236C239 222 250 213 263 214C277 215 282 229 275 239C268 248 251 248 247 238";
+  const grains: [number, number, number][] = [[214, 130, -20], [242, 126, 15], [300, 128, -10], [338, 126, 25], [256, 176, 30], [264, 190, -25], [176, 236, 20], [344, 236, -30], [108, 210, 10], [414, 208, -15]];
+  /** a marigold head: nine ruffled petals (rounded, so server and browser print the same markup) */
+  const bloom = (x: number, y: number, r: number) => Array.from({ length: 9 }, (_, i) => {
+    const at = (a: number, d: number) => `${Math.round((x + Math.cos(a) * d) * 100) / 100} ${Math.round((y + Math.sin(a) * d) * 100) / 100}`;
+    const a = (i * 2 * Math.PI) / 9;
+    return `${i ? "" : `M${at(a, r)}`}Q${at(a + Math.PI / 9, r * 1.4)} ${at(a + (2 * Math.PI) / 9, r)}`;
+  }).join("") + "Z";
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="260" cy="266" rx="196" ry="10" />
+        <path className="o-wash" fill={MARIGOLD} d="M72 182C76 286 444 286 448 182C448 274 72 274 72 182Z" />
+        <ellipse className="o-wash" fill={SUN} cx="260" cy="180" rx="186" ry="70" />
+        <g className="o-ink">
+          <ellipse cx="260" cy="180" rx="188" ry="71" />
+          <ellipse cx="260" cy="176" rx="158" ry="55" strokeWidth="1.4" />
+          <path d="M72 182C76 286 444 286 448 182" />
+        </g>
+        <path className="o-wash" fill={MARIGOLD} d="M208 196C210 212 242 212 244 196ZM276 196C278 212 310 212 312 196Z" />
+        <path className="o-wash" fill={RED} d="M210 196C214 182 238 182 242 196Z" />
+        <path className="o-wash" fill="#fbf6ec" d="M278 196C282 182 306 182 310 196Z" />
+        <g className="o-ink">
+          <path d="M206 196H246M208 196C210 212 242 212 244 196M274 196H314M276 196C278 212 310 212 312 196" />
+          <path d="M210 196C214 182 238 182 242 196M278 196C282 182 306 182 310 196M288 190h3M296 187h3M300 192h3M291 193h2" strokeWidth="1.5" />
+        </g>
+        {[[100, 186], [420, 182]].map(([x, y]) => (
+          <g key={x}>
+            <path className="o-wash" fill={MARIGOLD} d={bloom(x, y, 9)} />
+            <g className="o-ink"><path d={bloom(x, y, 9)} strokeWidth="1.6" /><circle cx={x} cy={y} r="3.4" strokeWidth="1.4" /></g>
+          </g>
+        ))}
+        {grains.map(([x, y, a], i) => (
+          <g key={i} className="o-grain" style={vars({ "--i": i })}>
+            <ellipse cx={x} cy={y} rx="3.6" ry="1.8" fill="#fbf6ec" stroke="#2a1d14" strokeWidth="1.1" transform={`rotate(${a} ${x} ${y})`} />
+          </g>
+        ))}
+        {["a", "b", "c"].map((s) => (
+          <g key={s} className={`o-strand o-strand-${s}`}>
+            <path className="o-wash" fill="none" stroke="#fbf6ec" strokeWidth="5" d={loop} />
+            <path className="o-wash" fill="none" stroke={MARIGOLD} strokeWidth="5" strokeDasharray="12 40" d={loop} />
+            <g className="o-ink"><path d={loop} strokeWidth="1.5" /></g>
+          </g>
+        ))}
+        <g className="o-tie">
+          <path className="o-wash" fill="none" stroke="#fbf6ec" strokeWidth="5" strokeLinecap="round" pathLength={1} d={tie} />
+          <g className="o-ink"><path pathLength={1} strokeWidth="1.6" d={tie} /></g>
+        </g>
+        <g className="o-knot">
+          <circle className="o-wash" fill={SUN} cx="260" cy="232" r="11" />
+          <g className="o-ink"><circle cx="260" cy="232" r="11" /><path d="M251 227C255 230 255 236 252 239M260 221C264 227 264 237 260 243M269 227C265 230 265 236 268 239" strokeWidth="1.4" /></g>
+        </g>
+        <g className="o-dot">
+          <circle className="o-wash" fill={MARIGOLD} cx="260" cy="232" r="7" />
+          <circle cx="260" cy="232" r="3.4" fill={RED} />
+        </g>
+      </svg>
+      <Trigger at={["50%", "77.3%", "12%"]} label={label} onOpen={onOpen} viewBox="0 0 60 60">
+        <path className="o-wash" fill="none" stroke="#fbf6ec" strokeWidth="4" strokeLinecap="round" d="M38 38C44 44 47 50 53 52M35 41C38 48 38 53 43 57" />
+        <circle className="o-wash" fill={SUN} cx="30" cy="30" r="13" />
+        <g className="o-ink"><path d="M38 38C44 44 47 50 53 52M35 41C38 48 38 53 43 57" strokeWidth="1.5" /><circle cx="30" cy="30" r="13" /><path d="M20 24C25 28 25 35 21 39M30 17C35 24 35 36 30 43M40 24C35 28 35 35 39 39" strokeWidth="1.5" /></g>
+      </Trigger>
+    </>
+  );
+}
+
+function Bell({ label, onOpen }: { label: string; onOpen: () => void }) {
+  const garland: [number, number][] = [[163, 110], [182, 89], [210, 72], [241, 57], [260, 47], [279, 57], [310, 72], [338, 89], [357, 110]];
+  // the ring of sound on both sides of the bell, as arcs around its middle (260, 126)
+  const chime = (r: number) => {
+    const dx = Math.round(r * 0.85);
+    const dy = Math.round(r * 0.53);
+    return `M${260 - dx} ${126 + dy}A${r} ${r} 0 0 1 ${260 - dx} ${126 - dy}M${260 + dx} ${126 - dy}A${r} ${r} 0 0 1 ${260 + dx} ${126 + dy}`;
+  };
+  const petals: [number, number, number, number, string][] = [
+    [206, 82, -12, -160, SUN], [316, 82, 12, 180, MARIGOLD], [170, 106, 14, 200, MARIGOLD], [350, 106, -10, -200, SUN],
+    [236, 66, 10, 240, MARIGOLD], [286, 66, -14, -220, RED], [112, 60, 16, 260, MARIGOLD], [410, 66, -16, -240, RED],
+  ];
+  const petal = (x: number, y: number) => `M${x} ${y}C${x - 4} ${y - 4} ${x - 4} ${y - 10} ${x} ${y - 12}C${x + 4} ${y - 10} ${x + 4} ${y - 4} ${x} ${y}Z`;
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="260" cy="284" rx="150" ry="9" />
+        <path className="o-wash" fill={RED} opacity=".25" d="M176 120C182 92 228 78 260 60C292 78 338 92 344 120H350V250H170V120Z" />
+        <path className="o-wash" fill="#f6e3bf" d="M144 120C150 76 214 60 260 34C306 60 370 76 376 120H344C338 92 292 78 260 60C228 78 182 92 176 120Z" />
+        <path className="o-wash" fill="#f6e3bf" d="M150 130H170V250H150ZM350 130H370V250H350ZM146 250H374V262H146Z" />
+        <path className="o-wash" fill={MARIGOLD} d="M144 120H176V130H144ZM344 120H376V130H344Z" />
+        <path className="o-wash" fill="#c8693f" d="M132 262H388V280H132Z" />
+        <path className="o-wash" fill={SUN} d="M252 34C248 28 252 22 260 22C268 22 272 28 268 34Z" />
+        <path className="o-wash" fill={MARIGOLD} d="M260 8L282 13L260 18Z" />
+        {garland.map(([x, y], i) => <circle key={x} className="o-wash" fill={i % 3 === 1 ? RED : MARIGOLD} cx={x} cy={y} r="7" />)}
+        <path className="o-wash" fill="#c8693f" d="M184 242C186 251 206 251 208 242ZM312 242C314 251 334 251 336 242Z" />
+        <path className="o-wash" fill={SUN} d="M196 240C191 235 193 228 196 222C199 228 201 235 196 240ZM324 240C319 235 321 228 324 222C327 228 329 235 324 240Z" />
+        <g className="o-ink">
+          <path d="M144 120C150 76 214 60 260 34C306 60 370 76 376 120M176 120C182 92 228 78 260 60C292 78 338 92 344 120" />
+          <path d="M144 120H176V130H144ZM344 120H376V130H344Z" />
+          <path d="M150 130V250M170 130V250M350 130V250M370 130V250" />
+          <path d="M157 138V242M163 138V242M357 138V242M363 138V242" strokeWidth="1.2" />
+          <path d="M146 250H374V262H146ZM132 262H388V280H132Z" />
+          <path d="M252 34C248 28 252 22 260 22C268 22 272 28 268 34ZM260 22V6M260 8L282 13L260 18" />
+          <path d="M260 60V68C260 74 266 75 266 80C266 86 260 88 256 84" strokeWidth="2.8" />
+          {garland.map(([x, y]) => <circle key={x} cx={x} cy={y} r="6.5" />)}
+          <path d="M184 242C186 251 206 251 208 242ZM312 242C314 251 334 251 336 242Z" />
+          <path d="M196 240C191 235 193 228 196 222C199 228 201 235 196 240ZM324 240C319 235 321 228 324 222C327 228 329 235 324 240Z" strokeWidth="1.6" />
+        </g>
+        <g className="o-ink">
+          {[34, 50, 66].map((r, i) => <path key={r} className="o-chime" style={vars({ "--i": i })} d={chime(r)} />)}
+        </g>
+        <g className="o-petals">
+          {petals.map(([x, y, dx, r, f], i) => <path key={i} className="o-petal" fill={f} d={petal(x, y)} style={vars({ "--i": i, "--dx": `${dx}px`, "--r": `${r}deg` })} />)}
+        </g>
+      </svg>
+      <Trigger at={["50%", "42%", "11%"]} label={label} onOpen={onOpen} viewBox="0 0 60 88">
+        <path className="o-wash" fill={SUN} d="M30 17C21 17 17 23 17 32C17 46 13 56 6 64H54C47 56 43 46 43 32C43 23 39 17 30 17Z" />
+        <ellipse className="o-wash" fill={MARIGOLD} cx="30" cy="65" rx="25" ry="4.5" />
+        <path className="o-wash" fill={MARIGOLD} d="M25 18C25 13 35 13 35 18Z" />
+        <g className="o-ink">
+          <ellipse cx="30" cy="8" rx="5" ry="6" />
+          <path d="M25 18C25 13 35 13 35 18Z" strokeWidth="1.8" />
+          <path d="M30 17C21 17 17 23 17 32C17 46 13 56 6 64H54C47 56 43 46 43 32C43 23 39 17 30 17Z" />
+          <ellipse cx="30" cy="65" rx="25" ry="4.5" />
+          <path d="M18 30H42M16 43C24 46 36 46 44 43" strokeWidth="1.4" />
+          <path d="M24 37h1M30 37h1M36 37h1" strokeWidth="2.6" />
+          <g className="o-clapper"><path d="M30 70V77" /><circle cx="30" cy="81" r="4" fill={MARIGOLD} /></g>
+        </g>
+      </Trigger>
+    </>
+  );
+}
+
+function Cloth({ label, onOpen }: { label: string; onOpen: () => void }) {
+  const cloth = "M112 226C104 196 112 162 146 144C178 130 220 126 260 126C300 126 342 130 374 144C408 162 416 196 408 226C384 212 356 204 326 204C302 204 282 220 260 236C238 220 218 204 194 204C164 204 136 212 112 226Z";
+  const swirl = "M206 190C212 176 238 172 248 180C256 186 246 196 236 192C226 188 234 176 252 176C274 176 284 194 300 188C310 184 310 176 304 174";
+  const grains: [number, number][] = [[180, 184], [192, 198], [224, 200], [290, 200], [330, 174], [214, 170], [296, 168], [344, 190]];
+  const kumkum: [number, number][] = [[367, 192], [325, 205], [260, 210], [195, 205], [153, 192], [153, 174], [367, 174]];
+  const bandhani = ([[146, [180, 220, 260, 300, 340]], [166, [160, 200, 240, 280, 320, 360]], [186, [140, 180, 220, 260, 300, 340, 380]], [208, [260]]] as [number, number[]][]).flatMap(([y, xs]) => xs.map((x) => [x, y] as const));
+  const twinkles: [number, number, number][] = [[206, 158, 8], [244, 146, 6], [282, 152, 9], [318, 160, 6]];
+  return (
+    <>
+      <svg className="o-art" viewBox="0 0 520 300" aria-hidden="true">
+        <ellipse className="o-shadow" cx="260" cy="258" rx="160" ry="8" />
+        {/* the low bajot */}
+        <path className="o-wash" fill="#4f9a94" d="M120 220H400V234H120ZM124 234H138L136 256H126ZM382 234H396L394 256H384Z" />
+        <path className="o-wash" fill="#e8899e" d={`M140 234${"q8 8 16 0".repeat(15)}Z`} />
+        {[148, 184, 220, 300, 336, 372].map((x) => <circle key={x} cx={x} cy="227" r="2.5" fill={SUN} />)}
+        <g className="o-ink"><path d="M120 220H400V234H120ZM124 234L126 256H136L138 234M382 234L384 256H394L396 234" /><path d={`M140 234${"q8 8 16 0".repeat(15)}`} strokeWidth="1.5" /></g>
+        {/* the brass thali: only its rim shows under the cloth */}
+        <ellipse className="o-wash" fill={MARIGOLD} cx="260" cy="188" rx="124" ry="30" />
+        <ellipse className="o-wash" fill={SUN} cx="260" cy="182" rx="124" ry="30" />
+        <g className="o-ink"><ellipse cx="260" cy="182" rx="124" ry="30" /><path d="M136 182V188C136 228 384 228 384 188V182" /></g>
+        <g className="o-rice">
+          <ellipse className="o-wash" fill="#f6e3bf" cx="260" cy="185" rx="100" ry="21" />
+          <path className="o-wash" fill="none" stroke="#c8693f" strokeWidth="5" opacity=".35" d={swirl} />
+          {kumkum.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="2.2" fill={RED} />)}
+          <g className="o-ink">
+            <ellipse cx="260" cy="184" rx="104" ry="23" strokeWidth="1.4" />
+            <path d={swirl} strokeWidth="2" />
+            <path d="M316 194h1" strokeWidth="3" />
+            <path d={grains.map(([x, y]) => `M${x} ${y}l4 -1`).join("")} strokeWidth="1.3" />
+          </g>
+        </g>
+        {/* the bandhani cloth (a solid layer under the wash, so the rice doesn't show through) */}
+        <g className="o-cloth">
+          <path fill="#c2457a" d={cloth} transform="matrix(.96 0 0 .96 10.4 7.2)" />
+          <path className="o-wash" fill="#c2457a" d={cloth} />
+          <path fill="none" stroke="#4f9a94" strokeWidth="6" strokeLinecap="round" d="M132 210C150 202 170 197 194 197C218 197 240 212 260 228C280 212 302 197 326 197C350 197 370 202 388 210" />
+          {bandhani.map(([x, y], i) => <g key={i} fill={i % 3 ? "#fbf6ec" : SUN}><circle cx={x} cy={y - 4} r="1.8" /><circle cx={x + 4} cy={y} r="1.8" /><circle cx={x} cy={y + 4} r="1.8" /><circle cx={x - 4} cy={y} r="1.8" /></g>)}
+          <g className="o-ink"><path d={cloth} /></g>
+        </g>
+        <g className="o-twinkles">
+          {twinkles.map(([x, y, r], i) => (
+            <g key={x} className="o-twinkle" style={vars({ "--i": i })}>
+              <path className="o-wash" fill={SUN} d={star(x, y, r)} />
+              <g className="o-ink"><path d={star(x, y, r)} strokeWidth="1.8" /></g>
+            </g>
+          ))}
+        </g>
+      </svg>
+      <Trigger at={["78.5%", "86%", "10%"]} label={label} onOpen={onOpen} viewBox="0 0 48 64">
+        <circle className="o-wash" fill={MARIGOLD} cx="24" cy="13" r="6" />
+        <path className="o-wash" fill="#4f9a94" d="M18 22H30L37 55C31 61 17 61 11 55Z" />
+        <path className="o-wash" fill={SUN} d="M17 23H31V30H17Z" />
+        <g className="o-ink"><path d="M24 0V7M24 19V22" /><circle cx="24" cy="13" r="6" /><path d="M18 22H30L37 55C31 61 17 61 11 55Z" /><path d="M17 30H31" strokeWidth="1.6" /><path d="M20 34L17 56M24 33V58M28 34L31 56" strokeWidth="1.3" /></g>
+      </Trigger>
+    </>
+  );
+}
+
+const OPENERS: Record<ArtName, (p: { label: string; onOpen: () => void }) => ReactNode> = { wedding: Scroll, birthday: GiftBox, garba: Rangoli, opening: Ribbon, engagement: RingBox, babyshower: Cradle, housewarming: Door, anniversary: Letter, diwali: Diyas, janoi: Thread, puja: Bell, naming: Cloth };
 
 export function Opener({ name, label, onOpen }: { name: ArtName; label: string; onOpen: () => void }) {
   const Drawing = OPENERS[name];

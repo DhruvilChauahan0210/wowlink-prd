@@ -13,7 +13,7 @@ const UPDATED = "2026-10-23";
 type Section = { heading: string; items: string[] };
 type Content = { title: string; description: string; heading: readonly [string, string]; intro: string; early: string; earlyLabel: string; updated: string; sections: Section[] };
 
-export const PRIVACY: Record<Lang, Content> = {
+const PRIVACY: Record<Lang, Content> = {
   en: {
     title: "Privacy — WowLink",
     description: "What WowLink keeps when you make an invitation or reply to one, who can see it, and how it’s deleted.",

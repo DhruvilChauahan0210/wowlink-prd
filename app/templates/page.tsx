@@ -18,6 +18,10 @@ const collection: Record<TemplateId, { title: string; detail: string }> = {
   housewarming: { title: "Step inside.", detail: "Open the door to your new home." },
   anniversary: { title: "Still us.", detail: "Raise a cup of chai to the years together." },
   opening: { title: "Here’s to new.", detail: "Cut the ribbon on your next big thing." },
+  diwali: { title: "Light it up.", detail: "Diyas, mithai and the whole family." },
+  janoi: { title: "A sacred thread.", detail: "Blessings for a new beginning." },
+  puja: { title: "With faith.", detail: "Gather for the katha and the aarti." },
+  naming: { title: "Hello, little one.", detail: "Be there to hear the name first." },
 };
 
 export default function TemplatesPage() {

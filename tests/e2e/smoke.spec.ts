@@ -25,11 +25,11 @@ for (const { path, check } of PAGES) {
   });
 }
 
-test("the home page hero draws itself, and the reel shows all eight occasions", async ({ page }) => {
+test("the home page hero draws itself, and the reel shows all twelve occasions", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".cin-hero-art.is-drawing")).toBeVisible();
-  await expect(page.locator(".cin-occasion-card")).toHaveCount(8);
-  await expect(page.locator(".cin-occasion-card h3")).toHaveText(["For your forever.", "Say yes, together.", "Make a wish.", "Feel the rhythm.", "Little blessings.", "Step inside.", "Still us.", "Here’s to new."]);
+  await expect(page.locator(".cin-occasion-card")).toHaveCount(12);
+  await expect(page.locator(".cin-occasion-card h3")).toHaveText(["For your forever.", "Say yes, together.", "Make a wish.", "Feel the rhythm.", "Little blessings.", "Step inside.", "Still us.", "Here’s to new.", "Light it up.", "A sacred thread.", "With faith.", "Hello, little one."]);
 });
 
 test("an unknown invitation link shows the not-found page", async ({ page }) => {
@@ -56,5 +56,5 @@ test("each occasion's drawing is served as an image, for the places it doesn't a
   }
   expect((await request.get("/art/funeral.svg")).status()).toBe(404);
   await page.goto("/templates");
-  await expect(page.locator(".cin-catalog-grid img.art-image")).toHaveCount(8);
+  await expect(page.locator(".cin-catalog-grid img.art-image")).toHaveCount(12);
 });

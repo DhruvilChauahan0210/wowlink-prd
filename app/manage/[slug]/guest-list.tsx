@@ -8,6 +8,7 @@ import { MESSAGES } from "../../lib/i18n";
 import { hostMessage, type HostText } from "../../lib/host-i18n";
 import { useHostText } from "../../ui/host-lang";
 import { countShare } from "../../ui/counting";
+import { planOf, repliesLimit } from "../../lib/plans";
 import type { Experience, Rsvp } from "../../lib/store";
 
 /*
@@ -144,7 +145,8 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const used = repliesUsed(rsvps, experience.guests);
-  const full = used >= LIMITS.rsvpsPerEvent || experience.guests.length >= LIMITS.guestList;
+  const cap = repliesLimit(planOf(experience));
+  const full = used >= cap || experience.guests.length >= LIMITS.guestList;
   const lines = list.split(/\r?\n/).filter(line => line.trim()).length;
   const edit = <T,>(set: (value: T) => void) => (value: T) => { set(value); setErrors({}); setStatus(""); };
 
@@ -202,12 +204,12 @@ export function GuestList({ owner, origin, experience, rsvps, onChanged }: { own
       {schedule.length > 1 && <CelebrationPicker schedule={schedule} value={events} onChange={edit(setEvents)} legend={h.whichCelebrations(many)} error={errors.events}/>}
       {errors.form && !errors.name && !errors.events && !errors.phone && !errors.list && <p className="studio-error" role="alert">{tr(errors.form)}</p>}
       <button type="submit" className="cin-cta cin-cta-light" disabled={busy}>{h.addInvitation(lines, many)}</button>
-    </form> : <p className="manage-warn">{h.noRoom(LIMITS.rsvpsPerEvent)}</p>)}
+    </form> : <p className="manage-warn">{h.noRoom(cap)}</p>)}
     <p className="share-status" role="status">{status}</p>
     {experience.guests.length > 0 && <p className="manage-guest-summary">{h.openedSummary(experience.guests.filter(g => g.openedAt).length, experience.guests.length, experience.guests.filter(g => rsvps.some(r => r.guestId === g.id)).length)}</p>}
     {experience.guests.length > 0 && <ul className="manage-guests">{[...experience.guests].reverse().map(guest => <GuestRow key={guest.id} owner={owner} origin={origin} guest={guest} experience={experience} reply={rsvps.find(r => r.guestId === guest.id)} onChanged={onChanged}/>)}</ul>}
     {experience.guests.length > 0 && <div className="manage-downloads"><span>{h.download}</span><button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "invitations"), invitationsCsv({ experience, rsvps }, origin))}>{h.listCsv}</button></div>}
-    <p className="manage-limit">{h.planLimit(used, LIMITS.rsvpsPerEvent, experience.guests.length > 0)}</p>
+    <p className="manage-limit">{h.planLimit(used, cap, experience.guests.length > 0)}</p>
   </>;
 }
 

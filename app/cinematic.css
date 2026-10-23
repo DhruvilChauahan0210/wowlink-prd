@@ -359,6 +359,8 @@ html.lenis,html.lenis body{height:auto}
 /* ---------- An occasion's own page (/templates/<id>) ---------- */
 .occasion-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,480px);gap:clamp(40px,6vw,96px);align-items:center;padding:clamp(40px,6vw,88px) 0 clamp(64px,8vw,112px)}
 .occasion-kind{font:700 30px/1 var(--hand);color:var(--accent)}
+.occasion-pro{margin-left:12px;vertical-align:6px}
+.occasion-point h3 .studio-pro-badge{font-size:11px;vertical-align:3px}
 .occasion-hero h1{margin-top:14px;font-size:clamp(40px,4.8vw,76px);line-height:1.02;text-wrap:balance}
 .occasion-hero .occasion-intro{margin-top:24px;max-width:34em;font-size:18px;line-height:1.65;color:var(--muted)}
 .occasion-ctas{display:flex;flex-wrap:wrap;align-items:center;gap:16px 28px;margin-top:34px}

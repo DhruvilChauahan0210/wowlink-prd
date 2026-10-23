@@ -87,9 +87,9 @@ test("the manage link works on another device, and only with the right key", asy
   await expect(page.locator(".manage-replies tbody tr td").first()).toHaveText("Nani & Nana");
   await expect(page.locator(".manage-totals > div").first()).toContainText("1");
   await expect(page.locator(".manage-totals > div").first()).toContainText("2 guests in all");
-  // The wedding sample has a schedule, and every celebration was ticked by default: 2 people at each.
-  await expect(page.locator(".manage-headcount tbody tr")).toHaveCount(4);
-  for (const row of await page.locator(".manage-headcount tbody tr").all()) await expect(row.locator("td").first()).toContainText("2 people");
+  // Published from a fresh studio, it's on the free plan: one celebration, so no headcount per celebration.
+  await expect(page.locator(".manage-plan")).toHaveText("Free plan");
+  await expect(page.locator(".manage-headcount")).toHaveCount(0);
 
   // Editing from this device goes live on the same link.
   await page.getByRole("link", { name: "Edit in studio" }).click();

@@ -12,8 +12,9 @@ import { MomentMark, WowLinkBrand } from "./brand";
 import { Bowl, Diya, Flower, Leaf, Note, Ring, Star } from "./doodles";
 import { InvitationScene } from "./invitation-scene";
 import { countAttribution, countPage, countPlayed, countVisit } from "./counting";
+import { DIETS, EXTRA_LIMITS, type Diet } from "../lib/extras";
 
-type Reply = { name: string; attendance: Attendance; guestCount: number; byEvent?: ByEvent; wish?: string; at?: string };
+type Reply = { name: string; attendance: Attendance; guestCount: number; byEvent?: ByEvent; wish?: string; diet?: Diet[]; dietNote?: string; song?: string; pick?: number; at?: string };
 
 type Props = {
   template: InvitationTemplate;
@@ -138,6 +139,11 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
   const [perEvent, setPerEvent] = useState(() => new Set(Object.values(counts)).size > 1);
   const [name, setName] = useState(earlier?.name ?? "");
   const [wish, setWish] = useState(earlier?.wish ?? "");
+  // What else the hosts asked: food needs, a song, their poll.
+  const [diet, setDiet] = useState<Diet[]>(earlier?.diet ?? []);
+  const [dietNote, setDietNote] = useState(earlier?.dietNote ?? "");
+  const [song, setSong] = useState(earlier?.song ?? "");
+  const [pick, setPick] = useState<number | null>(earlier?.pick ?? null);
   // "done" shows the reply. A household that has already replied starts there, so a relative opening a forwarded
   // link sees the family's reply before changing it.
   const [state, setState] = useState<"idle" | "sending" | "done">(earlier ? "done" : "idle");
@@ -227,6 +233,9 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
           ...(splitCounts && { counts: Object.fromEntries(chosen.map(e => [e.id, countFor(e.id)])) }),
           guest: guest?.id,
           wish,
+          ...(draft.askDiet && { diet, dietNote }),
+          ...(draft.askSong && { song }),
+          ...(draft.poll && pick !== null && { pick }),
           website: form.get("website"),
         }),
       });
@@ -248,6 +257,10 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
     if (sends && !guest) {
       setName("");
       setWish("");
+      setDiet([]);
+      setDietNote("");
+      setSong("");
+      setPick(null);
       setCount("1");
       setCounts({});
       setPerEvent(false);
@@ -382,6 +395,16 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
               {askWhich && chosen.length > 1 && <button type="button" className="inv-text-button" aria-expanded={splitCounts} onClick={() => setPerEvent(!perEvent)}>{t.splitToggle(splitCounts)}</button>}
             </div>}
             <div className="studio-field"><label htmlFor="guest-name">{t.yourName} <span>{t.optional}</span></label><input id="guest-name" name="guest-name" autoComplete="name" maxLength={LIMITS.guestName} placeholder={t.namePlaceholder(!!guest)} value={name} onChange={e => setName(e.target.value)}/></div>
+            {attendance !== "Not attending" && draft.askDiet && <fieldset className="inv-extras inv-diet">
+              <legend>{t.dietLegend} <span>{t.optional}</span></legend>
+              <div>{DIETS.map(option => <label key={option} className={diet.includes(option) ? "is-ticked" : ""}><input type="checkbox" checked={diet.includes(option)} onChange={() => setDiet(now => (now.includes(option) ? now.filter(d => d !== option) : [...now, option]))}/><span>{t.dietNames[option]}</span></label>)}</div>
+              {diet.length > 0 && <div className="studio-field"><label htmlFor="guest-diet-note">{t.dietNote} <span>{t.optional}</span></label><input id="guest-diet-note" maxLength={EXTRA_LIMITS.dietNote} value={dietNote} onChange={e => setDietNote(e.target.value)}/></div>}
+            </fieldset>}
+            {attendance !== "Not attending" && draft.askSong && <div className="studio-field"><label htmlFor="guest-song">{t.songLabel} <span>{t.optional}</span></label><input id="guest-song" maxLength={EXTRA_LIMITS.song} placeholder={t.songPlaceholder} value={song} onChange={e => setSong(e.target.value)}/></div>}
+            {attendance !== "Not attending" && draft.poll && <fieldset className="inv-extras inv-poll">
+              <legend>{draft.poll.question} <span>{t.optional}</span></legend>
+              <div>{draft.poll.options.map((option, i) => <label key={i} className={pick === i ? "is-ticked" : ""}><input type="radio" name="poll" checked={pick === i} onChange={() => setPick(i)}/><span>{option}</span></label>)}</div>
+            </fieldset>}
             <div className="studio-field inv-wish-field">
               <label htmlFor="guest-wish">{t.wishLabel} <span>{t.optional}</span></label>
               <p className="inv-field-hint" id="guest-wish-hint">{t.wishHint(wishes !== null)}</p>
@@ -400,6 +423,6 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
         <ul className="inv-wishes">{wishes.map((w, i) => <li key={i} className="inv-wish"><p>{w.text}</p><span>— {w.name || t.aGuest}</span></li>)}</ul>
       </section>}
     </main>
-    <footer className="invitation-footer"><WowLinkBrand/><span lang={live ? undefined : "en"}>{live ? t.madeWith : "Made with love, shared with one link."}</span><Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}<Link href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link></footer>
+    <footer className="invitation-footer"><WowLinkBrand/>{draft.attribution !== false && <span lang={live ? undefined : "en"}>{live ? t.madeWith : "Made with love, shared with one link."}</span>}<Link className="invitation-footer-privacy" href={privacyHref}>{t.privacy}</Link>{sends && slug && <Link className="invitation-footer-report" href={reportHref(slug, lang, guest?.id)}>{t.report}</Link>}{draft.attribution !== false && <Link className="invitation-footer-create" href="/templates" onClick={() => { if (sends && slug) countAttribution(slug); }}>{t.createYours} <span aria-hidden="true">→</span></Link>}</footer>
   </div>;
 }

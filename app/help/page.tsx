@@ -9,7 +9,7 @@ import { PublicPage } from "../ui/public-page";
 
 type Content = { title: string; description: string; heading: readonly [string, string]; intro: string; sections: { heading: string; items: [string, string][] }[]; more: string; start: string };
 
-export const HELP: Record<Lang, Content> = {
+const HELP: Record<Lang, Content> = {
   en: {
     title: "Help — WowLink",
     description: "How to make, send and manage a WowLink invitation: personal links for each family, Gujarati and Hindi, changing details, replies, printing and deleting.",
@@ -19,22 +19,22 @@ export const HELP: Record<Lang, Content> = {
       {
         heading: "Making your invitation",
         items: [
-          ["Is it free?", "Yes. Making and sharing an invitation for your own occasion is free, with up to 100 replies."],
+          ["Is it free?", "Yes, to start. The free plan has the four starter occasions, one celebration and up to 50 replies, and stays up until 30 days after the day. Schedules, a link for each family, your own colours and more are in the Creator studio."],
           ["Do I need an account?", "No. An invitation is yours through its private manage link, which is saved on the phone or computer you publish from. My invitations can save all your manage links to a small file, so you can open them on another device."],
-          ["Can I add the mehndi, sangeet and reception?", "Yes. Add up to 10 celebrations, each with its own day, time and place. Guests tick the ones they’re coming to, and you get a headcount for each."],
+          ["Can I add the mehndi, sangeet and reception?", "With the Creator studio, yes. Add up to 10 celebrations, each with its own day, time and place. Guests tick the ones they’re coming to, and you get a headcount for each."],
           ["Can guests read it in Gujarati or Hindi?", "Yes. In the studio you choose the language guests see first, and each guest can switch with one tap. Dates and times are written the way an invitation says them."],
-          ["Can I use my own colours?", "Yes. Keep the occasion’s colours, pick one of seven palettes, or choose any colour. WowLink adjusts it so the words stay easy to read."],
-          ["Can I make another one like it?", "Yes. On its manage page choose “Make another like this”: the new one starts with the same drawing, colours, words and schedule. Its guests and replies aren’t copied."],
+          ["Can I use my own colours?", "With the Creator studio, yes. Keep the occasion’s colours, pick one of seven palettes, or choose any colour. WowLink adjusts it so the words stay easy to read."],
+          ["Can I make another one like it?", "With the Creator studio, yes. On its manage page choose “Make another like this”: the new one starts with the same drawing, colours, words and schedule. Its guests and replies aren’t copied."],
         ],
       },
       {
         heading: "Sending it",
         items: [
-          ["How do I send each family its own link?", "On the manage page, add households under Personal invitations, one at a time or as a pasted list. Each gets a link that opens with their name on it, and you can send it on WhatsApp straight from the list. You’ll see who has opened theirs and who hasn’t replied."],
+          ["How do I send each family its own link?", "With the Creator studio: on the manage page, add households under Personal invitations, one at a time or as a pasted list. Each gets a link that opens with their name on it, and you can send it on WhatsApp straight from the list. You’ll see who has opened theirs and who hasn’t replied."],
           ["Can I print it?", "Yes. Show the QR code on the manage page and download it for cards, posters or the shop window. It opens the same invitation as the link."],
           ["Can it be an announcement, with no replies?", "Yes. In the studio, under “On the invitation”, turn off “Ask guests to reply”. You can also hide the countdown there."],
           ["Can guests get directions to the exact gate?", "Yes. Paste the place’s share link from Google Maps into the studio. Without it, guests search for the venue’s name."],
-          ["Who sees the replies?", "Only you, on the manage page. You can download every reply, and a headcount per celebration for the caterer, as a spreadsheet."],
+          ["Who sees the replies?", "Only you, on the manage page. In the Creator studio you can also download every reply, and a headcount per celebration for the caterer, as a spreadsheet."],
         ],
       },
       {
@@ -60,22 +60,22 @@ export const HELP: Record<Lang, Content> = {
       {
         heading: "આમંત્રણ બનાવવું",
         items: [
-          ["શું તે મફત છે?", "હા. આપના પોતાના પ્રસંગ માટે આમંત્રણ બનાવવું અને મોકલવું મફત છે, 100 જવાબો સુધી."],
+          ["શું તે મફત છે?", "હા, શરૂઆત માટે. મફત પ્લાનમાં ચાર શરૂઆતના પ્રસંગો, એક પ્રસંગ અને 50 જવાબો સુધી છે, અને તે પ્રસંગ પછી 30 દિવસ સુધી ચાલુ રહે છે. કાર્યક્રમ, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ અને ઘણું વધારે ક્રિએટર સ્ટુડિયોમાં છે."],
           ["શું મારે એકાઉન્ટ બનાવવું પડશે?", "ના. આમંત્રણ તેની ખાનગી મેનેજ લિંકથી આપનું છે, જે આપ જે ફોન કે કમ્પ્યુટર પરથી પ્રકાશિત કરો તેમાં સચવાય છે. મારાં આમંત્રણો આપની બધી મેનેજ લિંક એક નાની ફાઇલમાં સાચવી શકે છે, જેથી આપ તેને બીજા ઉપકરણ પર ખોલી શકો."],
-          ["શું હું મહેંદી, સંગીત અને રિસેપ્શન ઉમેરી શકું?", "હા. 10 પ્રસંગો સુધી ઉમેરો, દરેકનો પોતાનો દિવસ, સમય અને સ્થળ. મહેમાનો જેમાં આવવાના હોય તે પસંદ કરે છે, અને આપને દરેકની ગણતરી મળે છે."],
+          ["શું હું મહેંદી, સંગીત અને રિસેપ્શન ઉમેરી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. 10 પ્રસંગો સુધી ઉમેરો, દરેકનો પોતાનો દિવસ, સમય અને સ્થળ. મહેમાનો જેમાં આવવાના હોય તે પસંદ કરે છે, અને આપને દરેકની ગણતરી મળે છે."],
           ["શું મહેમાનો તેને ગુજરાતી કે હિન્દીમાં વાંચી શકે?", "હા. સ્ટુડિયોમાં આપ પસંદ કરો કે મહેમાનો પહેલાં કઈ ભાષા જુએ, અને દરેક મહેમાન એક ટૅપથી બદલી શકે છે. તારીખ અને સમય આમંત્રણમાં લખાય છે એ રીતે જ લખાય છે."],
-          ["શું હું મારા પોતાના રંગ વાપરી શકું?", "હા. પ્રસંગના પોતાના રંગ રાખો, સાતમાંથી એક રંગસમૂહ પસંદ કરો, અથવા કોઈ પણ રંગ પસંદ કરો. WowLink તેને એવો ગોઠવે છે કે શબ્દો સહેલાઈથી વંચાય."],
-          ["શું હું આના જેવું બીજું બનાવી શકું?", "હા. તેના મેનેજ પાના પર “આના જેવું બીજું બનાવો” પસંદ કરો: નવું આમંત્રણ એ જ ચિત્ર, રંગ, શબ્દો અને કાર્યક્રમથી શરૂ થાય છે. તેના મહેમાનો અને જવાબો નકલ થતા નથી."],
+          ["શું હું મારા પોતાના રંગ વાપરી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. પ્રસંગના પોતાના રંગ રાખો, સાતમાંથી એક રંગસમૂહ પસંદ કરો, અથવા કોઈ પણ રંગ પસંદ કરો. WowLink તેને એવો ગોઠવે છે કે શબ્દો સહેલાઈથી વંચાય."],
+          ["શું હું આના જેવું બીજું બનાવી શકું?", "ક્રિએટર સ્ટુડિયોમાં, હા. તેના મેનેજ પાના પર “આના જેવું બીજું બનાવો” પસંદ કરો: નવું આમંત્રણ એ જ ચિત્ર, રંગ, શબ્દો અને કાર્યક્રમથી શરૂ થાય છે. તેના મહેમાનો અને જવાબો નકલ થતા નથી."],
         ],
       },
       {
         heading: "આમંત્રણ મોકલવું",
         items: [
-          ["દરેક પરિવારને તેની પોતાની લિંક કેવી રીતે મોકલું?", "મેનેજ પાના પર વ્યક્તિગત આમંત્રણોમાં પરિવારો ઉમેરો, એક એક કરીને અથવા આખી યાદી પેસ્ટ કરીને. દરેકને એવી લિંક મળે છે જે તેમના નામ સાથે ખૂલે, અને આપ યાદીમાંથી જ WhatsApp પર મોકલી શકો છો. કોણે ખોલી અને કોણે જવાબ નથી આપ્યો તે આપ જોઈ શકશો."],
+          ["દરેક પરિવારને તેની પોતાની લિંક કેવી રીતે મોકલું?", "ક્રિએટર સ્ટુડિયોમાં: મેનેજ પાના પર વ્યક્તિગત આમંત્રણોમાં પરિવારો ઉમેરો, એક એક કરીને અથવા આખી યાદી પેસ્ટ કરીને. દરેકને એવી લિંક મળે છે જે તેમના નામ સાથે ખૂલે, અને આપ યાદીમાંથી જ WhatsApp પર મોકલી શકો છો. કોણે ખોલી અને કોણે જવાબ નથી આપ્યો તે આપ જોઈ શકશો."],
           ["શું હું તેને છાપી શકું?", "હા. મેનેજ પાના પર QR કોડ બતાવો અને કાર્ડ, પોસ્ટર કે દુકાનની બારી માટે ડાઉનલોડ કરો. તે લિંક જેવું જ આમંત્રણ ખોલે છે."],
           ["શું તે જવાબ વગરની ફક્ત જાણ બની શકે?", "હા. સ્ટુડિયોમાં “આમંત્રણ પર” હેઠળ “મહેમાનોને જવાબ આપવા કહો” બંધ કરો. ત્યાં જ દિવસ સુધીની ગણતરી પણ છુપાવી શકાય છે."],
           ["શું મહેમાનોને સાચા દરવાજા સુધીનો રસ્તો મળે?", "હા. Google Maps માંથી સ્થળની શેર લિંક સ્ટુડિયોમાં મૂકો. તે વગર મહેમાનો સ્થળનું નામ શોધે છે."],
-          ["જવાબો કોણ જુએ છે?", "ફક્ત આપ, મેનેજ પાના પર. આપ દરેક જવાબ, અને કેટરર માટે દરેક પ્રસંગની ગણતરી, સ્પ્રેડશીટ તરીકે ડાઉનલોડ કરી શકો છો."],
+          ["જવાબો કોણ જુએ છે?", "ફક્ત આપ, મેનેજ પાના પર. ક્રિએટર સ્ટુડિયોમાં આપ દરેક જવાબ, અને કેટરર માટે દરેક પ્રસંગની ગણતરી, સ્પ્રેડશીટ તરીકે ડાઉનલોડ કરી શકો છો."],
         ],
       },
       {
@@ -101,22 +101,22 @@ export const HELP: Record<Lang, Content> = {
       {
         heading: "अपना निमंत्रण बनाना",
         items: [
-          ["क्या यह मुफ़्त है?", "हाँ। अपने खुद के अवसर के लिए निमंत्रण बनाना और शेयर करना मुफ़्त है, 100 जवाबों तक।"],
+          ["क्या यह मुफ़्त है?", "हाँ, शुरुआत के लिए। फ़्री प्लान में चार शुरुआती अवसर, एक कार्यक्रम और 50 जवाब तक हैं, और यह अवसर के 30 दिन बाद तक चालू रहता है। कार्यक्रमों की सूची, हर परिवार के लिए लिंक, अपने रंग और बहुत कुछ क्रिएटर स्टूडियो में है।"],
           ["क्या मुझे अकाउंट बनाना होगा?", "नहीं। निमंत्रण अपने निजी मैनेज लिंक से आपका है, जो उसी फ़ोन या कंप्यूटर पर सहेजा जाता है जिससे आप पब्लिश करते हैं। मेरे निमंत्रण से आप अपने सभी मैनेज लिंक एक छोटी फ़ाइल में सहेज सकते हैं, ताकि उन्हें दूसरे डिवाइस पर खोल सकें।"],
-          ["क्या मेहंदी, संगीत और रिसेप्शन भी जोड़े जा सकते हैं?", "हाँ। 10 कार्यक्रमों तक जोड़ें, हर एक का अपना दिन, समय और जगह। मेहमान उन पर टिक करते हैं जिनमें वे आ रहे हैं, और आपको हर एक की गिनती मिलती है।"],
+          ["क्या मेहंदी, संगीत और रिसेप्शन भी जोड़े जा सकते हैं?", "क्रिएटर स्टूडियो में, हाँ। 10 कार्यक्रमों तक जोड़ें, हर एक का अपना दिन, समय और जगह। मेहमान उन पर टिक करते हैं जिनमें वे आ रहे हैं, और आपको हर एक की गिनती मिलती है।"],
           ["क्या मेहमान इसे गुजराती या हिंदी में पढ़ सकते हैं?", "हाँ। स्टूडियो में आप चुनते हैं कि मेहमान पहले कौन-सी भाषा देखें, और हर मेहमान एक टैप में भाषा बदल सकता है। तारीख़ और समय वैसे ही लिखे जाते हैं जैसे निमंत्रण में लिखे जाते हैं।"],
-          ["क्या मैं अपने खुद के रंग चुन सकता हूँ?", "हाँ। अवसर के अपने रंग रखें, सात पैलेट में से एक चुनें, या कोई भी रंग चुनें। WowLink उसे ऐसे ढालता है कि शब्द आसानी से पढ़े जा सकें।"],
-          ["क्या इस जैसा एक और बनाया जा सकता है?", "हाँ। उसके मैनेज पेज पर “इस जैसा एक और बनाएँ” चुनें: नया निमंत्रण उसी चित्र, रंगों, शब्दों और कार्यक्रम-सूची से शुरू होता है। उसके मेहमान और जवाब कॉपी नहीं होते।"],
+          ["क्या मैं अपने खुद के रंग चुन सकता हूँ?", "क्रिएटर स्टूडियो में, हाँ। अवसर के अपने रंग रखें, सात पैलेट में से एक चुनें, या कोई भी रंग चुनें। WowLink उसे ऐसे ढालता है कि शब्द आसानी से पढ़े जा सकें।"],
+          ["क्या इस जैसा एक और बनाया जा सकता है?", "क्रिएटर स्टूडियो में, हाँ। उसके मैनेज पेज पर “इस जैसा एक और बनाएँ” चुनें: नया निमंत्रण उसी चित्र, रंगों, शब्दों और कार्यक्रम-सूची से शुरू होता है। उसके मेहमान और जवाब कॉपी नहीं होते।"],
         ],
       },
       {
         heading: "निमंत्रण भेजना",
         items: [
-          ["हर परिवार को उसका अपना लिंक कैसे भेजें?", "मैनेज पेज पर व्यक्तिगत निमंत्रण में परिवार जोड़ें, एक-एक करके या पूरी सूची पेस्ट करके। हर परिवार को ऐसा लिंक मिलता है जो उनके नाम के साथ खुलता है, और आप सूची से ही उसे WhatsApp पर भेज सकते हैं। आप देख पाएँगे कि किसने अपना लिंक खोला और किसने जवाब नहीं दिया।"],
+          ["हर परिवार को उसका अपना लिंक कैसे भेजें?", "क्रिएटर स्टूडियो में: मैनेज पेज पर व्यक्तिगत निमंत्रण में परिवार जोड़ें, एक-एक करके या पूरी सूची पेस्ट करके। हर परिवार को ऐसा लिंक मिलता है जो उनके नाम के साथ खुलता है, और आप सूची से ही उसे WhatsApp पर भेज सकते हैं। आप देख पाएँगे कि किसने अपना लिंक खोला और किसने जवाब नहीं दिया।"],
           ["क्या इसे प्रिंट किया जा सकता है?", "हाँ। मैनेज पेज पर QR कोड दिखाएँ और कार्ड, पोस्टर या दुकान की खिड़की के लिए डाउनलोड करें। यह लिंक वाला ही निमंत्रण खोलता है।"],
           ["क्या यह बिना जवाब वाली सिर्फ़ सूचना हो सकती है?", "हाँ। स्टूडियो में “निमंत्रण पर” के नीचे “मेहमानों से जवाब माँगें” बंद करें। वहीं आप उलटी गिनती भी छिपा सकते हैं।"],
           ["क्या मेहमानों को सही गेट तक का रास्ता मिल सकता है?", "हाँ। Google Maps से जगह का शेयर लिंक स्टूडियो में पेस्ट करें। उसके बिना, मेहमान जगह का नाम सर्च करते हैं।"],
-          ["जवाब कौन देखता है?", "सिर्फ़ आप, मैनेज पेज पर। आप हर जवाब, और कैटरर के लिए हर कार्यक्रम की गिनती, स्प्रेडशीट के रूप में डाउनलोड कर सकते हैं।"],
+          ["जवाब कौन देखता है?", "सिर्फ़ आप, मैनेज पेज पर। क्रिएटर स्टूडियो में आप हर जवाब, और कैटरर के लिए हर कार्यक्रम की गिनती, स्प्रेडशीट के रूप में डाउनलोड कर सकते हैं।"],
         ],
       },
       {

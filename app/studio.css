@@ -225,6 +225,79 @@
 .inv-anniversary.is-open .o-letter{transform:translateY(-104px);opacity:1}
 .inv-anniversary .inv-card{transform:translateY(90px) scale(.9)}
 
+.inv-diwali{--out:1.5s;--in:1.65s}
+.inv-diwali{--tone:#b8441a;--tone-2:#e0922f}
+/* diwali: the phuljhadi fizzes, sweeps along the row, and the diyas catch one after another from left to right */
+.inv-diwali.is-open .inv-trigger{opacity:0;transform:translate(474%,-30%);animation:o-sweep 1.4s linear both}
+@keyframes o-sweep{0%,22%{opacity:1;transform:none}82%{opacity:1;transform:translateX(474%)}100%{opacity:0;transform:translate(474%,-30%)}}
+.inv-diwali .o-spark{opacity:0}
+.inv-diwali.is-open .o-spark{animation:o-fizz .3s ease-out calc(var(--i) * 30ms) 4 both}
+@keyframes o-fizz{0%{opacity:0;transform:none}20%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty))}}
+.inv-diwali .o-tip{transform-origin:53px 96px}
+.inv-diwali.is-open .o-tip{animation:o-ember .16s ease-in-out 8 alternate}
+@keyframes o-ember{to{transform:scale(1.8)}}
+.inv-diwali .o-diya-glow{opacity:0;transform-origin:var(--fx) calc(var(--fy) - 14px);transform:scale(.3);transition:opacity .5s ease calc(.32s + var(--i) * .21s),transform .6s cubic-bezier(.2,.7,.2,1) calc(.32s + var(--i) * .21s)}
+.inv-diwali.is-open .o-diya-glow{opacity:.6;transform:none}
+.inv-diwali .o-diya-flame{opacity:0;transform-origin:var(--fx) var(--fy);transform:scale(.15);transition:opacity .15s ease calc(.32s + var(--i) * .21s),transform .45s cubic-bezier(.3,1.5,.5,1) calc(.32s + var(--i) * .21s)}
+.inv-diwali.is-open .o-diya-flame{opacity:1;transform:none}
+.inv-diwali .o-diya-core{transform-origin:var(--fx) var(--fy)}
+.inv-diwali.is-open .o-diya-core{animation:o-flicker .28s ease-in-out calc(.78s + var(--i) * .21s) 4 alternate}
+@keyframes o-flicker{to{transform:scale(.8,1.12)}}
+.inv-diwali .inv-card{transform:translateY(70px) scale(.9)}
+
+.inv-janoi{--out:1.35s;--in:1.5s}
+.inv-janoi{--tone:#b0580f;--tone-2:#a3262a}
+/* janoi: tie the brahmagranthi, the three loose strands draw together, a dot of haldi and kumkum, and the rice hops */
+.inv-janoi .o-strand{transform-origin:260px 232px;transition:transform .7s cubic-bezier(.5,0,.25,1)}
+.inv-janoi .o-strand-a{transform:scale(1.11) rotate(-4deg)}
+.inv-janoi .o-strand-c{transform:scale(.89) rotate(4deg)}
+.inv-janoi.is-open .o-strand-a{transform:scale(1.015)}
+.inv-janoi.is-open .o-strand-c{transform:scale(.985)}
+.inv-janoi.is-open .inv-trigger{transform:rotate(-270deg) scale(.7);opacity:0;transition:transform .65s cubic-bezier(.5,0,.3,1),opacity .2s ease .5s}
+.inv-janoi .o-tie{opacity:0;transition:opacity .1s ease .35s}
+.inv-janoi.is-open .o-tie{opacity:1}
+.inv-janoi .o-tie path{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .5s ease-in-out .35s}
+.inv-janoi.is-open .o-tie path{stroke-dashoffset:0}
+.inv-janoi .o-knot{opacity:0;transition:opacity .25s ease .55s}
+.inv-janoi.is-open .o-knot{opacity:1}
+.inv-janoi .o-dot{opacity:0;transform-origin:260px 232px;transform:scale(0);transition:transform .4s cubic-bezier(.3,1.6,.5,1) .85s,opacity .15s ease .85s}
+.inv-janoi.is-open .o-dot{opacity:1;transform:none}
+.inv-janoi .o-grain{transform-box:fill-box;transform-origin:center}
+.inv-janoi.is-open .o-grain{animation:janoi-hop .42s calc(.9s + var(--i) * 30ms) both}
+@keyframes janoi-hop{0%{transform:none;animation-timing-function:cubic-bezier(.2,.7,.4,1)}45%{transform:translateY(-16px) rotate(90deg);animation-timing-function:cubic-bezier(.6,0,.8,.3)}100%{transform:rotate(180deg)}}
+.inv-janoi .inv-card{transform:translateY(80px) scale(.9)}
+
+.inv-puja{--out:1.35s;--in:1.5s}
+.inv-puja{--tone:#b23a1e;--tone-2:#e0922f}
+/* puja: ring the brass ghanti, it swings on its hook, the sound ripples out and marigold petals drift down */
+.inv-puja .inv-trigger{transform-origin:50% 0}
+.inv-puja.is-open .inv-trigger{opacity:1;transform:none;animation:o-swing 1.3s ease-in-out both}
+@keyframes o-swing{0%{rotate:0deg}14%{rotate:24deg}36%{rotate:-20deg}58%{rotate:13deg}78%{rotate:-6deg}100%{rotate:0deg}}
+.inv-puja .o-clapper{transform-origin:30px 22px}
+.inv-puja.is-open .o-clapper{animation:o-clapper 1.3s ease-in-out both}
+@keyframes o-clapper{0%,100%{transform:rotate(0)}12%{transform:rotate(-16deg)}32%{transform:rotate(14deg)}54%{transform:rotate(-10deg)}76%{transform:rotate(5deg)}}
+.inv-puja .o-chime{opacity:0;transform-origin:260px 126px}
+.inv-puja.is-open .o-chime{animation:o-chime .55s ease-out calc(.15s + var(--i) * .1s) 2 both}
+@keyframes o-chime{0%{opacity:0;transform:scale(.75)}30%{opacity:1}100%{opacity:0;transform:scale(1.25)}}
+.inv-puja .o-petal{opacity:0;transform-box:fill-box;transform-origin:center}
+.inv-puja.is-open .o-petal{animation:o-petal-fall 1.1s ease-in-out calc(.3s + var(--i) * .08s) both}
+@keyframes o-petal-fall{0%{opacity:0;transform:translate(0,0) rotate(0)}15%{opacity:1}55%{opacity:1;transform:translate(var(--dx),80px) rotate(calc(var(--r) * .5))}100%{opacity:0;transform:translate(calc(var(--dx) * -.5),150px) rotate(var(--r))}}
+.inv-puja .inv-card{transform:translateY(80px) scale(.9)}
+
+.inv-naming{--out:1.3s;--in:1.45s}
+.inv-naming{--tone:#b83a72;--tone-2:#3d7f79}
+/* naming: lift the bandhani cloth by its tassel, it slides off the thali, and little stars rise over the swirl in the rice */
+.inv-naming.is-open .inv-trigger{transform:translate(64px,-20px) rotate(18deg);opacity:0;transition:transform .7s cubic-bezier(.45,0,.3,1) .1s,opacity .3s ease .3s}
+.inv-naming .o-cloth{transform-origin:260px 180px}
+.inv-naming.is-open .o-cloth{animation:o-cloth-off 1.05s cubic-bezier(.45,0,.3,1) .1s both}
+@keyframes o-cloth-off{0%{transform:none;opacity:1}24%{transform:translate(6px,-16px) rotate(-3deg);opacity:1}100%{transform:translate(240px,-34px) rotate(9deg);opacity:0}}
+.inv-naming .o-rice{opacity:0;transition:opacity .5s ease .35s}
+.inv-naming.is-open .o-rice{opacity:1}
+.inv-naming .o-twinkle{opacity:0;transform-box:fill-box;transform-origin:center}
+.inv-naming.is-open .o-twinkle{animation:o-twinkle-up 1s ease calc(.7s + var(--i) * .12s) both}
+@keyframes o-twinkle-up{0%{opacity:0;transform:translateY(8px) scale(.5)}30%{opacity:1;transform:translateY(-8px) scale(1)}100%{opacity:0;transform:translateY(-56px) scale(.8)}}
+.inv-naming .inv-card{transform:translateY(60px) scale(.9)}
+
 .is-open .inv-intro{opacity:0;transform:translateY(60px) rotate(-3deg);pointer-events:none}
 
 /* the card that comes out of it */
@@ -301,7 +374,7 @@
 .inv-rsvp-confirmation .cin-cta{margin-top:26px;min-height:46px;font-size:14px}
 .invitation-footer{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:112px;padding:28px clamp(20px,7vw,112px);border-top:1px solid var(--line)}
 .invitation-footer>span{font:600 24px/1.1 var(--hand);color:var(--faint)}
-.invitation-footer>a:last-child{display:flex;gap:10px;align-items:center;font:700 26px/1 var(--hand);color:var(--accent-soft)}
+.invitation-footer>a.invitation-footer-create{display:flex;gap:10px;align-items:center;font:700 26px/1 var(--hand);color:var(--accent-soft)}
 
 /* ---------- 404 ---------- */
 .inv-not-found{min-height:100svh}
@@ -622,6 +695,35 @@
 .studio-switch input{width:22px;height:22px;margin:0;flex:none;accent-color:#a8341f;cursor:pointer}
 .studio-fieldset .studio-switch-help{margin:-4px 0 10px 34px}
 .inv-no-rsvp{text-align:center}
+/* the guest's extras: food needs, a song, the host's poll */
+.inv-extras{margin:0;padding:0;border:0;min-width:0}
+.inv-extras legend{margin-bottom:10px;font:700 22px/1.2 var(--hand);color:var(--text)}
+.inv-extras legend span{font:500 13px/1 var(--sans);color:var(--muted)}
+.inv-extras>div{display:flex;flex-wrap:wrap;gap:8px}
+.inv-extras label{position:relative;display:inline-flex;align-items:center;min-height:42px;padding:6px 14px;border:1.5px dashed var(--line-strong);border-radius:999px;cursor:pointer;font-size:15px}
+.inv-extras label.is-ticked{border-style:solid;border-color:var(--text);background:#fbf6ec}
+.inv-extras input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.inv-extras label:has(input:focus-visible){outline:2px dashed var(--accent);outline-offset:2px}
+.inv-extras .studio-field{margin-top:12px}
+/* the Creator studio's parts, in the studio and on the manage page */
+.studio-pro-badge{display:inline-block;padding:3px 9px 2px;border-radius:999px;background:#241a13;color:#f6efe3;font:700 13px/1.2 var(--sans);letter-spacing:.02em;vertical-align:1px}
+.studio-pro-note{margin:4px 0 0;font-size:15px;line-height:1.6;color:var(--muted)}
+.studio-pro-note a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.studio-template-pro{position:absolute;top:8px;left:8px;z-index:2;rotate:-3deg}
+.studio-poll{margin-top:8px;padding:14px 16px;border:1.5px dashed var(--line-strong);border-radius:12px}
+.studio-poll-add{margin-top:6px}
+.manage-plan{display:inline-block;margin-left:6px;font:700 20px/1 var(--hand);color:var(--muted);rotate:-2deg}
+.manage-plan.is-pro{color:#a8341f}
+.manage-hero .manage-ends{margin-top:8px;font-size:14px}
+.manage-hero .manage-ends a,.manage-hero .manage-warn a{color:var(--accent);text-decoration:underline}
+.manage-extras{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px 32px}
+.manage-extras h3{font:700 23px/1.2 var(--hand);color:var(--text);margin:0 0 8px}
+.manage-extras h4{font:600 14px/1.2 var(--sans);color:var(--muted);margin:14px 0 6px}
+.manage-extras-list,.manage-extras-notes,.manage-poll{list-style:none;margin:0;padding:0}
+.manage-extras-list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px dashed var(--line-strong);font-size:15px}
+.manage-extras-notes li{padding:6px 0;border-top:1px dashed var(--line-strong);font-size:15px;line-height:1.45}
+.manage-poll li{position:relative;display:flex;justify-content:space-between;gap:12px;padding:9px 10px;margin-bottom:6px;border-radius:8px;overflow:hidden;font-size:15px;isolation:isolate}
+.manage-poll li i{position:absolute;inset:0 auto 0 0;z-index:-1;background:var(--accent);opacity:.14}
 .inv-card:focus{outline:none}
 .inv-langs{display:inline-flex;align-items:center;gap:14px}
 .manage-wishes{list-style:none;margin:14px 0 0;padding:0}

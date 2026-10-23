@@ -6,7 +6,7 @@ const event = (overrides: Partial<ScheduleItem> = {}): ScheduleItem => ({ id: "m
 
 test("a complete draft is valid, and its text is trimmed", () => {
   const result = validateDraft({ ...good, title: "  Aarav & Meera  ", venue: " Surat " });
-  expect(result).toEqual({ ok: true, value: { ...good, language: "en", thanks: "", palette: "" } });
+  expect(result).toEqual({ ok: true, value: { ...good, language: "en", thanks: "", palette: "", rsvp: true, countdown: true, mapUrl: "", attribution: true, askDiet: false, askSong: false, poll: null } });
 });
 
 test("title, date and venue are required", () => {

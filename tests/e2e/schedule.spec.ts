@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { freshIp, sampleDraft } from "../helpers";
+import { adminHeaders, freshIp, openInStudio, publish, sampleDraft } from "../helpers";
+
+const SAMPLE = [
+  { id: "mehndi", name: "Mehndi", date: "2026-11-06", time: "16:00", venue: "" },
+  { id: "sangeet", name: "Sangeet", date: "2026-11-07", time: "19:30", venue: "Lakeview Lawns, Surat" },
+  { id: "wedding", name: "Wedding", date: "2026-11-08", time: "18:00", venue: "" },
+  { id: "reception", name: "Reception", date: "2026-11-08", time: "21:00", venue: "" },
+];
 
 const days = (page: import("@playwright/test").Page) => page.locator(".inv-timeline-item h3");
 
@@ -13,9 +20,10 @@ test("the wedding sample shows its schedule; occasions without one show no timel
 
 test("build a schedule in the studio, publish it, and guests get a timeline in order", async ({ browser }) => {
   const context = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp() } });
+  // Schedules are the Creator studio's: start from one there, with the sample wedding schedule.
+  const { slug, key } = await publish(context.request, "wedding", { title: "Isha & Kabir", events: SAMPLE });
   const page = await context.newPage();
-  await page.goto("/create?template=wedding");
-  await page.locator("#title").fill("Isha & Kabir");
+  await openInStudio(page, slug, key);
   // The sample schedule: Mehndi, Sangeet, Wedding, Reception. Drop the reception, add a haldi.
   await page.getByRole("button", { name: "Remove Reception from the schedule" }).click();
   await page.getByRole("button", { name: "+ Haldi" }).click();
@@ -25,9 +33,8 @@ test("build a schedule in the studio, publish it, and guests get a timeline in o
   await expect(haldi.locator("input[type=time]")).toHaveValue("10:00");
   await haldi.locator("input[id$=-venue]").fill("Patel family home, Surat");
 
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
-  const publicUrl = await page.locator(".publish-dialog[open] .share-tools input").inputValue();
-  const slug = publicUrl.split("/e/")[1];
+  await page.getByRole("button", { name: "Update", exact: true }).click();
+  await expect(page.locator(".publish-dialog[open]")).toBeVisible();
 
   const guest = await context.newPage();
   await guest.goto(`/e/${slug}`);
@@ -53,12 +60,13 @@ test("build a schedule in the studio, publish it, and guests get a timeline in o
   await context.close();
 });
 
-test("the studio points at a schedule entry that needs fixing", async ({ page }) => {
-  await page.goto("/create?template=birthday");
+test("the studio points at a schedule entry that needs fixing", async ({ page, request }) => {
+  const { slug, key } = await publish(request, "birthday");
+  await openInStudio(page, slug, key);
   await page.getByRole("button", { name: "+ Add an event" }).click();
   const blank = page.locator(".studio-event").last();
   await expect(blank.locator("input[list]")).toBeFocused();
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await page.getByRole("button", { name: "Update", exact: true }).click();
   await expect(blank.locator(".studio-error")).toHaveText("Give this event a name.");
   await expect(blank.locator("input[list]")).toBeFocused();
   await expect(blank.locator("input[list]")).toHaveAttribute("aria-invalid", "true");
@@ -67,7 +75,8 @@ test("the studio points at a schedule entry that needs fixing", async ({ page })
 });
 
 test("the API enforces schedule rules", async ({ request }) => {
-  const post = (events: object[]) => request.post("/api/experiences", { headers: { "x-forwarded-for": freshIp() }, data: { templateId: "wedding", draft: { ...sampleDraft(), events } } });
+  // Schedules are the Creator studio's; the admin can publish there directly.
+  const post = (events: object[]) => request.post("/api/experiences", { headers: adminHeaders(), data: { templateId: "wedding", draft: { ...sampleDraft(), events }, plan: "pro" } });
   const eleven = Array.from({ length: 11 }, (_, i) => ({ id: `e${i}`, name: `Day ${i}`, date: "2026-11-06", time: "", venue: "" }));
   const tooMany = await post(eleven);
   expect(tooMany.status()).toBe(422);

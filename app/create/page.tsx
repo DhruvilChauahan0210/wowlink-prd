@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { EVENT_NAMES, LANGS, LANG_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
+import { EVENT_NAMES, LANGS, draftOf, LANG_NAMES, LIMITS, SCHEDULE_PRESETS, draftKey, getInvitationTemplate, initialDraft, invitationTemplates, newEventId, ownerKey, presetEvent, readDraft, scheduleItemError, validateDraft, type DraftErrors, type InvitationDraft, type ScheduleItem } from "../lib/invitations";
 import { WowLinkBrand } from "../ui/brand";
 import { ArtImage } from "../ui/art";
 import { InvitationScene } from "../ui/invitation-scene";
@@ -11,12 +11,14 @@ import { CopyField, ShareTools } from "../ui/share-tools";
 import { HostLangSwitch, useHostLang } from "../ui/host-lang";
 import { hostMessage, type HostText } from "../lib/host-i18n";
 import { OCCASION_TONES, PALETTES, PALETTE_IDS, type PaletteId } from "../lib/palette";
+import { STARTER_OCCASIONS, freeDraft, planOf, type Plan } from "../lib/plans";
+import { EXTRA_LIMITS } from "../lib/extras";
 import type { Experience, Rsvp } from "../lib/store";
 
 const LANGUAGE_CHOICES = LANGS.map(lang => [lang, LANG_NAMES[lang]] as const);
 
 /** A published invitation this browser can edit: its public slug and private manage key. */
-type Owned = { slug: string; key: string };
+type Owned = { slug: string; key: string; plan?: Plan };
 
 export default function CreatePage() {
   const [templateId, setTemplateId] = useState<string>("wedding");
@@ -44,6 +46,10 @@ export default function CreatePage() {
   const usage = useRef<Record<string, { replies: number; invitations: number }>>({});
   const [removed, setRemoved] = useState<{ item: ScheduleItem; replies: number; invitations: number } | null>(null);
   const template = getInvitationTemplate(templateId);
+  // New invitations are free; an invitation already in the Creator studio keeps everything.
+  const pro = owned ? planOf(owned) === "pro" : false;
+  // What guests will get: a free invitation without the Creator studio's parts.
+  const shown = pro ? draft : freeDraft(draft);
 
   useEffect(() => {
     setOrigin(location.origin);
@@ -76,15 +82,18 @@ export default function CreatePage() {
       const response = await fetch(`/api/experiences/${slug}`, { headers: { authorization: `Bearer ${key}` }, cache: "no-store" });
       if (!response.ok) throw new Error();
       const { experience } = (await response.json()) as { experience: Experience };
+      // Copying is the Creator studio's.
+      if (planOf(experience) !== "pro") throw Object.assign(new Error(), { pro: true });
       setTemplateId(experience.templateId);
-      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: (experience.events ?? []).map(e => ({ ...e, id: newEventId() })), language: experience.language ?? "en", thanks: experience.thanks ?? "", palette: experience.palette ?? "", rsvp: experience.rsvp !== false, countdown: experience.countdown !== false, mapUrl: experience.mapUrl ?? "" });
+      const copied = draftOf(experience);
+      setDraft({ ...copied, events: copied.events.map(e => ({ ...e, id: newEventId() })) });
       setDirty(true);
       setStatus(() => (t: HostText) => t.copiedFrom(experience.title));
       history.replaceState(null, "", `/create?template=${experience.templateId}`);
-    } catch {
+    } catch (failure) {
       const fallback = getInvitationTemplate(null);
       setDraft(readDraft(fallback.id) ?? initialDraft(fallback));
-      setStatus(() => (t: HostText) => t.couldntCopy);
+      setStatus(() => (t: HostText) => ((failure as { pro?: boolean }).pro ? t.proCopy : t.couldntCopy));
     }
     setReady(true);
   }
@@ -102,13 +111,13 @@ export default function CreatePage() {
       if (!response.ok) throw new Error();
       const { experience, rsvps } = (await response.json()) as { experience: Experience; rsvps: Rsvp[] };
       setTemplateId(experience.templateId);
-      setDraft({ title: experience.title, date: experience.date, time: experience.time, venue: experience.venue, message: experience.message, events: experience.events ?? [], language: experience.language ?? "en", thanks: experience.thanks ?? "", palette: experience.palette ?? "", rsvp: experience.rsvp !== false, countdown: experience.countdown !== false, mapUrl: experience.mapUrl ?? "" });
+      setDraft(draftOf(experience));
       published.current = experience.events ?? [];
       usage.current = Object.fromEntries(published.current.map(e => [e.id, {
         replies: rsvps.filter(r => r.byEvent && Object.hasOwn(r.byEvent, e.id)).length,
         invitations: (experience.guests ?? []).filter(g => g.events !== "all" && g.events.includes(e.id)).length,
       }]));
-      setOwned({ slug, key });
+      setOwned({ slug, key, plan: planOf(experience) });
       setTakenDown(!!experience.removed);
       setStatus(() => (t: HostText) => (experience.removed ? t.studioTakenDown : t.editingLive));
     } catch {
@@ -197,6 +206,10 @@ export default function CreatePage() {
       requestAnimationFrame(() => document.getElementById(first === "events" && badEvent ? `event-${badEvent.id}-name` : first)?.focus());
       return;
     }
+    if (!pro && !STARTER_OCCASIONS.includes(template.id)) {
+      setStatus(() => (t: HostText) => t.proOccasion);
+      return;
+    }
     setErrors({});
     setPublishing(true);
     setStatus(() => (t: HostText) => (owned ? t.updatingStatus : t.publishing));
@@ -204,14 +217,14 @@ export default function CreatePage() {
       const response = await fetch(owned ? `/api/experiences/${owned.slug}` : "/api/experiences", {
         method: owned ? "PATCH" : "POST",
         headers: { "content-type": "application/json", ...(owned ? { authorization: `Bearer ${owned.key}` } : {}) },
-        body: JSON.stringify({ templateId, draft: checked.value, ...(owned ? { status: "published" } : {}) }),
+        body: JSON.stringify({ templateId, draft: pro ? checked.value : freeDraft(checked.value), ...(owned ? { status: "published" } : {}) }),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
         if (body.fields) setErrors(body.fields);
         throw new Error(body.error);
       }
-      const mine = owned ?? { slug: body.slug as string, key: body.key as string };
+      const mine: Owned = owned ?? { slug: body.slug as string, key: body.key as string, plan: "free" };
       if (!owned) {
         try { localStorage.setItem(ownerKey(mine.slug), mine.key); } catch { /* the manage link in the dialog still works */ }
         setOwned(mine);
@@ -230,6 +243,7 @@ export default function CreatePage() {
   }
 
   const customColour = /^#[0-9a-f]{6}$/i.test(draft.palette ?? "") ? draft.palette! : "";
+  const proNote = (text: string) => <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} <Link href="/pricing">{h.seePlans}</Link></p>;
   const fieldError = (key: keyof InvitationDraft) => errors[key] ? <p className="studio-error" id={`${key}-error`}>{message(errors[key]!)}</p> : null;
   const described = (key: keyof InvitationDraft) => errors[key] ? { "aria-invalid": true, "aria-describedby": `${key}-error` } : {};
 
@@ -251,7 +265,7 @@ export default function CreatePage() {
       <section className="studio-edit-panel theme-paper" id="studio-edit" aria-label={h.settingsLabel}>
         <Link className="studio-back" href={owned ? `/manage/${owned.slug}` : "/templates"}>{owned ? h.backToInvitation : h.allTemplates}</Link>
         <div className="studio-intro"><h1>{h.makeIt[0]} <span className="scribble">{h.makeIt[1]}</span></h1><p>{h.makeItBody}</p></div>
-        <fieldset className="studio-fieldset"><legend>{h.occasion}</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><ArtImage name={item.id} fit="slice"/><span>{h.occasionNames[item.id] ?? item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : ""}</i></button>)}</div></fieldset>
+        <fieldset className="studio-fieldset"><legend>{h.occasion}</legend><div className="studio-template-grid">{invitationTemplates.map(item => <button key={item.id} type="button" className={`studio-template${templateId === item.id ? " is-selected" : ""}`} onClick={() => changeTemplate(item.id)} aria-pressed={templateId === item.id}><ArtImage name={item.id} fit="slice"/><span>{h.occasionNames[item.id] ?? item.name}</span><i aria-hidden="true">{templateId === item.id ? "✓" : ""}</i>{!pro && !STARTER_OCCASIONS.includes(item.id) && <b className="studio-pro-badge studio-template-pro">{h.proBadge}</b>}</button>)}</div></fieldset>
         <fieldset className="studio-fieldset"><legend>{h.details}</legend>
           <div className="studio-field"><label htmlFor="title">{h.titleLabel}</label><input id="title" value={draft.title} maxLength={80} placeholder="Aarav & Meera" onChange={event => update("title", event.target.value)} {...described("title")}/>{fieldError("title")}</div>
           <div className="studio-field-row">
@@ -266,9 +280,30 @@ export default function CreatePage() {
           <label className="studio-switch"><input type="checkbox" checked={draft.rsvp !== false} onChange={event => update("rsvp", event.target.checked)} aria-describedby="rsvp-help"/><span>{h.askToReply}</span></label>
           <p className="studio-help studio-switch-help" id="rsvp-help">{h.askToReplyHelp(draft.rsvp !== false)}</p>
           <label className="studio-switch"><input type="checkbox" checked={draft.countdown !== false} onChange={event => update("countdown", event.target.checked)}/><span>{h.showCountdown}</span></label>
+          {draft.rsvp !== false && <>
+            <label className="studio-switch"><input type="checkbox" checked={!!draft.askDiet} onChange={event => update("askDiet", event.target.checked)} aria-describedby="diet-help"/><span>{h.askDiet}</span></label>
+            <p className="studio-help studio-switch-help" id="diet-help">{h.askDietHelp}</p>
+          </>}
+          {pro ? <>
+            {draft.rsvp !== false && <>
+              <label className="studio-switch"><input type="checkbox" checked={!!draft.askSong} onChange={event => update("askSong", event.target.checked)} aria-describedby="song-help"/><span>{h.askSong}</span></label>
+              <p className="studio-help studio-switch-help" id="song-help">{h.askSongHelp}</p>
+              {draft.poll ? <div className="studio-poll" role="group" aria-label={h.addPoll}>
+                <div className="studio-field"><label htmlFor="poll-question">{h.pollQuestion}</label><input id="poll-question" value={draft.poll.question} maxLength={EXTRA_LIMITS.pollQuestion} placeholder={h.pollQuestionPlaceholder} onChange={event => update("poll", { ...draft.poll!, question: event.target.value })} {...described("poll")}/></div>
+                {draft.poll.options.map((option, i) => <div className="studio-field" key={i}><label htmlFor={`poll-option-${i}`}>{h.pollOption(i + 1)}</label><input id={`poll-option-${i}`} value={option} maxLength={EXTRA_LIMITS.pollOption} onChange={event => update("poll", { ...draft.poll!, options: draft.poll!.options.map((o, j) => (j === i ? event.target.value : o)) })}/></div>)}
+                <div className="manage-guest-buttons">
+                  {draft.poll.options.length < EXTRA_LIMITS.pollOptions && <button type="button" className="share-chip" onClick={() => update("poll", { ...draft.poll!, options: [...draft.poll!.options, ""] })}>{h.pollAddOption}</button>}
+                  <button type="button" className="share-chip" onClick={() => update("poll", null)}>{h.pollRemove}</button>
+                </div>
+                {fieldError("poll")}
+              </div> : <button type="button" className="share-chip studio-poll-add" onClick={() => update("poll", { question: "", options: ["", ""] })}>{h.addPoll}</button>}
+            </>}
+            <label className="studio-switch"><input type="checkbox" checked={draft.attribution !== false} onChange={event => update("attribution", event.target.checked)}/><span>{h.showAttribution}</span></label>
+          </> : proNote(h.proSongPoll)}
         </fieldset>
         <fieldset className="studio-fieldset studio-schedule" id="events">
           <legend>{h.schedule} <span className="studio-legend-note">{h.scheduleNote}</span></legend>
+          {!pro ? proNote(h.proSchedule) : <>
           <p className="studio-help">{h.scheduleHelp(template.id === "wedding")}</p>
           {draft.events.map((item, index) => {
             const problem = checkEvents ? message(scheduleItemError(item)) : "";
@@ -294,9 +329,11 @@ export default function CreatePage() {
           </div>}
           {fieldError("events")}
           <datalist id="event-names">{EVENT_NAMES.map(name => <option key={name} value={name}/>)}</datalist>
+          </>}
         </fieldset>
         <fieldset className="studio-fieldset">
           <legend>{h.colours}</legend>
+          {!pro ? proNote(h.proColours) : <>
           <p className="studio-help">{h.coloursHelp}</p>
           <div className="studio-palette">
             <div className="studio-palette-swatches" role="radiogroup" aria-label={h.colours}>
@@ -306,6 +343,7 @@ export default function CreatePage() {
             <label className={`studio-own-colour${customColour ? " is-selected" : ""}`}><input type="color" value={customColour || "#7a3fb5"} onChange={event => update("palette", event.target.value.toLowerCase())} aria-label={h.ownColour}/><span>{h.ownColour}</span></label>
           </div>
           <p className="studio-palette-name" aria-live="polite">{!draft.palette ? h.occasionColours : customColour ? "" : h.paletteNames[draft.palette as PaletteId]}</p>
+          </>}
         </fieldset>
         <fieldset className="studio-fieldset">
           <legend>{h.language} <span className="studio-legend-note">{h.forGuests}</span></legend>
@@ -320,7 +358,7 @@ export default function CreatePage() {
         <div className="studio-save-status" role="status"><i className={dirty ? "is-dirty" : ""}/><span>{status(h)}</span></div>
         <p className="studio-storage-note">{owned && !takenDown ? <>{h.liveAt} <a href={`/e/${owned.slug}`} target="_blank" rel="noreferrer">{origin.replace(/^https?:\/\//, "")}/e/{owned.slug}</a>. {h.draftsAlsoKept}</> : h.draftsSaved}</p>
       </section>
-      <aside className="studio-preview-panel theme-paper" id="studio-live" aria-label={h.livePreviewLabel}><div className="studio-preview-inner"><div className="studio-preview-toolbar"><span className="studio-live"><i/>{h.livePreview}</span><button onClick={() => setOpened(false)} aria-label={h.replayLabel}>{h.replay}</button></div><div className="studio-canvas-frame"><InvitationScene template={template} draft={draft} compact opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)}/></div><div className="studio-preview-bottom"><span>{h.occasionNames[template.id] ?? template.category}</span><span>{h.tapToTry}</span></div></div></aside>
+      <aside className="studio-preview-panel theme-paper" id="studio-live" aria-label={h.livePreviewLabel}><div className="studio-preview-inner"><div className="studio-preview-toolbar"><span className="studio-live"><i/>{h.livePreview}</span><button onClick={() => setOpened(false)} aria-label={h.replayLabel}>{h.replay}</button></div><div className="studio-canvas-frame"><InvitationScene template={template} draft={shown} compact opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)}/></div><div className="studio-preview-bottom"><span>{h.occasionNames[template.id] ?? template.category}</span><span>{h.tapToTry}</span></div></div></aside>
     </main>
 
     <dialog ref={dialog} className="publish-dialog" aria-labelledby="publish-title">

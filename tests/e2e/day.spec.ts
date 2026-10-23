@@ -59,7 +59,7 @@ test("the thank-you note is written in the studio, and checked like the message"
   expect(long.status()).toBe(422);
   expect((await long.json()).fields.thanks).toBeTruthy();
 
-  await page.goto("/create?template=anniversary");
+  await page.goto("/create?template=birthday");
   await page.locator("#thanks").fill("Thank you for 25 wonderful years of showing up.");
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   const manage = await page.locator(".publish-dialog[open] .publish-private input").inputValue();

@@ -14,6 +14,8 @@ import { CopyField, ShareTools } from "../../ui/share-tools";
 import { csvName, headcountCsv, repliesCsv } from "../../lib/export";
 import { GeneralLinkAudience, GuestList, Headcount, WishesCard, saveCsv } from "./guest-list";
 import { Insights } from "./insights";
+import { FromGuests } from "./from-guests";
+import { endsOn, hasEnded, planOf } from "../../lib/plans";
 import { REASON_TEXT } from "../../lib/reports";
 
 type Loaded = { experience: Experience; rsvps: Rsvp[] };
@@ -147,6 +149,10 @@ export default function ManagePage() {
 
   const experience = data?.experience;
   const removed = experience?.removed;
+  const pro = experience ? planOf(experience) === "pro" : false;
+  // A free invitation comes down 30 days after the occasion.
+  const ends = experience ? endsOn(experience) : null;
+  const ended = !!experience && hasEnded(experience);
   const live = experience?.status === "published" && !removed;
   const schedule = sortSchedule(experience?.events ?? []);
   const owner = key ? { slug, ownerKey: key } : null;
@@ -178,9 +184,10 @@ export default function ManagePage() {
         <section className="manage-hero">
           <div className="cin-print manage-print"><span className="cin-photo"><ArtImage name={experience.templateId as ArtName} fit="slice"/></span></div>
           <div>
-            <span className={`manage-status is-${removed ? "removed" : experience.status}`}>{removed ? h.takenDown : live ? h.live : h.unpublished}</span>
+            <span className={`manage-status is-${removed ? "removed" : experience.status}`}>{removed ? h.takenDown : live ? h.live : h.unpublished}</span> <span className={`manage-plan${pro ? " is-pro" : ""}`}>{pro ? h.proBadge : h.freeBadge}</span>
             <h1>{experience.title}</h1>
             <p>{formatInvitationDate(experience.date, true, lang)}{experience.time && ` · ${formatInvitationTime(experience.time, lang)}`} · {experience.venue}</p>
+            {ends && <p className={ended ? "manage-warn" : "manage-muted manage-ends"}>{ended ? h.endedFree(formatInvitationDate(ends, true, lang)) : h.upUntil(formatInvitationDate(ends, true, lang))} {!ended && <Link href="/pricing">{h.seePlans}</Link>}</p>}
           </div>
         </section>
 
@@ -197,12 +204,12 @@ export default function ManagePage() {
 
         <section className="sketch-card manage-card" aria-labelledby="insights-heading">
           <h2 id="insights-heading">{h.insightsHeading}</h2>
-          <Insights experience={experience} rsvps={data.rsvps}/>
+          <Insights experience={experience} rsvps={data.rsvps} pro={pro}/>
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="guests-heading">
           <h2 id="guests-heading">{h.personalInvitations}</h2>
-          {owner && <GuestList owner={owner} origin={origin} experience={experience} rsvps={data.rsvps} onChanged={reload}/>}
+          {!pro ? <ProNote h={h} text={h.proPersonal}/> : owner && <GuestList owner={owner} origin={origin} experience={experience} rsvps={data.rsvps} onChanged={reload}/>}
         </section>
 
         <section className="sketch-card manage-card" aria-labelledby="replies-heading">
@@ -242,11 +249,17 @@ export default function ManagePage() {
               </div></td></tr>}</Fragment>;
             })}</tbody>
           </table></div> : <p className="manage-muted">{h.noRepliesYet}</p>}
-          {data.rsvps.length > 0 && <div className="manage-downloads"><span>{h.download}</span>
+          {data.rsvps.length > 0 && !pro && <ProNote h={h} text={h.proDownloads}/>}
+          {data.rsvps.length > 0 && pro && <div className="manage-downloads"><span>{h.download}</span>
             <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "replies"), repliesCsv(data))}>{h.everyReplyCsv}</button>
             {schedule.length > 0 && <button type="button" className="share-chip" onClick={() => saveCsv(csvName(experience.title, "headcount"), headcountCsv(data))}>{h.headcountCsv}</button>}
           </div>}
         </section>
+
+        {(experience.askDiet || (pro && (experience.askSong || experience.poll))) && <section className="sketch-card manage-card" aria-labelledby="extras-heading">
+          <h2 id="extras-heading">{h.fromGuests}</h2>
+          <FromGuests experience={experience} rsvps={data.rsvps} pro={pro}/>
+        </section>}
 
         <section className="sketch-card manage-card" aria-labelledby="wishes-heading">
           <h2 id="wishes-heading">{h.wishesHeading}</h2>
@@ -263,7 +276,7 @@ export default function ManagePage() {
               : <button className="cin-cta cin-cta-light" disabled={busy} onClick={() => void setStatus("published")}>{h.publishAgain}</button>}
             <span className="manage-muted">{h.unpublishNote(live)}</span>
           </div>}
-          <Link className="cin-text-link manage-privacy-link" href={`/create?copy=${slug}`}>{h.makeAnother} <span aria-hidden="true">→</span></Link>
+          {pro && <Link className="cin-text-link manage-privacy-link" href={`/create?copy=${slug}`}>{h.makeAnother} <span aria-hidden="true">→</span></Link>}
           <Link className="cin-text-link manage-privacy-link" href={langHref("/privacy", lang)}>{h.privacyLink} <span aria-hidden="true">→</span></Link>
         </section>
 
@@ -282,6 +295,11 @@ export default function ManagePage() {
       </>}
     </main>
   </div></HostTextContext.Provider>;
+}
+
+/** A feature this invitation's plan doesn't include, and where to read about the Creator studio. */
+function ProNote({ text, h }: { text: string; h: HostText }) {
+  return <p className="studio-pro-note"><span className="studio-pro-badge">{h.proBadge}</span> {text} <Link href="/pricing">{h.seePlans}</Link></p>;
 }
 
 function Notice({ h, title, action, children }: { h: HostText; title: string; action?: React.ReactNode; children: React.ReactNode }) {

@@ -1,3 +1,4 @@
+import { cleanPoll, pollError, type Poll } from "./extras";
 import { isPaletteValue } from "./palette";
 
 /** One event in an occasion's schedule, e.g. the mehndi or the sangeet. A blank venue means "the main venue". */
@@ -34,7 +35,17 @@ export type InvitationDraft = {
   countdown?: boolean;
   /** A Google Maps link to the exact place (a gate, a lawn), for directions. Without one, guests search the venue's name. */
   mapUrl?: string;
+  /** Whether the invitation shows "Made with WowLink". Missing means yes; only the Creator studio can turn it off. */
+  attribution?: boolean;
+  /** Extras guests are asked with their reply (extras.ts): food needs, a song request, and the host's own poll. */
+  askDiet?: boolean;
+  askSong?: boolean;
+  poll?: Poll | null;
 };
+
+/** Just the invitation's own fields, from anything that has them (a stored invitation, say). */
+export const draftOf = ({ title, date, time, venue, message, events, language, thanks, palette, rsvp, countdown, mapUrl, attribution, askDiet, askSong, poll }: InvitationDraft): InvitationDraft =>
+  ({ title, date, time, venue, message, events: events ?? [], language: language ?? "en", thanks: thanks ?? "", palette: palette ?? "", rsvp: rsvp !== false, countdown: countdown !== false, mapUrl: mapUrl ?? "", attribution: attribution !== false, askDiet: !!askDiet, askSong: !!askSong, poll: poll ?? null });
 
 /** Google Maps share links only (maps.app.goo.gl, goo.gl/maps, google.*\/maps, maps.google.*): nowhere else. */
 export const isMapUrl = (value: string) => /^https:\/\/(maps\.app\.goo\.gl\/|goo\.gl\/maps\/|(www\.)?google\.[a-z]{2,3}(\.[a-z]{2})?\/maps[/?]|maps\.google\.[a-z]{2,3}(\.[a-z]{2})?\/)[^\s<>"']*$/i.test(value);
@@ -48,6 +59,10 @@ export const invitationTemplates = [
   { id: "housewarming", name: "Home Sweet Home", category: "Housewarming & vastu puja", action: "Open the door", eyebrow: "A new home, a new beginning", title: "The Shahs’ new home", date: "2027-02-07", time: "09:00", venue: "Shree Residency, Rajkot", message: "Our new home won’t feel complete until you’ve stepped inside. Join us for the vastu puja and a warm lunch after." },
   { id: "anniversary", name: "Still Us", category: "Anniversary", action: "Open the letter", eyebrow: "Years of love, and counting", title: "Mummy & Papa’s 25th", date: "2027-02-14", time: "19:30", venue: "Terrace Garden, Surat", message: "Twenty-five years, countless cups of chai, and a family built with love. Come celebrate them with us." },
   { id: "opening", name: "A New Beginning", category: "Grand opening", action: "Cut the ribbon", eyebrow: "The start of something wonderful", title: "A new beginning", date: "2026-12-12", time: "10:00", venue: "The Atelier, Vapi", message: "Every new beginning deserves a celebration. Be with us as we open our doors to a beautiful new chapter." },
+  { id: "diwali", name: "Festival of Lights", category: "Diwali get-together", action: "Light the sparkler", eyebrow: "Lights, laughter and a little mithai", title: "Diwali at the Mehtas", date: "2026-11-08", time: "19:30", venue: "Mehta Niwas, Ahmedabad", message: "Come light a diya with us. There’ll be mithai, music and the whole family under one roof." },
+  { id: "janoi", name: "Sacred Thread", category: "Janoi & upanayan", action: "Tie the janoi", eyebrow: "With the blessings of our elders", title: "Aarav’s janoi", date: "2027-02-20", time: "08:30", venue: "Shree Ram Vadi, Surat", message: "Our son takes the sacred thread. Be with us for the ceremony, and stay for lunch." },
+  { id: "puja", name: "Satyanarayan Katha", category: "Satyanarayan katha & puja", action: "Ring the bell", eyebrow: "With faith and gratitude", title: "Satyanarayan katha at home", date: "2026-12-20", time: "17:00", venue: "Shah residence, Vadodara", message: "Join us for the katha, the aarti and prasad. Your presence will make it complete." },
+  { id: "naming", name: "A Little Name", category: "Naamkaran", action: "Lift the cloth", eyebrow: "Our little one gets a name", title: "Naamkaran for baby Patel", date: "2027-01-10", time: "11:00", venue: "Patel family home, Navsari", message: "Foi will whisper the name, and we’d love you there to hear it first." },
 ] as const;
 
 export type InvitationTemplate = (typeof invitationTemplates)[number];
@@ -98,7 +113,7 @@ const SAMPLE_SCHEDULE: Partial<Record<InvitationTemplate["id"], ScheduleItem[]>>
 };
 
 export function initialDraft(template: InvitationTemplate): InvitationDraft {
-  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })), language: "en", thanks: "", palette: "", rsvp: true, countdown: true, mapUrl: "" };
+  return { title: template.title, date: template.date, time: template.time, venue: template.venue, message: template.message, events: (SAMPLE_SCHEDULE[template.id] ?? []).map(e => ({ ...e })), language: "en", thanks: "", palette: "", rsvp: true, countdown: true, mapUrl: "", attribution: true, askDiet: false, askSong: false, poll: null };
 }
 export const draftKey = (id: string) => `wowlink:draft:${id}`;
 
@@ -112,7 +127,7 @@ export function readDraft(id: string): InvitationDraft | null {
     if (!["title", "date", "time", "venue", "message"].every(key => typeof data[key] === "string")) return null;
     // Drafts saved before schedules existed simply have none.
     const events = Array.isArray(data.events) ? data.events.filter(isScheduleItem) : [];
-    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events, language: isLang(data.language) ? data.language : "en", thanks: typeof data.thanks === "string" ? data.thanks : "", palette: isPaletteValue(data.palette) ? data.palette : "", rsvp: data.rsvp !== false, countdown: data.countdown !== false, mapUrl: typeof data.mapUrl === "string" ? data.mapUrl : "" };
+    return { title: String(data.title), date: String(data.date), time: String(data.time), venue: String(data.venue), message: String(data.message), events, language: isLang(data.language) ? data.language : "en", thanks: typeof data.thanks === "string" ? data.thanks : "", palette: isPaletteValue(data.palette) ? data.palette : "", rsvp: data.rsvp !== false, countdown: data.countdown !== false, mapUrl: typeof data.mapUrl === "string" ? data.mapUrl : "", attribution: data.attribution !== false, askDiet: data.askDiet === true, askSong: data.askSong === true, poll: cleanPoll(data.poll) };
   } catch { return null; }
 }
 
@@ -210,7 +225,7 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
     // "main" is reserved: calendar links use ?event=main for the main occasion.
     return { id: /^[\w-]{1,40}$/.test(id) && id !== "main" ? id : newEventId(), name: text("name", item), date: text("date", item), time: text("time", item), venue: text("venue", item) };
   });
-  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events, language: isLang(data.language) ? data.language : "en", thanks: text("thanks"), palette: isPaletteValue(text("palette")) ? text("palette").toLowerCase() : "", rsvp: data.rsvp !== false, countdown: data.countdown !== false, mapUrl: text("mapUrl") };
+  const value: InvitationDraft = { title: text("title"), date: text("date"), time: text("time"), venue: text("venue"), message: text("message"), events, language: isLang(data.language) ? data.language : "en", thanks: text("thanks"), palette: isPaletteValue(text("palette")) ? text("palette").toLowerCase() : "", rsvp: data.rsvp !== false, countdown: data.countdown !== false, mapUrl: text("mapUrl"), attribution: data.attribution !== false, askDiet: data.askDiet === true, askSong: data.askSong === true, poll: cleanPoll(data.poll) };
   const errors: DraftErrors = {};
   if (!value.title) errors.title = "Add the names or a title for the occasion.";
   else if (value.title.length > LIMITS.title) errors.title = `Keep the title under ${LIMITS.title} characters.`;
@@ -221,6 +236,7 @@ export function validateDraft(input: unknown): { ok: true; value: InvitationDraf
   if (value.message.length > LIMITS.message) errors.message = `Keep the message under ${LIMITS.message} characters.`;
   if (value.thanks!.length > LIMITS.message) errors.thanks = `Keep the note under ${LIMITS.message} characters.`;
   if (value.mapUrl && (value.mapUrl.length > LIMITS.mapUrl || !isMapUrl(value.mapUrl))) errors.mapUrl = "Paste a Google Maps link, like https://maps.app.goo.gl/…";
+  if (pollError(value.poll ?? null)) errors.poll = pollError(value.poll ?? null);
   if (events.length > LIMITS.events) errors.events = `A schedule can have up to ${LIMITS.events} events.`;
   else if (events.some(scheduleItemError)) errors.events = "One of the events in the schedule needs a look.";
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value };

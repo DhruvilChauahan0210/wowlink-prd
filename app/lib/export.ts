@@ -1,6 +1,9 @@
 import { answerFor, invitedTo, tallyByEvent } from "./guests";
 import { formatEventDay, formatInvitationTime, sortSchedule } from "./invitations";
 import type { Experience, Rsvp } from "./store";
+import type { Diet } from "./extras";
+
+const DIET_LABELS: Record<Diet, string> = { jain: "Jain", swaminarayan: "Swaminarayan", "no-onion-garlic": "No onion or garlic", vegan: "Vegan", other: "Something else" };
 
 /*
  * Spreadsheets for the host: every reply, the headcount for each celebration (for the caterer), and the list of
@@ -31,7 +34,13 @@ const celebration = (e: { name: string; date: string }) => `${e.name} (${formatE
 export function repliesCsv({ experience, rsvps }: { experience: Experience; rsvps: Rsvp[] }) {
   const schedule = sortSchedule(experience.events);
   const households = new Map(experience.guests.map(g => [g.id, g]));
-  const rows: Cell[][] = [["Name", "Household", "Reply", "People", ...schedule.map(celebration), "Sent", "Wish"]];
+  // The extras' columns appear only when the invitation asks for them.
+  const extras: [string, (r: Rsvp) => Cell][] = [
+    ...(experience.askDiet ? [["Food needs", (r: Rsvp) => (r.diet ?? []).map(d => DIET_LABELS[d]).join(", ")], ["Food note", (r: Rsvp) => r.dietNote ?? ""]] as [string, (r: Rsvp) => Cell][] : []),
+    ...(experience.askSong ? [["Song", (r: Rsvp) => r.song ?? ""]] as [string, (r: Rsvp) => Cell][] : []),
+    ...(experience.poll ? [[experience.poll.question, (r: Rsvp) => (r.pick !== undefined ? experience.poll!.options[r.pick] ?? "" : "")]] as [string, (r: Rsvp) => Cell][] : []),
+  ];
+  const rows: Cell[][] = [["Name", "Household", "Reply", "People", ...schedule.map(celebration), "Sent", "Wish", ...extras.map(([label]) => label)]];
   for (const r of rsvps) {
     const household = r.guestId ? households.get(r.guestId) : undefined;
     rows.push([
@@ -47,6 +56,7 @@ export function repliesCsv({ experience, rsvps }: { experience: Experience; rsvp
       }),
       when(r.updatedAt ?? r.createdAt),
       r.wish ?? "",
+      ...extras.map(([, value]) => value(r)),
     ]);
   }
   return toCsv(rows);
