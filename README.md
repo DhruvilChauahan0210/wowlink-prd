@@ -45,7 +45,7 @@ Open [http://localhost:3000](http://localhost:3000).
 npm test
 ```
 
-Playwright runs the unit and end-to-end tests against a production build on port 3100, with its own build folder and data file, so a running `npm run dev` isn't affected. GitHub Actions runs the same suite on every push to `main` (`.github/workflows/test.yml`). If a run fails, its report is attached to the run.
+Playwright runs the unit and end-to-end tests against a production build on port 3100, with its own build folder and data file, so a running `npm run dev` isn't affected. `npm run test:pg` runs the same tests against Postgres instead: a throwaway in-memory one (PGlite, `scripts/test-db.mjs`), so no Supabase project is needed. GitHub Actions runs both on every push to `main` (`.github/workflows/test.yml`). If a run fails, its report is attached to the run.
 
 ## Configuration
 
@@ -54,11 +54,31 @@ Copy `.env.example` to `.env.local` and fill it in.
 | Variable | Used for |
 |---|---|
 | `WOWLINK_ADMIN_KEY` | Opens the admin page (`/admin`). On a live site it needs at least 24 characters (`openssl rand -hex 24`), or the admin stays off and the server logs a warning; with `npm run dev` any key works. Without it the admin doesn't exist. Ten wrong keys from one address lock that address out for an hour (the page then says so). |
+| `DATABASE_URL` | Postgres on Supabase (see Database below). Without it the data stays in `.data/wowlink.json`. |
 | `NEXT_PUBLIC_SITE_URL` | The public address, for absolute links in share previews, canonical links, `sitemap.xml` and `robots.txt` (for example `https://wowlink.example`). Defaults to the Vercel production URL when deployed there, and `http://localhost:3000` otherwise. |
+
+## Database
+
+Everything goes through `app/lib/store.ts`, which holds the rules (who may change what, limits, links). Where the data lives depends on `DATABASE_URL`:
+
+- Not set: one JSON file, `.data/wowlink.json` (`app/lib/store-file.ts`). Good for your own computer; it won't persist on serverless hosting.
+- Set: Postgres on Supabase (`app/lib/store-pg.ts`). Each call loads only what it needs, a change runs in one transaction that locks its invitation (so two guests replying at once can't undo each other), and only what changed is written. Links are unique across the app by a primary key, so two hosts can't take the same custom link even at the same moment.
+
+The tables are in their own `wowlink` schema (`supabase/migrations/`), which Supabase's Data API doesn't serve, with row level security on and nothing granted to Supabase's public roles: the app's server is the only way in. Each row keeps its object as a JSON document, the same shape as the file.
+
+To switch a copy of WowLink to Supabase:
+
+```bash
+npm run db:migrate
+npm run db:import -- .data/wowlink.json
+```
+
+The first sets up the tables (safe to run again). The second, optional, copies a JSON data file into an empty database; the file itself isn't changed. Both read `DATABASE_URL` from `.env.local`.
 
 ## Current limits
 
-- Published invitations and RSVPs are stored in a local JSON file, `.data/wowlink.json` (git-ignored), behind `app/lib/store.ts`. It works for local use but won't persist on serverless hosting. The PRD's target is Supabase, which means replacing that one module.
+- Without `DATABASE_URL`, data is in a local JSON file that won't persist on serverless hosting; set it (Supabase) before going live.
+- The admin's lists and numbers load every invitation; fine for now, worth turning into SQL counts as the app grows.
 - There are no accounts yet. Ownership is the private manage link, so a lost manage link can't be recovered. My invitations (`/mine`) keeps a list on each device and can back the links up to a file.
 - Rate limiting is in memory, for one server process.
 - Times are read as India Standard Time for the countdown and calendar files.
@@ -66,7 +86,7 @@ Copy `.env.example` to `.env.local` and fill it in.
 - "One live invitation" on the free plan, the Creator studio's 20 live invitations and 5,000 replies a month are per account in the PRD; without accounts they can't be counted yet, so limits are per invitation for now.
 - Subscriptions, analytics and the free plan's 60-day expiry aren't built yet.
 - The PRD puts custom colours in the paid plan. Until plans exist, every host has them.
-- Each counted visit rewrites the JSON file, like every other change. That's fine for trying it out; with Supabase, counts become single increments.
+- Each counted visit rewrites the JSON file (or, on Supabase, the invitation's row). Fine at this size; very busy invitations would want their counts in rows of their own.
 - The admin is one shared key, not accounts. When accounts arrive it should become a role.
 - The privacy page describes the app as it is today. Before launch it needs a proper review: where the data is hosted, how long it's kept, what the hosting provider logs, and consent.
 

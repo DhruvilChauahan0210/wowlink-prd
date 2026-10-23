@@ -38,6 +38,9 @@ jobs:
       - name: Run the tests
         run: npm test
 
+      - name: Run the tests on Postgres
+        run: npm run test:pg
+
       - name: Keep the report when something fails
         if: failure()
         uses: actions/upload-artifact@v7

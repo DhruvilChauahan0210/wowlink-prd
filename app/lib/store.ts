@@ -1,6 +1,4 @@
 import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { answersFor, isGuestId, repliesUsed, validateGuest, validateGuestList, validatePublicEvents, viewFor, type AudienceView, type ByEvent, type EventFilter, type Guest, type GuestErrors } from "./guests";
 import { INVITATION_DAYS, METRIC_DAYS, bump, dayKey, emptyStats, summarise, trimDays, type InvitationStats, type Metrics, type PageMetric, type ShareChannel } from "./insights";
 import { LIMITS, draftOf, type Attendance, type InvitationDraft, type Lang, type TemplateId } from "./invitations";
@@ -8,17 +6,18 @@ import type { Removal, Report, ReportReason } from "./reports";
 import { cleanExtras, type Diet } from "./extras";
 import { freeDraft, hasEnded, planOf, proFeaturesIn, repliesLimit, type Plan, type ProFeature } from "./plans";
 import { ALIAS_LIMITS, aliasError, tidyAlias } from "./aliases";
+import { fileBackend } from "./store-file";
+import { LinkTaken, pgBackend } from "./store-pg";
 
 /*
- * Where published invitations and RSVPs live.
+ * Where published invitations and RSVPs live, and the rules for changing them.
  *
- * For now this is a single JSON file (.data/wowlink.json, git-ignored). That's fine for one server
- * process and for trying the product out; it is not meant for production. Everything that touches
- * storage goes through the functions below, so swapping in Supabase later means rewriting this file only.
- *
- * - Every read and write runs through one queue, and writes replace the file atomically, so two
- *   requests at once can't interleave or leave a half-written file.
- * - Owners prove themselves with a random manage key. Only its SHA-256 hash is stored.
+ * Every rule below works on a `Db`: plain objects, the same whichever place keeps them.
+ * - Without DATABASE_URL: one JSON file (store-file.ts, .data/wowlink.json, git-ignored). Fine for one server
+ *   process and for trying the product out. Every read and write runs through one queue.
+ * - With DATABASE_URL: Postgres on Supabase (store-pg.ts). Each call loads only what its `Scope` names, runs the
+ *   same rule inside a transaction that locks the invitation, and saves only what changed.
+ * Owners prove themselves with a random manage key. Only its SHA-256 hash is stored.
  */
 
 export type Experience = InvitationDraft & {
@@ -77,56 +76,36 @@ export type HouseholdReply = Pick<Rsvp, "name" | "attendance" | "guestCount" | "
 /** A personal link's household, and their reply so far. */
 export type GuestView = { experience: PublicExperience; guest: Pick<Guest, "id" | "name">; reply: HouseholdReply | null };
 
-type StoredExperience = Experience & { keyHash: string };
+export type StoredExperience = Experience & { keyHash: string };
 /** `retired`: the slugs of deleted invitations, so an old link shared on WhatsApp never opens someone else's. Nothing else of them is kept. */
 /** A host asking WowLink to move their invitation to the Creator studio (until payments exist). */
 export type UpgradeRequest = { id: string; experienceId: string; note: string; contact: string; createdAt: string; status: "open" | "approved" | "declined"; decidedAt?: string };
 /** A client preview: the invitation as a planner is about to change it, at its own link, with the client's replies. */
 export type Preview = { token: string; experienceId: string; templateId: TemplateId; draft: InvitationDraft; createdAt: string; expiresAt: string; feedback: PreviewFeedback[] };
 export type PreviewFeedback = { verdict: "approve" | "changes"; note: string; at: string };
-type Db = { experiences: StoredExperience[]; rsvps: Rsvp[]; retired: string[]; reports: Report[]; metrics: Metrics; upgrades: UpgradeRequest[]; previews: Preview[] };
+export type Db = { experiences: StoredExperience[]; rsvps: Rsvp[]; retired: string[]; reports: Report[]; metrics: Metrics; upgrades: UpgradeRequest[]; previews: Preview[] };
 
-// Tests point this at their own file so they never touch real data.
-const FILE = process.env.WOWLINK_DATA_FILE ? path.resolve(process.env.WOWLINK_DATA_FILE) : path.join(process.cwd(), ".data", "wowlink.json");
-
-// Survives dev-server hot reloads, so there is only ever one queue.
-const g = globalThis as typeof globalThis & { __wowlinkQueue?: Promise<unknown> };
-
-function serialized<T>(task: () => Promise<T>): Promise<T> {
-  const run = (g.__wowlinkQueue ?? Promise.resolve()).then(task, task);
-  g.__wowlinkQueue = run.catch(() => undefined);
-  return run;
-}
+/** The other parts of the data that belong to an invitation, loaded only when a call needs them. */
+export type Part = "rsvps" | "reports" | "upgrades" | "previews";
+/**
+ * What a call needs: the invitation at a link (its slug exactly, else a custom link), by its exact slug (owners),
+ * by a preview's token or a request's id, nothing yet (a new invitation), only the app's numbers, or everything
+ * (the admin's lists). `probe`: links to check against every other invitation's, for a new custom link.
+ */
+export type Scope = ({ link: string } | { slug: string } | { token: string } | { upgradeId: string } | { create: true } | { metricsOnly: true } | { all: true; metrics?: true }) & { with?: Part[]; probe?: string[] };
+export type Backend = { read<T>(scope: Scope, fn: (db: Db) => T): Promise<T>; write<T>(scope: Scope, fn: (db: Db) => T): Promise<T> };
 
 // Invitations saved before schedules, guest lists or languages existed: none of the first two, and English.
 const withDefaults = (e: StoredExperience): StoredExperience => ({ ...e, events: e.events ?? [], guests: e.guests ?? [], publicEvents: e.publicEvents ?? "all", language: e.language ?? "en", showWishes: e.showWishes ?? false });
+const normalized = (db: Db) => {
+  db.experiences = db.experiences.map(withDefaults);
+  return db;
+};
+const backend = (): Backend => (process.env.DATABASE_URL ? pgBackend : fileBackend);
 
-async function load(): Promise<Db> {
-  try {
-    const db = JSON.parse(await fs.readFile(FILE, "utf8")) as Db;
-    return { experiences: (db.experiences ?? []).map(withDefaults), rsvps: db.rsvps ?? [], retired: db.retired ?? [], reports: db.reports ?? [], metrics: db.metrics ?? {}, upgrades: db.upgrades ?? [], previews: db.previews ?? [] };
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { experiences: [], rsvps: [], retired: [], reports: [], metrics: {}, upgrades: [], previews: [] };
-    throw error;
-  }
-}
-
-async function save(db: Db) {
-  await fs.mkdir(path.dirname(FILE), { recursive: true });
-  const tmp = `${FILE}.${process.pid}.${Date.now()}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(db, null, 2));
-  await fs.rename(tmp, FILE);
-}
-
-const read = <T>(fn: (db: Db) => T) => serialized(async () => fn(await load()));
-/** Run a change. Results with `ok: false` changed nothing, so the file isn't rewritten for them. */
-const write = <T>(fn: (db: Db) => T) =>
-  serialized(async () => {
-    const db = await load();
-    const result = fn(db);
-    if ((result as { ok?: boolean } | null)?.ok !== false) await save(db);
-    return result;
-  });
+const read = <T>(scope: Scope, fn: (db: Db) => T) => backend().read(scope, (db) => fn(normalized(db)));
+/** Run a change. Results with `ok: false` changed nothing, so nothing is saved for them. */
+const write = <T>(scope: Scope, fn: (db: Db) => T) => backend().write(scope, (db) => fn(normalized(db)));
 
 // ---------- keys and slugs ----------
 
@@ -179,8 +158,19 @@ const takenLinks = (db: Db) => new Set([...db.experiences.flatMap((e) => [e.slug
 
 // ---------- experiences ----------
 
-export function createExperience(templateId: TemplateId, draft: InvitationDraft, plan: Plan = "free") {
-  return write((db) => {
+export async function createExperience(templateId: TemplateId, draft: InvitationDraft, plan: Plan = "free") {
+  // Postgres only learns that a new slug is taken when saving it (the odds are tiny): then it tries another.
+  for (let tries = 1; ; tries++) {
+    try {
+      return await createOnce(templateId, draft, plan);
+    } catch (error) {
+      if (!(error instanceof LinkTaken) || tries >= 5) throw error;
+    }
+  }
+}
+
+function createOnce(templateId: TemplateId, draft: InvitationDraft, plan: Plan) {
+  return write({ create: true }, (db) => {
     const key = randomBytes(24).toString("base64url");
     const now = new Date().toISOString();
     bump(db.metrics, "published", Date.now());
@@ -207,7 +197,7 @@ export function createExperience(templateId: TemplateId, draft: InvitationDraft,
 
 /** The general link's view of a published invitation, or null if it doesn't exist or has been unpublished. */
 export function getPublished(slug: string) {
-  return read((db) => {
+  return read({ link: slug, with: ["rsvps"] }, (db) => {
     const found = findLive(db, slug);
     return found ? toPublic(db, found, found.publicEvents) : null;
   });
@@ -215,12 +205,12 @@ export function getPublished(slug: string) {
 
 /** The slug of the live invitation at a link (a custom link included), or null: one name per invitation, for limits. */
 export function liveSlug(link: string) {
-  return read((db) => findLive(db, link)?.slug ?? null);
+  return read({ link }, (db) => findLive(db, link)?.slug ?? null);
 }
 
 /** A personal link's view: only that household's celebrations, who it's for, and their reply so far. */
 export function getGuestView(slug: string, guestId: string) {
-  return read((db): GuestView | null => {
+  return read({ link: slug, with: ["rsvps"] }, (db): GuestView | null => {
     if (!isGuestId(guestId)) return null;
     const found = findLive(db, slug);
     const guest = found?.guests.find((g) => g.id === guestId);
@@ -239,7 +229,7 @@ export function getGuestView(slug: string, guestId: string) {
 
 /** The full invitation (guest list included) and its RSVPs, latest first, but only for whoever holds its manage key. */
 export function getOwned(slug: string, key: string) {
-  return read((db) => {
+  return read({ slug, with: ["rsvps", "upgrades"] }, (db) => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return null;
     const latest = (r: Rsvp) => r.updatedAt ?? r.createdAt;
@@ -254,7 +244,7 @@ type UpdateResult = { ok: true; experience: Experience } | { ok: false; reason: 
 
 /** Edit an invitation. `publicEvents` is checked here, against the schedule as it is after this edit. */
 export function updateOwned(slug: string, key: string, patch: Patch) {
-  return write((db): UpdateResult => {
+  return write({ slug }, (db): UpdateResult => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     // A taken-down invitation can't be put back in front of guests (its host can still delete it).
@@ -281,7 +271,7 @@ export function updateOwned(slug: string, key: string, patch: Patch) {
  * WhatsApp numbers) and its links. Only the slug is kept, so the link can't be given to a new invitation.
  */
 export function deleteOwned(slug: string, key: string) {
-  return write((db): { ok: true; replies: number } | { ok: false } => {
+  return write({ slug, with: ["rsvps", "reports", "upgrades", "previews"] }, (db): { ok: true; replies: number } | { ok: false } => {
     const index = db.experiences.findIndex((e) => e.slug === slug);
     if (index < 0 || !keyMatches(db.experiences[index].keyHash, key)) return { ok: false };
     const [gone] = db.experiences.splice(index, 1);
@@ -304,7 +294,7 @@ const rsvpsOf = (db: Db, experience: Experience) => db.rsvps.filter((r) => r.exp
 const newGuestId = (db: Db, experience: Experience) => newSlug(new Set([...experience.guests.map((g) => g.id), ...rsvpsOf(db, experience).flatMap((r) => (r.guestId ? [r.guestId] : []))].map((id) => id.toLowerCase())), 8);
 
 export function addGuest(slug: string, key: string, input: unknown) {
-  return write((db): GuestResult => {
+  return write({ slug, with: ["rsvps"] }, (db): GuestResult => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     if (planOf(found) === "free") return { ok: false, reason: "pro" };
@@ -322,7 +312,7 @@ type GuestListResult = { ok: true; guests: Guest[]; skipped: string[] } | { ok: 
 
 /** Add several households at once (a pasted list), all with the same celebrations. All or nothing. */
 export function addGuests(slug: string, key: string, input: unknown) {
-  return write((db): GuestListResult => {
+  return write({ slug, with: ["rsvps"] }, (db): GuestListResult => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     const checked = validateGuestList(input, found.events, found.guests);
@@ -345,7 +335,7 @@ export function addGuests(slug: string, key: string, input: unknown) {
  * further than meant): the old one stops working, and the household's reply moves to the new one.
  */
 export function updateGuest(slug: string, key: string, guestId: string, input: unknown) {
-  return write((db): GuestResult => {
+  return write({ slug, with: ["rsvps"] }, (db): GuestResult => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     const guest = found.guests.find((g) => g.id === guestId);
@@ -379,7 +369,7 @@ function opened(guest: Guest, now: number) {
  * within ten minutes aren't recorded again, which keeps the file from being rewritten on every visit.
  */
 export function markOpened(slug: string, guestId: string) {
-  return write((db): { ok: boolean } => {
+  return write({ link: slug }, (db): { ok: boolean } => {
     if (!isGuestId(guestId)) return { ok: false };
     const found = findLive(db, slug);
     const guest = found?.guests.find((g) => g.id === guestId);
@@ -390,7 +380,7 @@ export function markOpened(slug: string, guestId: string) {
 
 /** Their link stops working and their reply is removed with it, so the headcount only has people still invited. */
 export function removeGuest(slug: string, key: string, guestId: string) {
-  return write((db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
+  return write({ slug, with: ["rsvps"] }, (db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     const index = found.guests.findIndex((g) => g.id === guestId);
@@ -411,7 +401,7 @@ type RsvpResult = { ok: true; updated: boolean } | { ok: false; reason: "missing
  * replying again replaces it, keeping answers for celebrations this page didn't show.
  */
 export function addRsvp(slug: string, input: RsvpInput) {
-  return write((db): RsvpResult => {
+  return write({ link: slug, with: ["rsvps"] }, (db): RsvpResult => {
     const found = findLive(db, slug);
     if (!found) return { ok: false, reason: "missing" };
     if (found.rsvp === false) return { ok: false, reason: "closed" };
@@ -447,7 +437,7 @@ export function addRsvp(slug: string, input: RsvpInput) {
  * again; their invitation stays. Owner only.
  */
 export function removeRsvp(slug: string, key: string, rsvpId: string) {
-  return write((db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
+  return write({ slug, with: ["rsvps"] }, (db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     const index = db.rsvps.findIndex((r) => r.experienceId === found.id && r.id === rsvpId);
@@ -459,7 +449,7 @@ export function removeRsvp(slug: string, key: string, rsvpId: string) {
 
 /** Hide a wish from the invitation, or show it again. Owner only. */
 export function setWishHidden(slug: string, key: string, rsvpId: string, hidden: boolean) {
-  return write((db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
+  return write({ slug, with: ["rsvps"] }, (db): { ok: true } | { ok: false; reason: "not-yours" | "missing" } => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     const reply = db.rsvps.find((r) => r.experienceId === found.id && r.id === rsvpId);
@@ -481,7 +471,7 @@ type Visit = { first: boolean; viaQr: boolean; guestId?: string };
  * and not by the host's own browser. `first` is the browser's first visit, so each person is counted once.
  */
 export function recordVisit(slug: string, visit: Visit) {
-  return write((db): { ok: boolean } => {
+  return write({ link: slug }, (db): { ok: boolean } => {
     const found = findLive(db, slug);
     if (!found) return { ok: false };
     const now = Date.now();
@@ -503,7 +493,7 @@ export function recordVisit(slug: string, visit: Visit) {
 
 /** Someone played the opening (once per browser). */
 export function recordPlayed(slug: string) {
-  return write((db): { ok: boolean } => {
+  return write({ link: slug }, (db): { ok: boolean } => {
     const found = findLive(db, slug);
     if (!found) return { ok: false };
     statsOf(found).played += 1;
@@ -514,7 +504,7 @@ export function recordPlayed(slug: string) {
 
 /** A guest followed "Create yours free" from an invitation: how WowLink spreads. */
 export function recordAttribution(slug: string) {
-  return write((db): { ok: boolean } => {
+  return write({ link: slug }, (db): { ok: boolean } => {
     if (!findLive(db, slug)) return { ok: false };
     bump(db.metrics, "attribution", Date.now());
     return { ok: true };
@@ -523,7 +513,7 @@ export function recordAttribution(slug: string) {
 
 /** The host shared their invitation (or a personal link) one way or another. Owner only. */
 export function recordShare(slug: string, key: string, channel: ShareChannel) {
-  return write((db): { ok: boolean } => {
+  return write({ slug }, (db): { ok: boolean } => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key) || found.removed) return { ok: false };
     const stats = statsOf(found);
@@ -535,7 +525,7 @@ export function recordShare(slug: string, key: string, channel: ShareChannel) {
 
 /** A visit to one of WowLink's own pages (the studio, a sample, an occasion's page). */
 export function recordPageView(page: PageMetric) {
-  return write((db) => {
+  return write({ metricsOnly: true }, (db) => {
     bump(db.metrics, page, Date.now());
     return { ok: true };
   });
@@ -547,7 +537,7 @@ export function recordPageView(page: PageMetric) {
 const OPEN_REPORTS_MAX = 50;
 
 export function addReport(slug: string, reason: ReportReason, details: string) {
-  return write((db): { ok: true } | { ok: false; reason: "missing" } => {
+  return write({ link: slug, with: ["reports"] }, (db): { ok: true } | { ok: false; reason: "missing" } => {
     const found = findLive(db, slug);
     if (!found) return { ok: false, reason: "missing" };
     // At the cap, the oldest open report makes way, so the latest (often the most telling) is always there.
@@ -571,7 +561,7 @@ const forAdmin = (db: Db, e: StoredExperience): AdminInvitation => ({
 
 /** Every invitation with reports: those still to look at first (most reported first), then the rest, latest first. */
 export function reportedInvitations() {
-  return read((db) => {
+  return read({ all: true, with: ["rsvps", "reports"] }, (db) => {
     const reported = db.experiences.filter((e) => db.reports.some((r) => r.experienceId === e.id)).map((e) => forAdmin(db, e));
     const open = (i: AdminInvitation) => i.reports.filter((r) => !r.resolvedAt).length;
     return reported.sort((a, b) => open(b) - open(a) || b.reports[0].createdAt.localeCompare(a.reports[0].createdAt));
@@ -580,7 +570,7 @@ export function reportedInvitations() {
 
 /** An invitation by its slug or one of its custom links (what a report or a guest would have). */
 export function adminInvitation(link: string) {
-  return read((db) => {
+  return read({ link, with: ["rsvps", "reports"] }, (db) => {
     const found = findAt(db, link);
     return found ? forAdmin(db, found) : null;
   });
@@ -588,7 +578,7 @@ export function adminInvitation(link: string) {
 
 /** The invitation as its general link shows guests, whatever its state: for the admin to look at before deciding. */
 export function adminView(link: string) {
-  return read((db) => {
+  return read({ link, with: ["rsvps"] }, (db) => {
     const found = findAt(db, link);
     return found ? toPublic(db, found, "all") : null;
   });
@@ -598,7 +588,7 @@ export type Moderation = "take-down" | "restore" | "dismiss" | "make-pro" | "mak
 
 /** Take an invitation down (its open reports count as acted on), put it back, or dismiss its open reports. */
 export function moderate(link: string, action: Moderation) {
-  return write((db): { ok: true; invitation: AdminInvitation } | { ok: false } => {
+  return write({ link, with: ["rsvps", "reports"] }, (db): { ok: true; invitation: AdminInvitation } | { ok: false } => {
     const found = findAt(db, link);
     if (!found) return { ok: false };
     const now = new Date().toISOString();
@@ -625,7 +615,7 @@ export function moderate(link: string, action: Moderation) {
 
 /** The app's numbers over the last `days` days, and how things stand now. */
 export function appNumbers(days: number) {
-  return read((db) => {
+  return read({ all: true, metrics: true, with: ["rsvps", "reports"] }, (db) => {
     const now = Date.now();
     const live = db.experiences.filter(isLive).length;
     return {
@@ -647,8 +637,20 @@ export function appNumbers(days: number) {
 type AliasResult = { ok: true; aliases: string[] } | { ok: false; reason: "not-yours" | "pro" } | { ok: false; reason: "invalid" | "taken"; error: string };
 
 /** Give an invitation a custom link. Its earlier custom links keep working (up to a few), so shared links don't break. */
-export function setAlias(slug: string, key: string, input: string) {
-  return write((db): AliasResult => {
+const TAKEN = "That link is taken. Try another.";
+
+export async function setAlias(slug: string, key: string, input: string): Promise<AliasResult> {
+  try {
+    return await saveAlias(slug, key, input);
+  } catch (error) {
+    // Someone else took it at the same moment.
+    if (error instanceof LinkTaken) return { ok: false, reason: "taken", error: TAKEN };
+    throw error;
+  }
+}
+
+function saveAlias(slug: string, key: string, input: string) {
+  return write({ slug, probe: [tidyAlias(input)] }, (db): AliasResult => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     if (planOf(found) !== "pro") return { ok: false, reason: "pro" };
@@ -656,7 +658,7 @@ export function setAlias(slug: string, key: string, input: string) {
     const error = aliasError(alias);
     if (error) return { ok: false, reason: "invalid", error };
     const mine = new Set([found.slug, ...(found.aliases ?? [])].map((l) => l.toLowerCase()));
-    if (!mine.has(alias) && takenLinks(db).has(alias)) return { ok: false, reason: "taken", error: "That link is taken. Try another." };
+    if (!mine.has(alias) && takenLinks(db).has(alias)) return { ok: false, reason: "taken", error: TAKEN };
     const aliases = [alias, ...(found.aliases ?? []).filter((a) => a !== alias)];
     found.aliases = aliases.slice(0, ALIAS_LIMITS.kept);
     // The oldest stops working, but nobody else may take it: guests may still have it.
@@ -668,7 +670,7 @@ export function setAlias(slug: string, key: string, input: string) {
 // ---------- asking for the Creator studio ----------
 
 export function requestUpgrade(slug: string, key: string, note: string, contact: string) {
-  return write((db): { ok: true } | { ok: false; reason: "not-yours" | "already" } => {
+  return write({ slug, with: ["upgrades"] }, (db): { ok: true } | { ok: false; reason: "not-yours" | "already" } => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     if (planOf(found) === "pro") return { ok: false, reason: "already" };
@@ -685,7 +687,7 @@ export type AdminUpgrade = UpgradeRequest & { invitation: Pick<Experience, "slug
 
 /** Requests for the admin: open ones first (oldest first), then the latest decided ones. */
 export function upgradeRequests() {
-  return read((db) => {
+  return read({ all: true, with: ["upgrades"] }, (db) => {
     const withInvitation = (u: UpgradeRequest): AdminUpgrade | null => {
       const e = db.experiences.find((x) => x.id === u.experienceId);
       return e ? { ...u, invitation: { slug: e.slug, title: e.title, templateId: e.templateId, date: e.date, plan: planOf(e) } } : null;
@@ -698,7 +700,7 @@ export function upgradeRequests() {
 
 /** Approve (the invitation moves to the Creator studio) or decline a request. */
 export function decideUpgrade(id: string, approve: boolean) {
-  return write((db): { ok: boolean } => {
+  return write({ upgradeId: id }, (db): { ok: boolean } => {
     const request = db.upgrades.find((u) => u.id === id);
     const found = request && db.experiences.find((e) => e.id === request.experienceId);
     if (!request || !found) return { ok: false };
@@ -719,7 +721,7 @@ const previewable = (e: StoredExperience | undefined): e is StoredExperience => 
 
 /** A preview of the invitation as the planner is about to change it, at its own link for the client. */
 export function createPreview(slug: string, key: string, templateId: TemplateId, draft: InvitationDraft) {
-  return write((db): { ok: true; token: string } | { ok: false; reason: "not-yours" | "pro" | "removed" } => {
+  return write({ slug, with: ["previews"] }, (db): { ok: true; token: string } | { ok: false; reason: "not-yours" | "pro" | "removed" } => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return { ok: false, reason: "not-yours" };
     if (found.removed) return { ok: false, reason: "removed" };
@@ -737,7 +739,7 @@ export function createPreview(slug: string, key: string, templateId: TemplateId,
 
 /** The invitation's previews and what the client said, latest first. Owner only. */
 export function ownerPreviews(slug: string, key: string) {
-  return read((db) => {
+  return read({ slug, with: ["previews"] }, (db) => {
     const found = db.experiences.find((e) => e.slug === slug);
     if (!found || !keyMatches(found.keyHash, key)) return null;
     return db.previews.filter((p) => p.experienceId === found.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(({ token, createdAt, expiresAt, feedback }) => ({ token, createdAt, expiresAt, feedback }));
@@ -751,7 +753,7 @@ type ClientPreview = { expired: false; templateId: TemplateId; view: AudienceVie
  * its invitation was deleted, taken down or is no longer in the Creator studio.
  */
 export function getPreview(token: string) {
-  return read((db): ClientPreview | null => {
+  return read({ token }, (db): ClientPreview | null => {
     const preview = db.previews.find((p) => p.token === token);
     if (!preview || !previewable(db.experiences.find((e) => e.id === preview.experienceId))) return null;
     if (Date.parse(preview.expiresAt) < Date.now()) return { expired: true, language: preview.draft.language ?? "en" };
@@ -761,7 +763,7 @@ export function getPreview(token: string) {
 
 /** The client's answer to a preview: it looks good, or what to change. */
 export function addPreviewFeedback(token: string, verdict: PreviewFeedback["verdict"], note: string) {
-  return write((db): { ok: boolean } => {
+  return write({ token }, (db): { ok: boolean } => {
     const preview = db.previews.find((p) => p.token === token);
     if (!preview || Date.parse(preview.expiresAt) < Date.now() || !previewable(db.experiences.find((e) => e.id === preview.experienceId))) return { ok: false };
     preview.feedback = [...preview.feedback, { verdict, note, at: new Date().toISOString() }].slice(-20);
