@@ -12,3 +12,4 @@ playwright-report/
 .claude/
 supabase/.temp/
 *.tsbuildinfo
+video/

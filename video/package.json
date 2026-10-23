@@ -1,0 +1,23 @@
+{
+  "name": "wowlink-launch-video",
+  "private": true,
+  "description": "WowLink's launch video, made with Remotion: a vertical Reel and a wide version from one timeline.",
+  "scripts": {
+    "studio": "NODE_OPTIONS=--use-system-ca remotion studio",
+    "voice": ".venv/bin/python scripts/voice.py",
+    "music": "python3 scripts/music.py",
+    "footage": "node scripts/footage.mjs",
+    "render": "NODE_OPTIONS=--use-system-ca remotion render LaunchVertical out/wowlink-launch-vertical.mp4 && NODE_OPTIONS=--use-system-ca remotion render LaunchWide out/wowlink-launch-wide.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.538",
+    "@remotion/fonts": "4.0.538",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "remotion": "4.0.538"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.13",
+    "typescript": "5.9.2"
+  }
+}

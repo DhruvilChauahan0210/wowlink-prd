@@ -27,3 +27,10 @@ next-env.d.ts
 
 # Supabase CLI state (login link, project ref)
 supabase/.temp/
+
+# The launch video (video/): its own packages, Python tools and renders
+video/node_modules/
+video/.venv/
+video/out/
+/.next-video/
+video/public/footage/
