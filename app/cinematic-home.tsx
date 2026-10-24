@@ -93,7 +93,7 @@ function Hero() {
   return <section id="top" ref={hero} className="cin-hero theme-paper">
     <Toran className="hero-toran"/>
     <div className="hero-wall" role="group" aria-label="Try another occasion’s invitation">
-      {PRINTS.map((print, i) => <button key={print.id} type="button" className={`cin-print hero-print hero-print-${i + 1}${occasion === print.id ? " is-chosen" : ""}`} style={{ "--depth": print.depth } as CSSProperties} aria-pressed={occasion === print.id} aria-label={`Try the ${name(print.id)} invitation`} onClick={() => choose(print.id)}>
+      {PRINTS.map((print, i) => <button key={print.id} type="button" className={`cin-print hero-print hero-print-${i + 1}${occasion === print.id ? " is-chosen" : ""}`} style={{ "--depth": print.depth } as CSSProperties} aria-pressed={occasion === print.id} aria-label={`${print.label}: try the ${name(print.id)} invitation`} onClick={() => choose(print.id)}>
         <span className="cin-photo"><ArtImage name={print.id} fit="slice"/></span>
         <span className="hero-print-label">{print.label}</span>
       </button>)}
@@ -108,7 +108,7 @@ function Hero() {
       <span className="cin-note hero-try" aria-hidden="true">{opened ? "what guests see" : "go on, open it"}<small>{opened ? "tap a print for another" : "or tap a print"}</small><ArrowCurl className="hero-try-arrow"/></span>
     </div>
     <div className="hero-picker" role="group" aria-label="Try another occasion’s invitation">
-      {PRINTS.map(print => <button key={print.id} type="button" aria-pressed={occasion === print.id} aria-label={`Try the ${name(print.id)} invitation`} onClick={() => choose(print.id)}>{print.label}</button>)}
+      {PRINTS.map(print => <button key={print.id} type="button" aria-pressed={occasion === print.id} aria-label={`${print.label}: try the ${name(print.id)} invitation`} onClick={() => choose(print.id)}>{print.label}</button>)}
     </div>
     <div className="cin-hero-copy">
       <span className="hero-eyebrow"><span lang="gu">આમંત્રણ</span><span aria-hidden="true">·</span><span lang="hi">निमंत्रण</span><span aria-hidden="true">·</span><span>Invitation</span></span>
@@ -228,7 +228,7 @@ function OccasionReel({ reduced }: { reduced: boolean }) {
         </svg>}
         {line.map((o, i) => <article key={o.id} ref={(el) => { cards.current[i] = el; }} className={`reel-card${i === active ? " is-active" : ""}`} style={{ "--tilt": `${HANG[i % HANG.length][0]}deg`, "--k": HANG[i % HANG.length][1] } as CSSProperties}>
           <svg className="reel-peg" viewBox="0 0 18 44" aria-hidden="true"><path d="M5 2h8a2 2 0 0 1 2 2v34a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V4a2 2 0 0 1 2-2Z"/><path d="M9 4v36M4 17h10" strokeOpacity=".45"/></svg>
-          <Link className="reel-print" href={`/e/preview?template=${o.id}`} aria-label={`Peek inside the ${o.kind.toLowerCase()} invitation`}>
+          <Link className="reel-print" href={`/e/preview?template=${o.id}`} aria-label={`${o.kind}: peek inside the invitation`}>
             <span className="cin-photo">{i === active && !reduced ? <Art name={o.id} drawing decorative fit="slice"/> : <ArtImage name={o.id} fit="slice"/>}</span>
             <span className="reel-label">{o.kind}</span>
           </Link>
