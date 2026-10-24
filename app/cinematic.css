@@ -238,17 +238,17 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-reel{height:280svh;position:relative}
 /* The occasions on a line: prints hung from a cord strung with marigolds, clipped on with pegs, sliding past as the
    page scrolls (the line is moved in cinematic-home.tsx, which also sets --swing from its speed). */
-.cin-reel-sticky{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,2.4svh,30px);padding:clamp(100px,12svh,116px) 0 clamp(20px,4svh,44px);overflow:hidden;isolation:isolate}
+.cin-reel-sticky{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,2svh,24px);padding:clamp(92px,11svh,108px) 0 clamp(24px,5svh,52px);overflow:hidden;isolation:isolate}
 .cin-reel-sticky::before{content:"";position:absolute;inset:0;z-index:-1;background-color:color-mix(in srgb,var(--tone,#c2412d) 6%,transparent);transition:background-color .8s ease}
 .reel-head{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:0 var(--gutter)}
 .reel-head h2{font-size:clamp(30px,3.3vw,52px);line-height:1.05}
-.reel-line{--w:clamp(170px,min(19vw,calc((100svh - 470px) * .78)),310px);--gap:clamp(56px,6vw,110px);display:flex;align-items:flex-start;gap:var(--gap);padding:34px calc(50vw - var(--w) / 2) 26px;will-change:transform}
+.reel-line{--w:clamp(160px,min(17.5vw,calc((100svh - 500px) * .72)),290px);--gap:clamp(56px,6vw,110px);display:flex;align-items:flex-start;gap:var(--gap);padding:34px calc(50vw - var(--w) / 2) 44px;will-change:transform}
 .reel-line{position:relative}
 .reel-cord{position:absolute;z-index:0;left:0;top:0;overflow:visible;pointer-events:none}
 .reel-cord path{fill:none;stroke:#2a1d14;stroke-opacity:.5;stroke-width:1.6}
 .reel-cord circle{stroke:#2a1d14;stroke-opacity:.4;stroke-width:1.5}
 .reel-card{position:relative;z-index:1;flex:0 0 var(--w);width:var(--w);transform-origin:50% -14px;rotate:calc(var(--tilt) + var(--swing, 0) * var(--k) * 1deg);scale:.92;opacity:.78;transition:scale .55s cubic-bezier(.2,.8,.2,1),opacity .55s ease,translate .55s cubic-bezier(.2,.8,.2,1)}
-.reel-card.is-active{z-index:2;scale:1.08;opacity:1;translate:0 10px}
+.reel-card.is-active{z-index:2;scale:1.05;opacity:1;translate:0 4px}
 .reel-peg{position:absolute;z-index:3;top:-32px;left:50%;width:15px;height:38px;margin-left:-7.5px;rotate:-4deg;fill:#c08a52;stroke:#2a1d14;stroke-width:1.5;stroke-linecap:round;filter:drop-shadow(0 2px 1px #2a1d1433)}
 .reel-print{display:flex;flex-direction:column;padding:9px 9px 0;background:#fbf6ec;border-radius:2px;box-shadow:0 1px 2px #2a1d1433,0 20px 34px -16px #2a1d1470;transition:box-shadow .5s}
 .reel-card.is-active .reel-print{box-shadow:0 1px 2px #2a1d1433,0 34px 50px -20px #2a1d1490}
@@ -256,7 +256,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .reel-label{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px 11px;font:700 clamp(18px,1.5vw,22px)/1.1 var(--hand);color:var(--muted)}
 .reel-card.is-active .reel-label{color:var(--tone,var(--accent))}
 .reel-label .studio-pro-badge{font-size:11px;padding:2px 7px 1px;flex:none}
-.reel-now{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 var(--gutter);min-height:clamp(150px,22svh,200px)}
+.reel-now{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 var(--gutter);min-height:clamp(140px,19svh,180px)}
 .reel-kind{font:700 clamp(20px,1.7vw,25px)/1.1 var(--hand);color:var(--tone,var(--accent));transition:color .6s}
 .reel-kind b{font-weight:inherit}
 .cin-reel .reel-now h3{margin:4px 0 6px;font-size:clamp(32px,3.4vw,52px);line-height:1.04;animation:hero-fade .5s ease both}
@@ -566,7 +566,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cin-reel{height:280svh}
   .reel-head{flex-direction:column;gap:4px}
   .reel-head .cin-text-link{font-size:20px}
-  .reel-line{--w:min(54vw,calc((100svh - 450px) * .78));--gap:44px}
+  .reel-line{--w:min(52vw,calc((100svh - 470px) * .74));--gap:44px;padding-bottom:36px}
   .reel-now{min-height:0}
   .cin-occasion-card{width:76vw;flex-basis:76vw}
   .cin-occasion-image{height:48svh;min-height:300px;max-height:460px}
