@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CatalogFooter } from "../ui/public-page";
+import { SiteFooter } from "../ui/site-footer";
 import { STARTER_OCCASIONS } from "../lib/plans";
 import { invitationTemplates, type TemplateId } from "../lib/invitations";
 import { ArtImage } from "../ui/art";
@@ -36,6 +36,6 @@ export default function TemplatesPage() {
         <div className="cin-card-bottom"><p>{collection[item.id].detail}</p><Link href={`/create?template=${item.id}`}>Make it yours <span aria-hidden="true">→</span></Link></div>
       </article>)}</div>
     </main>
-    <CatalogFooter lang="en"/>
+    <SiteFooter/>
   </div>;
 }

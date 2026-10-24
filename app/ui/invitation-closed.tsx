@@ -1,4 +1,5 @@
 import { SealMark, WowLinkBrand } from "./brand";
+import { SiteFooter } from "./site-footer";
 
 /*
  * What a guest sees when an invitation's link doesn't open: unpublished, ended, taken down, or a personal link the
@@ -16,5 +17,5 @@ export function InvitationClosed() {
   return <div className="cinema inv-not-found theme-paper"><header><WowLinkBrand/></header><main><SealMark/>
     <h1 lang={first.lang}>{first.title[0]} <em>{first.title[1]}</em></h1><p lang={first.lang}>{first.body}</p>
     {others.map(say => <p key={say.lang} lang={say.lang} className="inv-nf-other"><strong>{say.title.join(" ")}</strong> {say.body}</p>)}
-  </main></div>;
+  </main><SiteFooter/></div>;
 }

@@ -21,6 +21,7 @@ import { syncAccount } from "../ui/account";
 const BRAND_KIT_KEY = "wowlink:brand-kit";
 type OwnerPreview = { token: string; createdAt: string; expiresAt: string; feedback: { verdict: "approve" | "changes"; note: string; at: string }[] };
 import type { Experience, Rsvp } from "../lib/store";
+import { SiteFooter } from "../ui/site-footer";
 
 const LANGUAGE_CHOICES = LANGS.map(lang => [lang, LANG_NAMES[lang]] as const);
 
@@ -520,6 +521,7 @@ export default function CreatePage() {
       </section>
       <aside className="studio-preview-panel theme-paper" id="studio-live" aria-label={h.livePreviewLabel}><div className="studio-preview-inner"><div className="studio-preview-toolbar"><span className="studio-live"><i/>{h.livePreview}</span><button onClick={() => setOpened(false)} aria-label={h.replayLabel}>{h.replay}</button></div><div className="studio-canvas-frame"><InvitationScene template={template} draft={shown} compact opened={opened} onOpen={() => setOpened(true)} onReplay={() => setOpened(false)}/></div><div className="studio-preview-bottom"><span>{h.occasionNames[template.id] ?? template.category}</span><span>{h.tapToTry}</span></div></div></aside>
     </main>
+    <SiteFooter lang={lang}/>
 
     <dialog ref={dialog} className="publish-dialog" aria-labelledby="publish-title">
       {owned && <div className="sketch-card publish-card">

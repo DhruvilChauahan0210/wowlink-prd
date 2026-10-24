@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { FEEDBACK_LIMITS, MOOD_EMOJI, MOODS, type Mood } from "../lib/feedback";
 import { isLang, type Lang } from "../lib/invitations";
 
@@ -10,7 +10,16 @@ import { isLang, type Lang } from "../lib/invitations";
  * note, how it's going, and a way to reply if they'd like one, read on the admin page. In the page's language.
  */
 
+// No floating button on a guest's invitation, a client preview, the report form or the admin; on a guest's invitation
+// and a client preview (which have no WowLink footer either) no form at all.
 const HIDDEN = /^\/(e|p|report|admin)(\/|$)/;
+const GUEST = /^\/(e|p)\//;
+const ASK = "wowlink:feedback";
+
+/** Opens the feedback form from anywhere on the page (the footer has one). */
+export function FeedbackLink({ children }: { children: ReactNode }) {
+  return <button type="button" className="feedback-link" aria-haspopup="dialog" onClick={() => dispatchEvent(new Event(ASK))}>{children}</button>;
+}
 
 const TEXT: Record<Lang, { button: string; title: string; intro: string; how: string; moods: Record<Mood, string>; message: string; placeholder: string; contact: string; fromAccount: string; privacy: string; send: string; sending: string; close: string; thanks: string; thanksMore: string; short: string; busy: string; failed: string }> = {
   en: {
@@ -94,7 +103,10 @@ export function FeedbackButton() {
   const [contact, setContact] = useState("");
   const [state, setState] = useState<"writing" | "sending" | "sent">("writing");
   const [error, setError] = useState<"" | "short" | "busy" | "failed">("");
-  const hidden = !path || HIDDEN.test(path);
+  const [docked, setDocked] = useState(false);
+  const opener = useRef(() => {});
+  const hidden = !path || GUEST.test(path);
+  const noPill = !path || HIDDEN.test(path);
   // The page's language as it changes: host pages switch theirs once they're up, or when the host picks another.
   useEffect(() => {
     if (hidden) return;
@@ -107,6 +119,25 @@ export function FeedbackButton() {
   }, [hidden, path]);
   // Once sent, the thanks takes focus, so it's read out.
   useEffect(() => { if (state === "sent") thanks.current?.focus(); }, [state]);
+  // The footer's own link opens the form.
+  useEffect(() => {
+    const ask = () => opener.current();
+    addEventListener(ASK, ask);
+    return () => removeEventListener(ASK, ask);
+  }, []);
+  // While the footer is in view the floating button steps aside (the footer has the same link), so it never covers it.
+  useEffect(() => {
+    if (hidden) return;
+    let observer: IntersectionObserver | undefined;
+    const frame = requestAnimationFrame(() => {
+      const footer = document.querySelector("[data-site-footer]");
+      setDocked(false);
+      if (!footer) return;
+      observer = new IntersectionObserver(([entry]) => setDocked(entry.isIntersecting), { rootMargin: "0px 0px -16px 0px" });
+      observer.observe(footer);
+    });
+    return () => { cancelAnimationFrame(frame); observer?.disconnect(); };
+  }, [hidden, path]);
   if (hidden) return null;
   const t = TEXT[lang];
 
@@ -124,6 +155,7 @@ export function FeedbackButton() {
       setContact((now) => now || email);
     }).catch(() => undefined);
   }
+  opener.current = open;
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (message.trim().length < 2) return setError("short");
@@ -142,10 +174,10 @@ export function FeedbackButton() {
   }
 
   return <div className="cinema feedback">
-    <button type="button" className="feedback-button theme-paper" aria-haspopup="dialog" onClick={open}>
+    {!noPill && <button type="button" className={`feedback-button theme-paper${docked ? " is-docked" : ""}`} aria-haspopup="dialog" onClick={open}>
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C8 4.6 15 4.4 20 5.2c.6 3.2.6 6.8 0 9.6-3.2.6-6 .7-8.6.6L7 19.4l.4-4.2c-1.2-.1-2.3-.2-3.4-.4-.6-3.1-.6-6.3 0-9.3Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M8.5 10.2h7M8.5 12.8h4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
       <span>{t.button}</span>
-    </button>
+    </button>}
     <dialog ref={dialog} className="feedback-dialog theme-paper" aria-labelledby="feedback-title" lang={lang} onClick={(e) => { if (e.target === dialog.current) dialog.current?.close(); }}>
       <div className="sketch-card feedback-card">
         {state === "sent" ? <div className="feedback-sent">

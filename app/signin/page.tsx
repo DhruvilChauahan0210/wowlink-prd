@@ -6,6 +6,7 @@ import { WowLinkBrand } from "../ui/brand";
 import { HostLangSwitch, useHostLang } from "../ui/host-lang";
 import { SignIn } from "../ui/sign-in";
 import { useAccount } from "../ui/account";
+import { SiteFooter } from "../ui/site-footer";
 
 /** Signing in on its own page (from a manage page without its link, or back from Google when it didn't work). */
 export default function SignInPage() {
@@ -41,5 +42,6 @@ export default function SignInPage() {
         {next !== "/mine" && <Link className="cin-text-link sign-in-back" href={next.replace(/[?&]publish=1/, "")}>{h.goBackSignedOut}</Link>}
       </section>
     </main>
+    <SiteFooter lang={lang}/>
   </div>;
 }

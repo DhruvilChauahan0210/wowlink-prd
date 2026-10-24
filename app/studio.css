@@ -770,6 +770,9 @@
 .feedback{display:contents}
 .feedback-button{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:40;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 13px;border:1.5px solid var(--text);border-radius:999px;color:var(--text);font:600 14px/1 var(--sans);cursor:pointer;box-shadow:0 4px 0 -1px var(--accent),0 10px 24px #241a1326;transition:transform .2s}
 .feedback-button:hover{transform:translateY(-2px)}
+/* While the footer is in view the button steps aside: the footer has the same link */
+.feedback-button{transition:transform .2s,opacity .3s,visibility .3s}
+.feedback-button.is-docked{opacity:0;visibility:hidden;transform:translateY(18px);pointer-events:none}
 .feedback-button:active{transform:translateY(1px)}
 .feedback-dialog{width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);margin:auto;padding:4px;border:0;background:none;color:var(--text);overflow:auto;background-image:none}
 .feedback-dialog::backdrop{background:#241a1366}

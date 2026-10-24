@@ -95,3 +95,24 @@ test("feedback needs a few words, keeps only the page's path, ignores bots, and 
   expect((await request.post("/api/admin/feedback/not-a-note", { headers: adminHeaders(), data: { action: "done" } })).status()).toBe(404);
   expect((await request.post(`/api/admin/feedback/${list[0].id}`, { headers: adminHeaders(), data: { action: "shred" } })).status()).toBe(400);
 });
+
+test("every page ends with the same footer; its link opens the form, and the floating button steps aside for it", async ({ page }) => {
+  for (const path of ["/", "/templates", "/templates/wedding", "/pricing", "/help", "/privacy", "/create?template=wedding", "/mine", "/signin", "/no-such-page"]) {
+    await page.goto(path);
+    const footer = page.locator("footer[data-site-footer]");
+    await expect(footer, path).toHaveCount(1);
+    await expect(footer.getByRole("link", { name: "WowLink home" })).toBeVisible();
+  }
+  // A guest's invitation keeps its own footer (the host's, with the report link).
+  await page.goto("/e/preview?template=wedding");
+  await expect(page.locator("footer[data-site-footer]")).toHaveCount(0);
+  await expect(page.locator(".invitation-footer")).toHaveCount(1);
+
+  await page.goto("/templates");
+  const pill = page.locator(".feedback-button");
+  await expect(pill).toBeVisible();
+  await page.locator("footer[data-site-footer]").scrollIntoViewIfNeeded();
+  await expect(pill).toBeHidden();
+  await page.locator("footer[data-site-footer]").getByRole("button", { name: "Tell us what you think" }).click();
+  await expect(page.getByRole("dialog", { name: "Tell us what you think" })).toBeVisible();
+});

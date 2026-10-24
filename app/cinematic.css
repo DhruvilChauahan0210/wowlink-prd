@@ -362,19 +362,13 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .fin-p1{left:5%;top:15%;rotate:-5deg}
 .fin-p2{right:6%;bottom:12%;rotate:4deg}
 .fin-p2:before{background:#a8341f99;rotate:4deg}
-.cin-footer{display:grid;grid-template-columns:1.2fr 1fr auto;align-items:start;gap:40px;padding:60px var(--gutter) 56px;background:var(--bg);position:relative}
-.cin-footer:before{content:"";position:absolute;top:-4px;left:0;right:0;height:8px;background:#241a13;opacity:.55;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
-.cin-footer-brand p{margin-top:12px;font:600 26px/1.1 var(--hand);color:var(--muted);max-width:20em}
-.cin-footer nav{display:flex;flex-wrap:wrap;gap:12px 28px;font:600 24px/1.2 var(--hand);color:var(--muted)}
-.cin-footer nav a:hover{color:var(--accent)}
-.cin-footer-note{font-size:14px;color:var(--faint)}
 
 /* ---------- Templates catalog (paper) ---------- */
 .cin-catalog{padding:0 var(--gutter)}
 .cin-catalog-nav{position:sticky;top:0;z-index:30;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:24px;height:72px;margin:0 calc(-1 * var(--gutter));padding:0 var(--gutter);background:#f3ebdc}
 .cin-catalog-nav>:first-child{justify-self:start}
 .cin-catalog-nav>:last-child:not(:first-child){grid-column:3;justify-self:end}
-.cin-catalog-nav:after,.cin-catalog-footer:before{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--text);opacity:.5;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
+.cin-catalog-nav:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--text);opacity:.5;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
 .cin-catalog-back{font:700 24px/1 var(--hand);color:var(--muted);white-space:nowrap;transition:color .2s}
 .cin-catalog-back:hover{color:var(--accent)}
 .cin-catalog-heading{padding:clamp(56px,8vw,110px) 0 clamp(48px,5vw,72px)}
@@ -392,11 +386,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 /* The occasions that aren't free say so in the same spot on every card: the photo's corner */
 .cin-card-pro{position:absolute;z-index:2;top:20px;right:20px}
 .occasion-others .studio-pro-badge{align-self:flex-start;font-size:11px}
-.cin-catalog-footer{position:relative;padding:30px 0 36px;display:flex;justify-content:space-between;gap:20px;font-size:14px;color:var(--faint)}
-.cin-catalog-footer:before{bottom:auto;top:-4px}
-.cin-catalog-footer-links{display:flex;flex-wrap:wrap;gap:8px 20px}
 .page-header-actions{display:flex;align-items:center;gap:28px}
-.cin-catalog-footer a:hover{color:var(--text)}
 
 /* ---------- Privacy ---------- */
 .privacy{max-width:760px;margin:0 auto;padding:clamp(40px,6vw,80px) 0 clamp(64px,8vw,112px)}
@@ -594,7 +584,6 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cin-plan-note{position:static;display:block;align-self:flex-end;margin:-10px -6px 10px 0;font-size:24px}
   .cin-plans .cin-section-top>p{display:block;text-align:left;margin-top:14px;rotate:0deg}
   .cin-plan-note{top:22px;right:26px;font-size:26px}
-  .cin-footer{grid-template-columns:1fr;gap:28px;padding:48px var(--gutter)}
 
   .cin-catalog-nav{height:64px}
   .cin-catalog-heading{padding:48px 0 36px}
@@ -606,7 +595,6 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cin-catalog-grid .cin-card-kind{font-size:19px}
   .cin-catalog-grid .cin-card-title h3{font-size:22px}
   .cin-catalog-grid .cin-card-bottom p,.cin-catalog-grid .cin-card-bottom>a{font-size:21px}
-  .cin-catalog-footer{flex-direction:column;gap:8px}
   .page-create{display:none}
 }
 @media(max-width:480px){
@@ -616,3 +604,36 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cin-catalog-grid .cin-card-title h3{font-size:32px}
   .cin-catalog-grid .cin-card-kind{font-size:22px}
 }
+
+/* ---------- The footer: one for every page (ui/site-footer.tsx) ----------
+   Night paper under the same toran as the home page's doorway: the seal stamped large, the sign-off, the way to
+   start, three short columns of links, and a base line. */
+.site-footer{position:relative;isolation:isolate;margin-top:clamp(56px,7vw,100px);padding:clamp(100px,9vw,124px) var(--gutter) 0;background-color:var(--bg);background-image:var(--grain);color:var(--text);overflow:hidden}
+.cin-catalog>.site-footer{margin-left:calc(-1 * var(--gutter));margin-right:calc(-1 * var(--gutter))}
+/* The home page ends on its own paper section, straight into the footer */
+.cin-home>.site-footer{margin-top:0}
+.site-footer-toran{position:absolute;z-index:-1;top:0;left:0;width:100%;height:84px;pointer-events:none}
+.site-footer-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:clamp(36px,6vw,110px);align-items:start;max-width:1240px;margin:0 auto}
+.site-footer-brand{display:flex;flex-direction:column;align-items:flex-start}
+.site-footer-seal{display:block;width:78px;height:78px;rotate:-8deg;filter:drop-shadow(0 8px 10px #0007);transition:rotate .4s cubic-bezier(.2,.8,.2,1)}
+.site-footer-seal:hover{rotate:6deg}
+.site-footer-seal svg{display:block;width:100%;height:100%}
+.cinema .site-footer-wordmark{display:block;margin-top:16px;color:var(--text);font:600 clamp(38px,3.6vw,52px)/1 var(--serif);letter-spacing:-.04em;font-variation-settings:"SOFT" 100}
+.site-footer-wordmark b{font-weight:inherit;color:var(--accent)}
+.cinema .site-footer-made{display:block;max-width:15em;margin:10px 0 26px;font:700 clamp(24px,2vw,29px)/1.15 var(--hand);color:var(--muted)}
+.site-footer-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px 32px;padding-top:8px}
+.site-footer-links>div{display:flex;flex-direction:column;align-items:flex-start}
+.cinema .site-footer-links h2{margin:0 0 12px;font:700 27px/1 var(--hand);letter-spacing:0;color:var(--accent)}
+.site-footer-links a,.site-footer-links .feedback-link{padding:6px 0;border:0;background:none;font:500 16px/1.4 var(--sans);color:var(--text);opacity:.82;text-align:left;cursor:pointer;transition:color .2s,opacity .2s}
+.site-footer-links a:hover,.site-footer-links .feedback-link:hover{color:var(--accent);opacity:1}
+.site-footer-base{position:relative;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px 24px;max-width:1240px;margin:clamp(44px,5vw,70px) auto 0;padding:24px 0 30px;font-size:13px;color:var(--faint)}
+.site-footer-base::before{content:"";position:absolute;top:-4px;left:0;right:0;height:8px;background:var(--text);opacity:.22;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
+.site-footer-trio{font:700 21px/1 var(--hand);color:var(--muted)}
+@media(max-width:860px){.site-footer-main{grid-template-columns:1fr}}
+@media(max-width:560px){
+  .site-footer{padding-top:96px}
+  .site-footer-links{grid-template-columns:1fr 1fr}
+  .site-footer-links>div:last-child{grid-column:1/-1}
+  .site-footer-base{flex-direction:column;align-items:flex-start;gap:10px;padding-bottom:26px}
+}
+@media print{.site-footer{display:none}}

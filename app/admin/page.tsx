@@ -13,6 +13,7 @@ import { HOST_TEXT } from "../lib/host-i18n";
 import { SignIn } from "../ui/sign-in";
 import { signOut as signOutAccount, useAccount } from "../ui/account";
 import { markTeamBrowser } from "../ui/counting";
+import { SiteFooter } from "../ui/site-footer";
 
 /*
  * WowLink's own admin: feedback, reports to look at, taking an invitation down (or back up), and the app's numbers
@@ -221,6 +222,7 @@ export default function AdminPage() {
       </>}
       <p className="studio-sr-only" role="status">{message}</p>
     </main>
+    <SiteFooter/>
   </div>;
 }
 

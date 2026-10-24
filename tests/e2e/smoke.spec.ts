@@ -70,7 +70,7 @@ test("the logo is the seal: in the header, as the app icon and as the home-scree
   expect(homeScreen.status()).toBe(200);
   expect(homeScreen.headers()["content-type"]).toContain("image/png");
   await page.goto("/templates");
-  const logo = page.getByRole("link", { name: "WowLink home" });
+  const logo = page.locator(".cin-catalog-nav").getByRole("link", { name: "WowLink home" });
   await expect(logo.locator(".seal-mark")).toBeVisible();
   await expect(logo).toHaveText("wowlink");
 });

@@ -6,6 +6,7 @@ import { REPORT_TEXT } from "../../lib/reports";
 import { getPublished } from "../../lib/store";
 import { WowLinkBrand } from "../../ui/brand";
 import { ReportForm } from "./report-form";
+import { SiteFooter } from "../../ui/site-footer";
 
 /*
  * Reporting an invitation (linked from every invitation's footer, in the guest's language). Only invitations guests
@@ -44,5 +45,6 @@ export default async function ReportPage({ params, searchParams }: Props) {
       </> : <p className="report-which">{t.gone}</p>}
       <Link className="report-privacy" href={langHref("/privacy", lang)}>{t.privacy}</Link>
     </main>
+    <SiteFooter lang={lang}/>
   </div>;
 }

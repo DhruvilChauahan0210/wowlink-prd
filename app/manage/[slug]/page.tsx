@@ -20,6 +20,7 @@ import { signOut, syncAccount, useAccount } from "../../ui/account";
 import { linkOf } from "../../lib/aliases";
 import { endsOn, hasEnded, planOf, repliesLimit } from "../../lib/plans";
 import { REASON_TEXT } from "../../lib/reports";
+import { SiteFooter } from "../../ui/site-footer";
 
 type Loaded = { experience: Experience; rsvps: Rsvp[]; upgrade?: { status: "open" | "approved" | "declined"; createdAt: string } };
 type Problem = "" | "no-key" | "invalid" | "offline";
@@ -332,6 +333,7 @@ export default function ManagePage() {
         </section>
       </>}
     </main>
+    <SiteFooter lang={lang}/>
   </div></HostTextContext.Provider>;
 }
 

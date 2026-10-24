@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CatalogFooter } from "../../ui/public-page";
+import { SiteFooter } from "../../ui/site-footer";
 import { notFound } from "next/navigation";
 import { getInvitationTemplate, invitationTemplates, isTemplateId } from "../../lib/invitations";
 import { FAQ, GUEST_GETS, OCCASION_PAGES, STEPS } from "../../lib/occasion-pages";
@@ -87,6 +87,6 @@ export default async function OccasionPage({ params }: Props) {
         </li>)}</ul>
       </section>
     </main>
-    <CatalogFooter lang="en"/>
+    <SiteFooter/>
   </div>;
 }

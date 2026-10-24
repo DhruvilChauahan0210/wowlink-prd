@@ -11,6 +11,7 @@ import { HostLangSwitch, useHostLang } from "../ui/host-lang";
 import { hasEnded, planOf } from "../lib/plans";
 import { savedKeys, signOut, syncAccount, useAccount } from "../ui/account";
 import { SignIn } from "../ui/sign-in";
+import { SiteFooter } from "../ui/site-footer";
 
 /*
  * Every invitation this device can manage: the ones whose private manage key is saved here (the studio saves it on
@@ -205,6 +206,7 @@ export default function MyInvitations() {
         <p className="share-status" role="status">{status(h)}</p>
       </section>
     </main>
+    <SiteFooter lang={lang}/>
   </div>;
 }
 
