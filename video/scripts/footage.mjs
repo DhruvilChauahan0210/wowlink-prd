@@ -41,9 +41,10 @@ for (const [name, attendance, count] of [["Nani & Nana", "Attending", 2], ["The 
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const phone = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true };
-// Links on screen show the live address, not this private copy's.
+// Links on screen show the live address, not this private copy's; the Feedback button stays out of the picture.
 const shot = async (page, name) => {
   await page.evaluate((live) => {
+    for (const button of document.querySelectorAll(".feedback-button")) button.style.display = "none";
     for (const input of document.querySelectorAll("input")) input.value = input.value.replace(location.origin, live);
     for (const el of document.querySelectorAll("a, p, span")) if (el.children.length === 0 && el.textContent?.includes(location.host)) el.textContent = el.textContent.replace(location.origin, live).replace(location.host, live.replace("https://", ""));
   }, "https://wowlink-one.vercel.app");
