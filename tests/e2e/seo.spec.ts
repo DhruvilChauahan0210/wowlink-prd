@@ -76,3 +76,25 @@ test("invitations, the studio and the manage pages ask not to be listed", async 
     await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
   }
 });
+
+test("search engines get structured data, a share image, and a title and description that fit", async ({ request }) => {
+  const ld = (html: string) => [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap((m) => [JSON.parse(m[1])].flat()) as { "@type": string; mainEntity?: unknown[] }[];
+  const types = async (path: string) => {
+    const html = await (await request.get(path)).text();
+    const decode = (text: string) => text.replace(/&amp;/g, "&").replace(/&#x27;/g, "'").replace(/&quot;/g, '"');
+    const title = decode(html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "");
+    const description = decode(html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "");
+    expect(title.length, `${path} title`).toBeLessThanOrEqual(70);
+    expect(description.length, `${path} description`).toBeGreaterThan(50);
+    expect(description.length, `${path} description`).toBeLessThanOrEqual(160);
+    expect(html, `${path} share image`).toMatch(/<meta property="og:image" content="[^"]+"/);
+    return ld(html);
+  };
+  expect((await types("/")).map((b) => b["@type"])).toEqual(["Organization", "WebSite", "WebApplication"]);
+  const occasion = await types("/templates/garba");
+  expect(occasion.map((b) => b["@type"])).toEqual(["BreadcrumbList", "FAQPage"]);
+  expect(occasion[1].mainEntity?.length).toBeGreaterThanOrEqual(3);
+  expect((await types("/templates")).map((b) => b["@type"])).toEqual(["BreadcrumbList", "ItemList"]);
+  expect((await types("/help?lang=gu"))[0]["@type"]).toBe("FAQPage");
+  for (const path of ["/pricing", "/pricing?lang=hi", "/privacy"]) await types(path);
+});

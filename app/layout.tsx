@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "WowLink — Make it a moment",
   description: "Create a beautiful, interactive invitation for the moments that matter.",
+  // Google Search Console's check that the site is ours: the code from "HTML tag" verification.
+  ...(process.env.GOOGLE_SITE_VERIFICATION && { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }),
 };
 
 // Self-hosted (OFL-licensed, see app/fonts) so builds and visitors never depend on reaching Google Fonts.

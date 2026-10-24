@@ -21,8 +21,8 @@ export type OccasionPage = {
 
 export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   wedding: {
-    title: "Wedding invitation website in Gujarati, Hindi or English, hand-drawn",
-    description: "A hand-drawn wedding invitation website that opens like a kankotri. In Gujarati, Hindi or English, with RSVPs. Free to start; add the mehndi, sangeet and reception with the Creator studio.",
+    title: "Wedding invitation website in Gujarati, Hindi or English",
+    description: "A hand-drawn wedding invitation website that opens like a kankotri, in Gujarati, Hindi or English. Share one link on WhatsApp and collect RSVPs. Free to start.",
     noun: "wedding",
     heading: ["A wedding invitation that opens like a", "kankotri"],
     intro: "Your guests untie the knot on a hand-drawn scroll and the invitation unrolls: your names, the day, the place and every function. Share one link on WhatsApp, and the replies come back to you.",
@@ -34,7 +34,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   engagement: {
     title: "Engagement and sagai invitation online, hand-drawn",
-    description: "An online engagement invitation that opens like a ring box. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and a link for each family. Part of the WowLink Creator studio.",
+    description: "An online engagement invitation that opens like a ring box. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and a link for each family.",
     noun: "engagement",
     heading: ["An engagement invitation in a", "ring box"],
     intro: "Guests press the clasp, the ring box opens, and your sagai invitation comes up in its place. Two families, one link, and every reply in one list.",
@@ -58,7 +58,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   garba: {
     title: "Garba and Navratri invitation maker online",
-    description: "Make a Garba or Navratri invitation online: guests light a diya and the rangoli blooms. In Gujarati, Hindi or English, with RSVPs. Free and hand-drawn; every night of Navratri with the Creator studio.",
+    description: "Make a Garba or Navratri invitation online: guests light a diya and the rangoli blooms. Hand-drawn, in Gujarati, Hindi or English, with RSVPs. Free.",
     noun: "Garba night",
     heading: ["A Garba invitation that lights a", "diya"],
     intro: "Guests light the diya, the rangoli blooms, and your invitation to raas under the stars appears. Make it for one night or for all nine.",
@@ -70,7 +70,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   babyshower: {
     title: "Seemant and baby shower invitation online, hand-drawn",
-    description: "A baby shower or seemant invitation guests open by shaking a rattle to rock the cradle. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and blessings. Part of the WowLink Creator studio.",
+    description: "A seemant or baby shower invitation guests open by rocking a hand-drawn cradle. In Gujarati, Hindi or English, with RSVPs and blessings.",
     noun: "seemant",
     heading: ["A seemant invitation that rocks the", "cradle"],
     intro: "Guests shake the rattle, the cradle rocks, and your invitation to shower the parents-to-be with love appears. One link for family near and far.",
@@ -82,7 +82,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   housewarming: {
     title: "Housewarming and vastu puja invitation online",
-    description: "A housewarming or vastu puja invitation guests open by lifting the latch on a hand-drawn door. With directions, RSVPs and a link for each family. Part of the WowLink Creator studio.",
+    description: "A housewarming or vastu puja invitation guests open by lifting the latch on a hand-drawn door. With directions, RSVPs and a link for each family.",
     noun: "housewarming",
     heading: ["A housewarming invitation with a", "door to open"],
     intro: "Guests lift the latch, the door swings open, and your invitation to the new home is waiting inside, with a map to find the new address.",
@@ -94,7 +94,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   anniversary: {
     title: "Anniversary party invitation online, hand-drawn",
-    description: "An anniversary invitation guests open by breaking the seal on a hand-drawn letter. For a 25th or a 50th, with RSVPs, wishes and personal links. Part of the WowLink Creator studio.",
+    description: "An anniversary invitation guests open by breaking the seal on a hand-drawn letter. For a 25th or a 50th, with RSVPs, wishes and personal links.",
     noun: "anniversary",
     heading: ["An anniversary invitation sealed in a", "letter"],
     intro: "Guests break the wax seal, the letter opens, and your invitation is inside. Made for a 25th, a 50th, or a surprise for Mummy and Papa.",
@@ -118,7 +118,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   diwali: {
     title: "Diwali party invitation online, hand-drawn",
-    description: "A Diwali get-together invitation guests open by lighting a sparkler, and a row of diyas lights up one by one. Hand-drawn, in Gujarati, Hindi or English, with RSVPs. Part of the WowLink Creator studio.",
+    description: "A Diwali party invitation that lights a row of diyas, one by one. Hand-drawn, in Gujarati, Hindi or English, with RSVPs.",
     noun: "Diwali get-together",
     heading: ["A Diwali invitation that lights the", "diyas"],
     intro: "Guests light the phuljhadi, the diyas catch one after another, and your invitation to the Diwali milan glows in. One link for the whole family group.",
@@ -130,7 +130,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   janoi: {
     title: "Janoi and upanayan invitation online, hand-drawn",
-    description: "A janoi (sacred thread ceremony) invitation guests open by tying the thread. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and directions. Part of the WowLink Creator studio.",
+    description: "A janoi (sacred thread ceremony) invitation guests open by tying the thread. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and directions.",
     noun: "janoi",
     heading: ["A janoi invitation that ties the", "sacred thread"],
     intro: "Guests tie the brahmagranthi, the three strands draw together, and your invitation to the ceremony appears, with the muhurat and the place.",
@@ -142,7 +142,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   puja: {
     title: "Satyanarayan katha and puja invitation online",
-    description: "A Satyanarayan katha or home puja invitation guests open by ringing a temple bell. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and directions. Part of the WowLink Creator studio.",
+    description: "A Satyanarayan katha or home puja invitation guests open by ringing a temple bell. Hand-drawn, in Gujarati, Hindi or English, with RSVPs.",
     noun: "katha",
     heading: ["A puja invitation that rings the", "bell"],
     intro: "Guests ring the bell, it swings and petals drift down, and your invitation to the katha, the aarti and prasad appears.",
@@ -154,7 +154,7 @@ export const OCCASION_PAGES: Record<TemplateId, OccasionPage> = {
   },
   naming: {
     title: "Naamkaran (naming ceremony) invitation online",
-    description: "A naamkaran invitation guests open by lifting a bandhani cloth to reveal the naming thali. Hand-drawn, in Gujarati, Hindi or English, with RSVPs and blessings. Part of the WowLink Creator studio.",
+    description: "A naamkaran invitation guests open by lifting a bandhani cloth to reveal the naming thali. Hand-drawn, in Gujarati, Hindi or English, with RSVPs.",
     noun: "naamkaran",
     heading: ["A naamkaran invitation under a", "bandhani cloth"],
     intro: "Guests lift the cloth from the thali, the rice and the little swirl appear, and your invitation to hear the name for the first time is inside.",

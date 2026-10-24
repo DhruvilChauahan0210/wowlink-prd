@@ -1,11 +1,16 @@
 import CinematicHome from "./cinematic-home";
+import { organization, webApplication, website } from "./lib/structured-data";
+import { JsonLd } from "./ui/json-ld";
 
 export const metadata = {
-  title: "WowLink — Hand-drawn invitations, shared with one link",
-  description: "Hand-drawn, interactive invitations for weddings, engagements, birthdays, Garba, seemant, housewarmings, anniversaries and grand openings, in Gujarati, Hindi or English. Pick a drawing, add your story, and share it with one link.",
+  title: "Hand-drawn online invitations for WhatsApp — WowLink",
+  description: "Make a hand-drawn invitation for a wedding, Garba, birthday or puja in Gujarati, Hindi or English. Share one link on WhatsApp; guests reply in a tap. Free.",
   alternates: { canonical: "/" },
 };
 
 export default function Home() {
-  return <CinematicHome />;
+  return <>
+    <JsonLd data={[organization(), website(), webApplication()]}/>
+    <CinematicHome/>
+  </>;
 }

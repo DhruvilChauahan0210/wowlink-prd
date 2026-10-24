@@ -5,10 +5,12 @@ import { invitationTemplates, type TemplateId } from "../lib/invitations";
 import { ArtImage } from "../ui/art";
 import { WowLinkBrand } from "../ui/brand";
 import { Flower } from "../ui/doodles";
+import { breadcrumbs, itemList } from "../lib/structured-data";
+import { JsonLd } from "../ui/json-ld";
 
 export const metadata = {
-  title: "Hand-drawn invitation templates — WowLink",
-  description: "Interactive, hand-drawn invitations for weddings, engagements, birthdays, Garba, seemant and baby showers, housewarmings, anniversaries and grand openings. In Gujarati, Hindi or English: free for weddings, birthdays, Garba and grand openings.",
+  title: "Online invitation templates, hand-drawn — WowLink",
+  description: "Hand-drawn, interactive invitation templates for weddings, Garba, birthdays, engagements, housewarmings and more, in Gujarati, Hindi or English. Free to start.",
   alternates: { canonical: "/templates" },
 };
 const collection: Record<TemplateId, { title: string; detail: string }> = {
@@ -28,6 +30,7 @@ const collection: Record<TemplateId, { title: string; detail: string }> = {
 
 export default function TemplatesPage() {
   return <div className="cinema cin-catalog theme-paper">
+    <JsonLd data={[breadcrumbs([["WowLink", "/"], ["Occasions", "/templates"]]), itemList("Hand-drawn invitation templates", invitationTemplates.map((t) => [t.category, `/templates/${t.id}`] as const))]}/>
     <header className="cin-catalog-nav"><WowLinkBrand/><Link href="/" className="cin-catalog-back">← Back to home</Link></header>
     <main>
       <div className="cin-catalog-heading"><h1>Pick a <em>drawing.</em><Flower className="doodle h-flower"/></h1><p>Every invitation starts as a sketch. Choose one that feels like your day, add your story, share one link.</p></div>

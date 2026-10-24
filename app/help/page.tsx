@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LANGS, langHref, pageLang, type Lang } from "../lib/invitations";
 import { PublicPage } from "../ui/public-page";
+import { faqPage } from "../lib/structured-data";
+import { JsonLd } from "../ui/json-ld";
 
 /*
  * Help: the questions hosts actually ask, answered from how WowLink works today, in each language (?lang=).
@@ -11,7 +13,7 @@ type Content = { title: string; description: string; heading: readonly [string, 
 
 const HELP: Record<Lang, Content> = {
   en: {
-    title: "Help — WowLink",
+    title: "Help: making and sending invitations — WowLink",
     description: "How to make, send and manage a WowLink invitation: personal links for each family, Gujarati and Hindi, changing details, replies, printing and deleting.",
     heading: ["How can we", "help?"],
     intro: "Short answers to what hosts ask most. Everything here is about how WowLink works today.",
@@ -53,7 +55,7 @@ const HELP: Record<Lang, Content> = {
     start: "Make your invitation",
   },
   gu: {
-    title: "મદદ — WowLink",
+    title: "મદદ: આમંત્રણ બનાવવું અને મોકલવું — WowLink",
     description: "WowLink આમંત્રણ કેવી રીતે બનાવવું, મોકલવું અને સંભાળવું: દરેક પરિવાર માટે વ્યક્તિગત લિંક, ગુજરાતી અને હિન્દી, વિગતો બદલવી, જવાબો, છાપવું અને કાઢી નાખવું.",
     heading: ["અમે કેવી રીતે", "મદદ કરીએ?"],
     intro: "યજમાનો સૌથી વધુ પૂછે છે તેના ટૂંકા જવાબો. અહીંનું બધું WowLink આજે જે રીતે કામ કરે છે તે વિશે છે.",
@@ -95,7 +97,7 @@ const HELP: Record<Lang, Content> = {
     start: "આપનું આમંત્રણ બનાવો",
   },
   hi: {
-    title: "मदद — WowLink",
+    title: "मदद: निमंत्रण बनाना और भेजना — WowLink",
     description: "WowLink निमंत्रण कैसे बनाएँ, भेजें और संभालें: हर परिवार के लिए व्यक्तिगत लिंक, गुजराती और हिंदी, जानकारी बदलना, जवाब, प्रिंट करना और हटाना।",
     heading: ["हम कैसे", "मदद करें?"],
     intro: "मेज़बान जो सबसे ज़्यादा पूछते हैं, उनके छोटे जवाब। यहाँ सब कुछ इस बारे में है कि WowLink आज कैसे काम करता है।",
@@ -150,6 +152,7 @@ export default async function HelpPage({ searchParams }: Props) {
   const lang = pageLang((await searchParams).lang);
   const c = HELP[lang];
   return <PublicPage lang={lang} path="/help" className="help-page">
+    <JsonLd data={faqPage(c.sections.flatMap((section) => section.items.map(([q, a]) => ({ q, a }))), lang)}/>
     <main className="help">
       <h1>{c.heading[0]} <span className="scribble">{c.heading[1]}</span></h1>
       <p className="help-intro">{c.intro}</p>

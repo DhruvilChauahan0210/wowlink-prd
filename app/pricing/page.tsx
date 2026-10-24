@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { LANGS, langHref, pageLang, type Lang } from "../lib/invitations";
 import { PlanCards } from "../ui/plan-cards";
 import { PublicPage } from "../ui/public-page";
+import { breadcrumbs, webApplication } from "../lib/structured-data";
+import { JsonLd } from "../ui/json-ld";
 
 /*
  * Pricing: the two plans, said honestly. The cards are the same ones the home page shows (ui/plan-cards.tsx); here
@@ -16,8 +18,8 @@ type Content = {
 
 const PRICING: Record<Lang, Content> = {
   en: {
-    title: "Pricing — WowLink",
-    description: "Start free: a hand-drawn invitation for your own occasion, with one celebration and 50 replies, in English, Gujarati or Hindi. The Creator studio adds schedules, a link for each family, your own colours and more.",
+    title: "Pricing: free to start — WowLink",
+    description: "Start free: a hand-drawn invitation for your own occasion, in English, Gujarati or Hindi. The Creator studio adds schedules, family links and your colours.",
     heading: ["Start free,", "go further"],
     intro: "A simple invitation for your own day is free. For a wedding with many functions, a link for each family, your own colours or a planner’s work, there’s the Creator studio.",
     table: { caption: "Side by side", feature: "Feature", free: "Personal", pro: "Creator studio", soon: "coming soon", rows: [
@@ -40,8 +42,8 @@ const PRICING: Record<Lang, Content> = {
     note: "The Creator studio can’t be bought online yet. Until it can, ask for it from your invitation’s manage page and WowLink moves it for you. Prices are in Indian rupees.",
   },
   gu: {
-    title: "કિંમત — WowLink",
-    description: "મફતમાં શરૂ કરો: આપના પોતાના પ્રસંગ માટે હાથે દોરેલું આમંત્રણ, એક પ્રસંગ અને 50 જવાબો, અંગ્રેજી, ગુજરાતી કે હિન્દીમાં. ક્રિએટર સ્ટુડિયોમાં કાર્યક્રમ, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ અને ઘણું વધારે છે.",
+    title: "કિંમત: મફતમાં શરૂ કરો — WowLink",
+    description: "મફતમાં શરૂ કરો: આપના પ્રસંગ માટે હાથે દોરેલું આમંત્રણ, અંગ્રેજી, ગુજરાતી કે હિન્દીમાં. ક્રિએટર સ્ટુડિયોમાં કાર્યક્રમ, પરિવાર માટે લિંક અને આપના રંગ.",
     heading: ["મફતમાં શરૂ કરો,", "આગળ વધો"],
     intro: "આપના પોતાના દિવસ માટે સાદું આમંત્રણ મફત છે. ઘણા પ્રસંગોવાળાં લગ્ન, દરેક પરિવાર માટે લિંક, આપના પોતાના રંગ કે આયોજકના કામ માટે ક્રિએટર સ્ટુડિયો છે.",
     table: { caption: "સામસામે સરખામણી", feature: "સુવિધા", free: "પર્સનલ", pro: "ક્રિએટર સ્ટુડિયો", soon: "જલદી આવે છે", rows: [
@@ -64,8 +66,8 @@ const PRICING: Record<Lang, Content> = {
     note: "ક્રિએટર સ્ટુડિયો હજી ઑનલાઇન ખરીદી શકાતો નથી. ત્યાં સુધી આપના આમંત્રણના મેનેજ પાના પરથી તે માટે પૂછો, અને WowLink તેને ખસેડી આપશે. કિંમતો ભારતીય રૂપિયામાં છે.",
   },
   hi: {
-    title: "कीमत — WowLink",
-    description: "मुफ़्त में शुरू करें: अपने अवसर के लिए हाथ से बना निमंत्रण, एक कार्यक्रम और 50 जवाब, अंग्रेज़ी, गुजराती या हिन्दी में। क्रिएटर स्टूडियो में कार्यक्रमों की सूची, हर परिवार के लिए लिंक, अपने रंग और बहुत कुछ है।",
+    title: "कीमत: मुफ़्त में शुरू करें — WowLink",
+    description: "मुफ़्त में शुरू करें: अपने अवसर के लिए हाथ से बना निमंत्रण, अंग्रेज़ी, गुजराती या हिन्दी में। क्रिएटर स्टूडियो में कार्यक्रम, परिवार के लिंक और अपने रंग।",
     heading: ["मुफ़्त में शुरू करें,", "आगे बढ़ें"],
     intro: "अपने दिन के लिए एक सादा निमंत्रण मुफ़्त है। कई रस्मों वाली शादी, हर परिवार के लिए लिंक, अपने रंग या आयोजक के काम के लिए क्रिएटर स्टूडियो है।",
     table: { caption: "आमने-सामने", feature: "सुविधा", free: "पर्सनल", pro: "क्रिएटर स्टूडियो", soon: "जल्द आ रहा है", rows: [
@@ -101,6 +103,7 @@ export default async function PricingPage({ searchParams }: Props) {
   const lang = pageLang((await searchParams).lang);
   const c = PRICING[lang];
   return <PublicPage lang={lang} path="/pricing" className="pricing-page">
+    <JsonLd data={[breadcrumbs([["WowLink", "/"], [c.title.split(/ — |:/)[0], langHref("/pricing", lang)]]), webApplication()]}/>
     <main className="pricing">
       <h1>{c.heading[0]} <span className="scribble">{c.heading[1]}</span></h1>
       <p className="help-intro">{c.intro}</p>

@@ -130,3 +130,15 @@ export function occasionCard(id: TemplateId) {
     cta: STARTER_OCCASIONS.includes(template.id) ? "make yours free →" : "make yours →",
   });
 }
+
+/** The card for WowLink's own pages (the home page, pricing, help…), when they're shared. */
+export function siteCard() {
+  return card({
+    name: "wedding",
+    tone: TONE.wedding,
+    eyebrow: "WowLink",
+    title: "One link. A whole celebration.",
+    lines: ["Hand-drawn invitations for WhatsApp", "In Gujarati, Hindi or English, with replies"],
+    cta: "make yours free →",
+  });
+}

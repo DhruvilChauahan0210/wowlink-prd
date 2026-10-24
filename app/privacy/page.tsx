@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LANGS, formatInvitationDate, langHref, pageLang, type Lang } from "../lib/invitations";
 import { PublicPage } from "../ui/public-page";
+import { breadcrumbs } from "../lib/structured-data";
+import { JsonLd } from "../ui/json-ld";
 
 /*
  * What WowLink keeps, who sees it, and how it's deleted, in plain words, in English, Gujarati and Hindi (?lang=gu, hi). Guests
@@ -295,6 +297,7 @@ export default async function PrivacyPage({ searchParams }: Props) {
   const lang = pageLang((await searchParams).lang);
   const c = PRIVACY[lang];
   return <PublicPage lang={lang} path="/privacy" className="privacy-page">
+    <JsonLd data={breadcrumbs([["WowLink", "/"], [c.title.split(" — ")[0], langHref("/privacy", lang)]])}/>
     <main className="privacy">
       <h1>{c.heading[0]} <span className="scribble">{c.heading[1]}</span></h1>
       <p className="privacy-intro">{c.intro}</p>

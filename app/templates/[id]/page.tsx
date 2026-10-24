@@ -9,6 +9,8 @@ import { WowLinkBrand } from "../../ui/brand";
 import { OPEN_HINT } from "../../ui/openers";
 import { OccasionDemo } from "./demo";
 import { STARTER_OCCASIONS } from "../../lib/plans";
+import { breadcrumbs, faqPage } from "../../lib/structured-data";
+import { JsonLd } from "../../ui/json-ld";
 
 /*
  * Each occasion's own page: what its invitation does, a sample to open right here, and a way to start. These are the
@@ -37,6 +39,7 @@ export default async function OccasionPage({ params }: Props) {
   const pro = !STARTER_OCCASIONS.includes(id);
 
   return <div className="cinema cin-catalog theme-paper occasion-page">
+    <JsonLd data={[breadcrumbs([["WowLink", "/"], ["Occasions", "/templates"], [template.category, `/templates/${id}`]]), faqPage(FAQ)]}/>
     <header className="cin-catalog-nav"><WowLinkBrand/><Link href="/templates" className="cin-catalog-back">← All occasions</Link></header>
     <main>
       <section className="occasion-hero">
