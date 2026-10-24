@@ -97,7 +97,7 @@ test("feedback needs a few words, keeps only the page's path, ignores bots, and 
 });
 
 test("every page ends with the same footer; its link opens the form, and the floating button steps aside for it", async ({ page }) => {
-  for (const path of ["/", "/templates", "/templates/wedding", "/pricing", "/help", "/privacy", "/create?template=wedding", "/mine", "/signin", "/no-such-page"]) {
+  for (const path of ["/", "/templates", "/templates/wedding", "/templates/wedding?lang=hi", "/wording", "/wording/wedding-invitation-wording", "/pricing", "/help", "/privacy", "/create?template=wedding", "/mine", "/signin", "/no-such-page"]) {
     await page.goto(path);
     const footer = page.locator("footer[data-site-footer]");
     await expect(footer, path).toHaveCount(1);

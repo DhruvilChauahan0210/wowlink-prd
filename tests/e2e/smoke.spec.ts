@@ -10,6 +10,11 @@ const PAGES = [
   { path: "/e/preview?template=opening", check: "A new beginning" },
   { path: "/templates/wedding", check: "A wedding invitation" },
   { path: "/templates/babyshower", check: "A seemant invitation" },
+  { path: "/templates/garba?lang=gu", check: "ગરબાનું આમંત્રણ" },
+  { path: "/templates/housewarming?lang=hi", check: "गृह प्रवेश का निमंत्रण" },
+  { path: "/e/preview?template=wedding&lang=hi", check: "आरव और मीरा" },
+  { path: "/wording", check: "Invitation wording" },
+  { path: "/wording/navratri-garba-invitation-message", check: "Garba invitation messages" },
   { path: "/privacy", check: "What we keep" },
   { path: "/privacy?lang=gu", check: "અમે શું સાચવીએ છીએ" },
 ];

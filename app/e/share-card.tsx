@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
 import { formatInvitationDate, formatInvitationTime, getInvitationTemplate, sortSchedule, type TemplateId } from "../lib/invitations";
-import { OCCASION_PAGES } from "../lib/occasion-pages";
+import { OCCASION_COPY } from "../lib/occasion-pages";
 import { STARTER_OCCASIONS } from "../lib/plans";
 import type { PublicExperience } from "../lib/store";
 import { paletteFor } from "../lib/palette";
@@ -120,14 +120,26 @@ export function shareCard(experience: PublicExperience | null, addressee?: strin
 /** The card for an occasion's own page (/templates/<id>), when that page is shared. */
 export function occasionCard(id: TemplateId) {
   const template = getInvitationTemplate(id);
-  const { heading } = OCCASION_PAGES[template.id];
+  const { heading } = OCCASION_COPY.en.pages[template.id];
   return card({
     name: template.id,
     tone: TONE[template.id],
     eyebrow: template.category,
-    title: `${heading[0]} ${heading[1]}`,
+    title: heading.filter(Boolean).join(" "),
     lines: ["Hand-drawn, in Gujarati, Hindi or English", "One link for WhatsApp, with replies"],
     cta: STARTER_OCCASIONS.includes(template.id) ? "make yours free →" : "make yours →",
+  });
+}
+
+/** The card for an invitation wording guide (/wording/<slug>), when it's shared: in English, which the card can draw. */
+export function wordingCard(id: TemplateId, title: string) {
+  return card({
+    name: id,
+    tone: TONE[id],
+    eyebrow: "Invitation wording",
+    title,
+    lines: ["Ready to copy, in English, Gujarati and Hindi", "For the invitation and the WhatsApp message"],
+    cta: "copy the words →",
   });
 }
 

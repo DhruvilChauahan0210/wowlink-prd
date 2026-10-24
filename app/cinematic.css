@@ -387,6 +387,8 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-card-pro{position:absolute;z-index:2;top:20px;right:20px}
 .occasion-others .studio-pro-badge{align-self:flex-start;font-size:11px}
 .page-header-actions{display:flex;align-items:center;gap:28px}
+/* On a phone the arrow alone leads back to the occasions, leaving room for the languages */
+@media(max-width:600px){.occasion-back-label{display:none}.occasion-page .page-header-actions{gap:20px}}
 
 /* ---------- Privacy ---------- */
 .privacy{max-width:760px;margin:0 auto;padding:clamp(40px,6vw,80px) 0 clamp(64px,8vw,112px)}
@@ -496,6 +498,41 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 @media(max-width:1100px){.occasion-others{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:960px){.occasion-hero,.occasion-split{grid-template-columns:1fr}.occasion-demo{max-width:480px;width:100%;margin:0 auto}.occasion-points{grid-template-columns:1fr}.occasion-faq{grid-template-columns:1fr}}
 @media(max-width:480px){.occasion-others{grid-template-columns:repeat(2,minmax(0,1fr))}.occasion-hero .occasion-intro{font-size:17px}}
+
+/* ---------- Invitation wording ---------- */
+.wording-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,320px);gap:clamp(40px,6vw,96px);align-items:center;padding:clamp(40px,6vw,88px) 0 clamp(56px,7vw,96px)}
+.wording-hero h1{margin-top:14px;font-size:clamp(40px,4.8vw,76px);line-height:1.02;text-wrap:balance}
+.wording-hero .occasion-intro{margin-top:24px;max-width:36em;font-size:18px;line-height:1.65;color:var(--muted)}
+.wording-jump{display:flex;flex-wrap:wrap;gap:12px 26px;margin-top:30px}
+.wording-jump a{font:700 23px/1.1 var(--hand);color:var(--accent-soft);text-decoration:underline wavy var(--line-strong);text-decoration-thickness:1px;text-underline-offset:6px;transition:color .2s}
+.wording-jump a:hover{color:var(--text)}
+.wording-print{display:flex;flex-direction:column;align-items:center;gap:18px}
+.wording-print .cin-photo{width:100%;flex:none;aspect-ratio:4/5;padding:10px;background:#fbf6ec;box-shadow:0 1px 2px #2a1d1433,0 20px 40px -16px #2a1d1480;rotate:3deg;transition:rotate .3s}
+.wording-print:hover .cin-photo{rotate:1deg}
+.wording-print-caption{font:700 26px/1 var(--hand);color:var(--muted);rotate:-1.5deg}
+.wording-section{scroll-margin-top:72px}
+.wording-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.wording-card{padding:22px 24px 28px}
+.wording-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:14px;margin-bottom:18px;border-bottom:1.5px dashed var(--line-strong)}
+.wording-card h3{font:700 27px/1 var(--hand);color:var(--accent)}
+.wording-text{white-space:pre-line;font-size:16.5px;line-height:1.75;color:var(--text);overflow-wrap:anywhere}
+.wording-copy{flex:none;min-height:36px;padding:0 16px;border:1.5px solid var(--text);border-radius:999px;background:transparent;color:var(--text);font:600 14px/1 var(--sans);cursor:pointer;transition:background .2s,color .2s}
+.wording-copy:hover{background:var(--text);color:var(--bg)}
+.wording-copy.is-copied{border-color:var(--accent);background:var(--accent);color:#fbf6ec}
+.wording-send p{max-width:32em;font-size:17px;line-height:1.65;color:var(--muted)}
+.wording-send .occasion-ctas{margin-top:28px}
+.occasion-start{margin-top:0}
+.occasion-start .cin-text-link{line-height:1.15}
+.wording-index{list-style:none;margin:0;padding:0 0 clamp(56px,7vw,96px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:44px 28px}
+.wording-index a{display:flex;flex-direction:column;gap:8px}
+.wording-index .cin-photo{flex:none;aspect-ratio:4/5;padding:8px;margin-bottom:10px;background:#fbf6ec;box-shadow:0 1px 2px #2a1d1433,0 14px 28px -14px #2a1d1470;rotate:-1.2deg;transition:rotate .3s}
+.wording-index li:nth-child(even) .cin-photo{rotate:1.2deg}
+.wording-index a:hover .cin-photo{rotate:0deg}
+.wording-index-name{font:700 26px/1 var(--hand);color:var(--accent)}
+.wording-index-title{font:400 20px/1.25 var(--serif);color:var(--text)}
+@media(max-width:1100px){.wording-grid{grid-template-columns:1fr 1fr}.wording-index{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:960px){.wording-hero{grid-template-columns:1fr}.wording-print{max-width:260px;margin:0 auto}}
+@media(max-width:700px){.wording-grid{grid-template-columns:1fr}.wording-index{grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 16px}.wording-index-title{font-size:17px}.wording-hero .occasion-intro{font-size:17px}}
 
 /* ---------- Reduced motion ---------- */
 .cin-reduced .cin-journey{height:auto}
