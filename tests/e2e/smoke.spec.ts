@@ -58,10 +58,18 @@ test("any other unknown page shows the site's not-found page", async ({ page }) 
   await expect(page.locator("h1")).toContainText("slipped away");
 });
 
-test("the app icon is served", async ({ request }) => {
+test("the logo is the seal: in the header, as the app icon and as the home-screen icon", async ({ page, request }) => {
   const response = await request.get("/icon.svg");
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toContain("image/svg+xml");
+  expect(await response.text()).toContain("#a8341f");
+  const homeScreen = await request.get("/apple-icon");
+  expect(homeScreen.status()).toBe(200);
+  expect(homeScreen.headers()["content-type"]).toContain("image/png");
+  await page.goto("/templates");
+  const logo = page.getByRole("link", { name: "WowLink home" });
+  await expect(logo.locator(".seal-mark")).toBeVisible();
+  await expect(logo).toHaveText("wowlink");
 });
 
 test("each occasion's drawing is served as an image, for the places it doesn't animate", async ({ request, page }) => {

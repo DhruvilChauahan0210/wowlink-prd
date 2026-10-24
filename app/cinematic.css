@@ -110,8 +110,10 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-nav:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--text);opacity:0;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat;transition:opacity .3s}
 .cin-nav.is-scrolled,.cin-nav.is-menu-open{background-color:#f3ebdcf5}
 .cin-nav.is-scrolled:after,.cin-nav.is-menu-open:after{opacity:.55}
-.cin-logo{display:inline-flex;align-items:center;gap:10px;font:600 21px/1 var(--serif);letter-spacing:-.02em;font-variation-settings:"SOFT" 100}
-.cin-logo svg{height:26px;width:26px;color:var(--accent)}
+.cin-logo{display:inline-flex;align-items:center;gap:9px;font:600 23px/1 var(--serif);letter-spacing:-.035em;font-variation-settings:"SOFT" 100}
+.cin-logo .seal-mark{flex:none;width:1.45em;height:1.45em;rotate:-6deg;transition:rotate .35s cubic-bezier(.2,.8,.2,1)}
+.cin-logo:hover .seal-mark{rotate:6deg}
+.cin-wordmark b{font-weight:inherit;color:var(--accent)}
 .cin-nav nav{display:flex;gap:36px;font:700 26px/1 var(--hand)}
 .cin-nav nav a{color:var(--muted);transition:color .2s}
 .cin-nav nav a:hover{color:var(--accent)}
@@ -511,7 +513,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cinema{font-size:16px}
   .cin-nav{height:64px;gap:16px}
   .cin-nav nav,.cin-nav-cta,.cin-nav-mine{display:none}
-  .cin-logo{font-size:20px}
+  .cin-logo{font-size:21px}
   .cinema .cin-menu-toggle{display:block;border:0;background:none;color:var(--text);font:700 26px/1 var(--hand);padding:10px 0}
   .cin-menu{display:flex;position:fixed;inset:64px 0 0;z-index:-1;flex-direction:column;justify-content:flex-start;gap:6px;padding:28px var(--gutter);background-color:#f3ebdc;background-image:var(--grain);opacity:0;pointer-events:none;transition:opacity .25s}
   .cin-menu.is-open{opacity:1;pointer-events:auto}

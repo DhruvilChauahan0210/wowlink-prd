@@ -7,13 +7,10 @@ import { getInvitationTemplate, initialDraft, type TemplateId } from "./lib/invi
 import type { ArtName } from "./ui/art";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 import { ArtImage } from "./ui/art";
+import { BrandLockup, SealMark } from "./ui/brand";
 import { InvitationScene } from "./ui/invitation-scene";
 import { ArrowCurl, Diya, Flower, Star } from "./ui/doodles";
 import { clamp, ease, onSceneFrame, progress, range, sceneNavigate, startSceneScroll } from "./lib/scene-scroll";
-
-function Mark() {
-  return <svg  viewBox="0 0 32 32" aria-hidden="true"><path d="M5 29V15.5a11 11 0 0 1 22 0V29" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/><path d="M10.5 29V16.5a5.5 5.5 0 0 1 11 0V29" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/><circle cx="16" cy="22" r="2.1" fill="currentColor"/></svg>;
-}
 
 function NavLink({ id, children, onNavigate }: { id: string; children: React.ReactNode; onNavigate?: () => void }) {
   const go = (event: MouseEvent<HTMLAnchorElement>) => { event.preventDefault(); onNavigate?.(); sceneNavigate(id); };
@@ -30,7 +27,7 @@ function Chrome() {
     return () => removeEventListener("scroll", onScroll);
   }, []);
   return <header className={`cin-nav${scrolled ? " is-scrolled" : ""}${open ? " is-menu-open" : ""}`}>
-    <NavLink id="top" onNavigate={() => setOpen(false)}><span className="cin-logo"><Mark/>WowLink</span></NavLink>
+    <NavLink id="top" onNavigate={() => setOpen(false)}><span className="cin-logo"><BrandLockup/></span></NavLink>
     <nav aria-label="Main navigation"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><NavLink id="plans">Pricing</NavLink></nav>
     <Link className="cin-nav-mine" href="/mine">My invitations</Link>
     <Link className="cin-nav-cta" href="/templates">Create invitation</Link>
@@ -157,7 +154,7 @@ function Hero() {
     <div className="hero-stage">
       <div className="hero-sheet">
         <InvitationScene key={occasion} template={template} draft={draft} compact opened={opened} onOpen={() => { touched.current = true; setOpened(true); }} onReplay={() => { touched.current = true; setOpened(false); }}/>
-        <span className="hero-link"><Mark/>wowlink-one.vercel.app/e/{linkFor(draft.title)}</span>
+        <span className="hero-link"><SealMark ring={false}/>wowlink-one.vercel.app/e/{linkFor(draft.title)}</span>
       </div>
       <span className="cin-note hero-try" aria-hidden="true">{opened ? "what guests see" : "go on, open it"}<small>{opened ? "tap a print for another" : "or tap a print"}</small><ArrowCurl className="hero-try-arrow"/></span>
     </div>
@@ -312,5 +309,5 @@ export default function CinematicHome() {
     <Flower className="doodle fin-a"/><Star className="doodle fin-b"/><Diya className="doodle fin-c"/><Flower className="doodle fin-d"/>
     <span className="cin-note cin-finale-note">come on in</span><h2>Your day.<br/><em>Their first wow.</em></h2><p>Free to start. Lovely to share.</p><Link href="/templates" className="cin-cta cin-cta-light">Create your invitation</Link>
   </section></main>
-      <footer className="cin-footer"><div className="cin-footer-brand"><span className="cin-logo"><Mark/>WowLink</span><p>Made with love, shared with one link.</p></div><nav aria-label="Footer"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><Link href="/pricing">Pricing</Link><Link href="/templates">Templates</Link><Link href="/mine">My invitations</Link><Link href="/help">Help</Link><Link href="/privacy">Privacy</Link></nav><span className="cin-footer-note">© 2026 WowLink</span></footer></div>;
+      <footer className="cin-footer"><div className="cin-footer-brand"><span className="cin-logo"><BrandLockup/></span><p>Made with love, shared with one link.</p></div><nav aria-label="Footer"><NavLink id="occasions">Occasions</NavLink><NavLink id="experience">How it works</NavLink><Link href="/pricing">Pricing</Link><Link href="/templates">Templates</Link><Link href="/mine">My invitations</Link><Link href="/help">Help</Link><Link href="/privacy">Privacy</Link></nav><span className="cin-footer-note">© 2026 WowLink</span></footer></div>;
 }

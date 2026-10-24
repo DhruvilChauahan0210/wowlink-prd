@@ -66,21 +66,27 @@ export function Bunting({ delay = 0, top = 0 }: { delay?: number; top?: number }
   </svg>;
 }
 
-/** WowLink's arch mark, drawing itself in. */
+// WowLink's seal, the same paths as app/ui/brand.tsx (the site's logo): a red wax seal scalloped like a marigold,
+// and a w written in one stroke that loops on.
+const SEAL_EDGE = "M50 10A8.6 8.6 0 0 1 65.31 13.04A8.6 8.6 0 0 1 78.28 21.72A8.6 8.6 0 0 1 86.96 34.69A8.6 8.6 0 0 1 90 50A8.6 8.6 0 0 1 86.96 65.31A8.6 8.6 0 0 1 78.28 78.28A8.6 8.6 0 0 1 65.31 86.96A8.6 8.6 0 0 1 50 90A8.6 8.6 0 0 1 34.69 86.96A8.6 8.6 0 0 1 21.72 78.28A8.6 8.6 0 0 1 13.04 65.31A8.6 8.6 0 0 1 10 50A8.6 8.6 0 0 1 13.04 34.69A8.6 8.6 0 0 1 21.72 21.72A8.6 8.6 0 0 1 34.69 13.04A8.6 8.6 0 0 1 50 10Z";
+const SEAL_W = "M24 39.5C25.6 49.5 29 58.5 33.5 63.8C36.8 56.6 40.6 49.4 45.4 43.8C48.8 50.8 52.6 58.6 57 63.8C60.8 57 64.2 48.8 65.6 41.6C67.2 34 64 27.6 59.4 29.4C55.2 31.2 56.2 38.4 62 40.4C67 42.1 72.6 41.6 77 39";
+
+/** The seal: it presses in, and its w writes itself as `draw` goes from 0 to 1. `color` is the wax. */
 export function Mark({ size, draw = 1, color = C.red }: { size: number; draw?: number; color?: string }) {
-  const stroke = { fill: "none", stroke: color, strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round", pathLength: 1, strokeDasharray: 1, strokeDashoffset: 1 - draw } as const;
-  return <svg width={size} height={size} viewBox="0 0 32 32">
-    <path d="M5 29V15.5a11 11 0 0 1 22 0V29" {...stroke}/>
-    <path d="M10.5 29V16.5a5.5 5.5 0 0 1 11 0V29" {...stroke}/>
-    <circle cx="16" cy="22" r="2.1" fill={color} opacity={draw > 0.9 ? 1 : 0}/>
+  return <svg width={size} height={size} viewBox="0 0 100 100" style={{ overflow: "visible" }}>
+    <g style={{ transform: `scale(${0.7 + 0.3 * Math.min(1, draw * 2)})`, transformOrigin: "50px 50px", opacity: Math.min(1, draw * 3) }}>
+      <path d={SEAL_EDGE} fill={color}/>
+      <circle cx="50" cy="50" r="31" fill="none" stroke={C.cream} strokeOpacity={0.4} strokeWidth={1.4} strokeDasharray="1.6 3.2" strokeLinecap="round"/>
+    </g>
+    <path d={SEAL_W} transform="translate(4 7.5) scale(.92)" fill="none" stroke={C.cream} strokeWidth={6.2} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - Math.max(0, Math.min(1, (draw - 0.3) / 0.7))}/>
   </svg>;
 }
 
-/** The logo: the mark and "WowLink". */
+/** The logo: the seal and "wowlink", "link" in `mark` (red on paper, gold on the dark end card). */
 export function Logo({ size, draw = 1, color = C.ink, mark = C.red }: { size: number; draw?: number; color?: string; mark?: string }) {
-  return <div style={{ display: "flex", alignItems: "center", gap: size * 0.28 }}>
-    <Mark size={size} draw={draw} color={mark}/>
-    <span style={{ font: `700 ${size * 0.82}px/1 ${F.serif}`, color, letterSpacing: "-0.02em", opacity: interpolate(draw, [0.4, 1], [0, 1], { extrapolateLeft: "clamp" }) }}>WowLink</span>
+  return <div style={{ display: "flex", alignItems: "center", gap: size * 0.24 }}>
+    <Mark size={size * 1.15} draw={draw}/>
+    <span style={{ font: `600 ${size * 0.86}px/1 ${F.serif}`, color, letterSpacing: "-0.035em", opacity: interpolate(draw, [0.4, 1], [0, 1], { extrapolateLeft: "clamp" }) }}>wow<span style={{ color: mark }}>link</span></span>
   </div>;
 }
 

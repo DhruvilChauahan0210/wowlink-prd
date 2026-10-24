@@ -8,6 +8,7 @@ import type { PublicExperience } from "../lib/store";
 import { paletteFor } from "../lib/palette";
 import { renderSvg } from "../lib/svg-string";
 import { StandaloneArt, type ArtName } from "../ui/art";
+import { SEAL_CREAM, SEAL_EDGE, SEAL_RED, SEAL_W, SEAL_W_TRANSFORM } from "../ui/brand";
 
 /*
  * The card WhatsApp, iMessage and social apps show when an invitation link is shared:
@@ -44,10 +45,11 @@ const torana = renderSvg(
     ))}
   </svg>,
 );
+// WowLink's seal (ui/brand.tsx).
 const mark = renderSvg(
-  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 32 32">
-    <path d="M5 29V15.5a11 11 0 0 1 22 0V29M10.5 29V16.5a5.5 5.5 0 0 1 11 0V29" fill="none" stroke="#a8341f" strokeWidth="2.2" strokeLinecap="round" />
-    <circle cx="16" cy="22" r="2.1" fill="#e0922f" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 100 100">
+    <path d={SEAL_EDGE} fill={SEAL_RED} />
+    <path d={SEAL_W} transform={SEAL_W_TRANSFORM} fill="none" stroke={SEAL_CREAM} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
   </svg>,
 );
 
@@ -89,8 +91,8 @@ async function card({ name, tone, eyebrow, title, lines, small, cta }: CardWords
         </div>
 
         <div style={{ position: "absolute", right: 60, bottom: 40, display: "flex", alignItems: "center", gap: 10 }}>
-          <img src={svgData(mark)} width={36} height={36} />
-          <div style={{ fontFamily: "Fraunces", fontSize: 30 }}>WowLink</div>
+          <img src={svgData(mark)} width={42} height={42} />
+          <div style={{ display: "flex", fontFamily: "Fraunces", fontSize: 32, letterSpacing: "-0.03em" }}>wow<span style={{ color: SEAL_RED }}>link</span></div>
         </div>
       </div>
     ),

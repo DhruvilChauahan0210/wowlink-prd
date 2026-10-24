@@ -383,7 +383,7 @@
 .cinema .inv-nf-other{margin-top:14px;max-width:34em;font-size:15px;color:var(--muted)}
 .inv-nf-other strong{color:var(--text);font-weight:600}
 .inv-not-found>main{min-height:calc(100svh - 72px);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:48px 24px 72px}
-.inv-not-found>main>svg{height:36px;width:36px;color:var(--accent);margin-bottom:28px}
+.inv-not-found>main>svg{height:64px;width:64px;margin-bottom:26px;rotate:-6deg}
 .inv-not-found h1{font-size:clamp(52px,7vw,104px);line-height:1;margin:0 0 20px}
 .inv-not-found p{font-size:18px;line-height:1.6;color:var(--muted);max-width:28em;margin-bottom:32px}
 .inv-not-found .inv-replay-link{margin-top:24px}
