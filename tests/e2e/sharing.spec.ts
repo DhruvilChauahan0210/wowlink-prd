@@ -23,6 +23,21 @@ test("the share image also renders for an invitation with a schedule", async ({ 
   expect(image.headers()["content-type"]).toBe("image/png");
 });
 
+test("a Gujarati or Hindi invitation's share image renders, its words joined up (shaped-text.ts)", async ({ request }) => {
+  const invitations = [
+    { language: "gu" as const, title: "પ્રિયા અને ક્ષિતિજનાં લગ્ન", venue: "શ્રી કૃષ્ણ વાડી, સુરત", events: ["ગ્રહશાંતિ", "મહેંદી", "લગ્ન"] },
+    { language: "hi" as const, title: "प्रिया और क्षितिज की शादी", venue: "श्री कृष्ण वाटिका, जयपुर", events: ["मेहंदी", "संगीत संध्या", "शादी"] },
+  ];
+  for (const { language, title, venue, events } of invitations) {
+    const { slug } = await publish(request, "wedding", { language, title, venue, events: events.map((name, i) => ({ id: `e${i}`, name, date: `2026-11-0${6 + i}`, time: "18:00", venue: "" })) });
+    const image = await request.get(`/e/${slug}/opengraph-image`);
+    expect(image.status(), language).toBe(200);
+    expect(image.headers()["content-type"]).toBe("image/png");
+    const png = await image.body();
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+  }
+});
+
 test("add to calendar: a Google link and a standards-compliant .ics, in India time", async ({ page, request }) => {
   const { slug } = await publish(request, "wedding", { title: "Isha & Kabir", date: "2026-11-08", time: "18:00", venue: "Lakeview Lawns, Udaipur" });
   await page.goto(`/e/${slug}`);

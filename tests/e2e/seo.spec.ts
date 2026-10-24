@@ -77,7 +77,11 @@ test("an occasion's page in Gujarati and Hindi: its own words and address, linke
   await expect(page.getByRole("link", { name: "આપનું આમંત્રણ બનાવો, મફત" })).toHaveAttribute("href", "/create?template=garba&lang=gu");
   await expect(page.locator(".occasion-others a").first()).toHaveAttribute("href", "/templates/wedding?lang=gu");
   await expect(page.locator("footer[data-site-footer]")).toHaveAttribute("lang", "gu");
-  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /\/templates\/garba\/opengraph-image/);
+  // Its own share card, in Gujarati (drawn by HarfBuzz, so its letters join: app/e/shaped-text.ts).
+  const card = await request.get((await page.locator('meta[property="og:image"]').getAttribute("content"))!);
+  expect(card.url()).toMatch(/\/templates\/garba\/gu\/opengraph-image/);
+  expect(card.status()).toBe(200);
+  expect(card.headers()["content-type"]).toBe("image/png");
 
   // On to Hindi, and back to English, from the header.
   await page.locator(".page-langs").getByRole("link", { name: "हिन्दी" }).click();
@@ -96,7 +100,10 @@ test("every occasion's page is built ahead in every language, as the live site n
   // `next start` would render a page missing from the build on demand; on Vercel it's a 404 (dynamicParams = false).
   const { readFileSync } = await import("node:fs");
   const built = Object.keys(JSON.parse(readFileSync(".next-test/prerender-manifest.json", "utf8")).routes);
-  for (const id of OCCASIONS) for (const page of [`/templates/${id}`, `/templates/${id}/gu`, `/templates/${id}/hi`]) expect(built, page).toContain(page);
+  for (const id of OCCASIONS) for (const lang of ["", "/gu", "/hi"]) {
+    expect(built).toContain(`/templates/${id}${lang}`);
+    expect(built).toContain(`/templates/${id}${lang}/opengraph-image`);
+  }
   for (const slug of GUIDES) expect(built).toContain(`/wording/${slug}`);
 });
 

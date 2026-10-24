@@ -16,6 +16,11 @@ page /
 page /templates
 page /create
 page /api/account
+# An occasion's page in Gujarati, and its share card (drawn with HarfBuzz): both built ahead, so a 404 here means they
+# weren't.
+page "/templates/wedding?lang=gu"
+page /templates/wedding/gu/opengraph-image
+page /wording
 
 # What search engines and link previews read names the site itself: the sitemap, robots.txt and a page's canonical link.
 # Right after a deploy the edge can still serve the old copy for a few seconds: try for up to a minute.

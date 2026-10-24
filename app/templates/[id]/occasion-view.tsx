@@ -12,7 +12,6 @@ import { STARTER_OCCASIONS } from "../../lib/plans";
 import { breadcrumbs, faqPage } from "../../lib/structured-data";
 import { JsonLd } from "../../ui/json-ld";
 import { guideFor } from "../../lib/wording";
-import { shareCardSize } from "../../e/share-card";
 
 /*
  * Each occasion's own page, in English (/templates/<id>) or in Gujarati or Hindi (?lang=gu or hi, which middleware.ts
@@ -27,11 +26,7 @@ export function occasionMetadata(id: TemplateId, lang: Lang): Metadata {
   const { title, description } = OCCASION_COPY[lang].pages[id];
   const url = langHref(path(id), lang);
   const languages = { ...Object.fromEntries(LANGS.map((other) => [other, langHref(path(id), other)])), "x-default": path(id) };
-  // The Gujarati and Hindi pages share the English page's card: the card renderer can't join Gujarati or Hindi letters
-  // into their conjuncts (પ્ર, प्र), so it would print them broken.
-  // (An English page's own card comes from ./opengraph-image; naming images here at all, even as none, would hide it.)
-  const images = lang === "en" ? {} : { images: [{ url: `${path(id)}/opengraph-image`, width: shareCardSize.width, height: shareCardSize.height, alt: "A hand-drawn invitation made with WowLink" }] };
-  return { title: `${title} — WowLink`, description, alternates: { canonical: url, languages }, openGraph: { title, description, url, type: "website", siteName: "WowLink", locale: { en: "en_IN", gu: "gu_IN", hi: "hi_IN" }[lang], ...images } };
+  return { title: `${title} — WowLink`, description, alternates: { canonical: url, languages }, openGraph: { title, description, url, type: "website", siteName: "WowLink", locale: { en: "en_IN", gu: "gu_IN", hi: "hi_IN" }[lang] } };
 }
 
 export function OccasionView({ id, lang }: { id: TemplateId; lang: Lang }) {
