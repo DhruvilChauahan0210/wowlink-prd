@@ -17,6 +17,18 @@ page /templates
 page /create
 page /api/account
 
+# What search engines and link previews read names the site itself: the sitemap, robots.txt and a page's canonical link.
+own() {
+  local body
+  body=$(curl -s --max-time 20 "$SITE$1?t=$(date +%s)")
+  if echo "$body" | grep -q "localhost"; then echo "FAIL  $1 names localhost, not $SITE (is NEXT_PUBLIC_SITE_URL set for the build?)"; fail=1
+  elif ! echo "$body" | grep -q "$SITE"; then echo "FAIL  $1 doesn't name $SITE"; fail=1
+  else echo "ok    $1 names $SITE"; fi
+}
+own /sitemap.xml
+own /robots.txt
+own /templates/wedding
+
 field() { echo "$health" | python3 -c "import json,sys
 try: print(json.load(sys.stdin).get('$1'))
 except Exception: print('unreadable')"; }

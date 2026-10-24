@@ -67,6 +67,9 @@ jobs:
       VERCEL_ORG_ID: team_MZ8qck5QQF2GT61SCmtdnIjx
       VERCEL_PROJECT_ID: prj_lNOU6CneK8zx38vF5LivX3k22Vi5
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # The site's own address, built into canonical links, the sitemap, robots.txt and share images. Without it the
+      # build falls back to localhost. Change it here when WowLink moves to its own domain.
+      NEXT_PUBLIC_SITE_URL: https://wowlink-one.vercel.app
     steps:
       - uses: actions/checkout@v7
 
@@ -87,4 +90,4 @@ jobs:
         run: npx -y vercel@65.2.0 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
       - name: The live site answers
-        run: bash scripts/live-check.sh https://wowlink-one.vercel.app
+        run: bash scripts/live-check.sh "$NEXT_PUBLIC_SITE_URL"
