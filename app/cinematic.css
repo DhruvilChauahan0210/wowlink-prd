@@ -236,18 +236,39 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 /* ---------- Occasion reel (paper) ---------- */
 /* the reel scrolls sideways as you scroll down: about 55svh of scrolling per occasion */
 .cin-reel{height:460svh;position:relative}
-.cin-reel-sticky{position:sticky;top:0;height:100svh;display:flex;align-items:center;overflow:hidden}
-.cin-reel-intro{position:relative;z-index:5;flex:0 0 min(34vw,520px);padding:0 clamp(24px,3.5vw,56px) 0 var(--gutter);background-color:var(--bg);box-shadow:24px 0 32px var(--bg);align-self:stretch;display:flex;flex-direction:column;justify-content:center}
-.cin-reel-intro h2{font-size:clamp(34px,3.8vw,60px);line-height:1.06}
-.cin-reel-intro>p{margin-top:20px;color:var(--muted);font-size:17px;line-height:1.6;max-width:22em}
-.cin-reel-note{display:flex;align-items:center;gap:6px;margin-top:22px;rotate:-2deg;font-size:28px}
+/* The occasions on a line: prints hung from a cord strung with marigolds, clipped on with pegs, sliding past as the
+   page scrolls (the line is moved in cinematic-home.tsx, which also sets --swing from its speed). */
+.cin-reel-sticky{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,2.4svh,30px);padding:clamp(100px,12svh,116px) 0 clamp(20px,4svh,44px);overflow:hidden;isolation:isolate}
+.cin-reel-sticky::before{content:"";position:absolute;inset:0;z-index:-1;background-color:color-mix(in srgb,var(--tone,#c2412d) 6%,transparent);transition:background-color .8s ease}
+.reel-head{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding:0 var(--gutter)}
+.reel-head h2{font-size:clamp(30px,3.3vw,52px);line-height:1.05}
+.reel-line{--w:clamp(170px,min(19vw,calc((100svh - 470px) * .78)),310px);--gap:clamp(56px,6vw,110px);display:flex;align-items:flex-start;gap:var(--gap);padding:34px calc(50vw - var(--w) / 2) 26px;will-change:transform}
+.reel-line{position:relative}
+.reel-cord{position:absolute;z-index:0;left:0;top:0;overflow:visible;pointer-events:none}
+.reel-cord path{fill:none;stroke:#2a1d14;stroke-opacity:.5;stroke-width:1.6}
+.reel-cord circle{stroke:#2a1d14;stroke-opacity:.4;stroke-width:1.5}
+.reel-card{position:relative;z-index:1;flex:0 0 var(--w);width:var(--w);transform-origin:50% -14px;rotate:calc(var(--tilt) + var(--swing, 0) * var(--k) * 1deg);scale:.92;opacity:.78;transition:scale .55s cubic-bezier(.2,.8,.2,1),opacity .55s ease,translate .55s cubic-bezier(.2,.8,.2,1)}
+.reel-card.is-active{z-index:2;scale:1.08;opacity:1;translate:0 10px}
+.reel-peg{position:absolute;z-index:3;top:-32px;left:50%;width:15px;height:38px;margin-left:-7.5px;rotate:-4deg;fill:#c08a52;stroke:#2a1d14;stroke-width:1.5;stroke-linecap:round;filter:drop-shadow(0 2px 1px #2a1d1433)}
+.reel-print{display:flex;flex-direction:column;padding:9px 9px 0;background:#fbf6ec;border-radius:2px;box-shadow:0 1px 2px #2a1d1433,0 20px 34px -16px #2a1d1470;transition:box-shadow .5s}
+.reel-card.is-active .reel-print{box-shadow:0 1px 2px #2a1d1433,0 34px 50px -20px #2a1d1490}
+.reel-print .cin-photo{flex:none;aspect-ratio:4/5}
+.reel-label{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 2px 11px;font:700 clamp(18px,1.5vw,22px)/1.1 var(--hand);color:var(--muted)}
+.reel-card.is-active .reel-label{color:var(--tone,var(--accent))}
+.reel-label .studio-pro-badge{font-size:11px;padding:2px 7px 1px;flex:none}
+.reel-now{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 var(--gutter);min-height:clamp(150px,22svh,200px)}
+.reel-kind{font:700 clamp(20px,1.7vw,25px)/1.1 var(--hand);color:var(--tone,var(--accent));transition:color .6s}
+.reel-kind b{font-weight:inherit}
+.cin-reel .reel-now h3{margin:4px 0 6px;font-size:clamp(32px,3.4vw,52px);line-height:1.04;animation:hero-fade .5s ease both}
+.cin-reel .reel-now p{max-width:30em;color:var(--muted);font-size:clamp(15px,1.15vw,17px)}
+.reel-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px 28px;margin-top:clamp(12px,2svh,20px)}
+.reel-actions .cin-cta{min-height:48px;padding:0 26px;font-size:14px}
+/* With reduced motion: a row to scroll sideways, nothing swinging */
+.cin-reduced .cin-reel{height:auto}
+.cin-reduced .cin-reel-sticky{position:relative;height:auto;min-height:100svh}
+.cin-reduced .reel-line{overflow-x:auto;transform:none!important;scroll-snap-type:x mandatory;padding-left:var(--gutter);padding-right:var(--gutter)}
+.cin-reduced .reel-card{rotate:var(--tilt);scroll-snap-align:center}
 .doodle-curl{width:62px;height:38px;flex:none;rotate:6deg}
-.cin-reel-meter{display:flex;align-items:center;gap:16px;margin:30px 0 26px;font:500 14px/1 var(--sans);color:var(--faint)}
-.cin-reel-meter b{color:var(--text);font-weight:600}
-.cin-meter{width:96px;height:3px;background:var(--line);border-radius:3px;overflow:hidden}
-.cin-meter>span{height:100%;width:100%;display:block;background:var(--accent);transform:scaleX(0);transform-origin:left}
-.cin-reel-intro .cin-text-link{align-self:flex-start}
-.cin-reel-track{display:flex;flex:none;gap:36px;padding-right:var(--gutter);will-change:transform}
 .cin-occasion-card{flex:0 0 clamp(290px,27vw,430px);width:clamp(290px,27vw,430px);transform-origin:bottom;will-change:transform,opacity}
 
 /* Each photo is a print, held up with a strip of washi tape. */
@@ -262,7 +283,6 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-photo{display:block;position:relative;flex:1;min-height:0;overflow:hidden;background:#f1e6d2}
 .cin-photo>:is(svg,img){display:block;width:100%;height:100%;will-change:transform}
 /* the reel scales its cards as they pass; a layer of their own keeps that from repainting the drawing */
-.cin-reel .cin-occasion-card{will-change:transform,opacity}
 
 .cin-card-title{display:block;padding:12px 10px 14px}
 .cin-card-kind{display:block;font:700 24px/1.1 var(--hand);color:var(--accent)}
@@ -486,11 +506,6 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 @media(max-width:480px){.occasion-others{grid-template-columns:repeat(2,minmax(0,1fr))}.occasion-hero .occasion-intro{font-size:17px}}
 
 /* ---------- Reduced motion ---------- */
-.cin-reduced .cin-reel{height:auto;padding:100px 0}
-.cin-reduced .cin-reel-sticky{position:relative;height:auto;display:block;overflow:visible}
-.cin-reduced .cin-reel-intro{width:100%;padding:0 var(--gutter) 40px;box-shadow:none}
-.cin-reduced .cin-reel-track{width:100%;padding:18px var(--gutter) 24px;overflow-x:auto;transform:none!important}
-.cin-reduced .cin-occasion-card{opacity:1!important;transform:none!important}
 .cin-reduced .cin-journey{height:auto}
 .cin-reduced .cin-journey-sticky{position:relative;height:auto;min-height:760px}
 @media(prefers-reduced-motion:reduce){.cinema *,.cinema *:before,.cinema *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -549,11 +564,10 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 
 
   .cin-reel{height:460svh}
-  .cin-reel-sticky{flex-direction:column;align-items:flex-start;justify-content:center;padding-top:64px}
-  .cin-reel-intro{flex:none;width:100%;padding:0 var(--gutter) 28px;background:transparent;box-shadow:none;align-self:auto;display:block}
-  .cin-reel-intro h2{font-size:32px;line-height:1.1}
-  .cin-reel-intro>p,.cin-reel-meter,.cin-reel-intro .cin-text-link,.cin-reel-note{display:none}
-  .cin-reel-track{gap:24px;padding-left:var(--gutter);padding-right:var(--gutter)}
+  .reel-head{flex-direction:column;gap:4px}
+  .reel-head .cin-text-link{display:none}
+  .reel-line{--w:min(54vw,calc((100svh - 450px) * .78));--gap:44px}
+  .reel-now{min-height:0}
   .cin-occasion-card{width:76vw;flex-basis:76vw}
   .cin-occasion-image{height:48svh;min-height:300px;max-height:460px}
   .cin-card-title{padding:10px 8px 12px}

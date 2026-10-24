@@ -6,7 +6,7 @@ import { STARTER_OCCASIONS } from "./lib/plans";
 import { getInvitationTemplate, initialDraft, type TemplateId } from "./lib/invitations";
 import type { ArtName } from "./ui/art";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
-import { ArtImage } from "./ui/art";
+import { Art, ArtImage } from "./ui/art";
 import { BrandLockup, SealMark } from "./ui/brand";
 import { InvitationScene } from "./ui/invitation-scene";
 import { ArrowCurl, Diya, Flower, Star } from "./ui/doodles";
@@ -188,41 +188,111 @@ const occasions = [
   { id: "naming", title: "Hello, little one.", kind: "Naamkaran", detail: "Be there to hear the name first." },
 ] as const;
 
+// Each occasion's colour (as on its invitation), for the section's wash while it's in the middle.
+const TONES: Record<string, string> = { wedding: "#c2412d", engagement: "#9c2f55", birthday: "#c9506d", garba: "#b8552c", babyshower: "#3d7f79", housewarming: "#a24a24", anniversary: "#b8405f", opening: "#4f7a3c", diwali: "#b8441a", janoi: "#b0580f", puja: "#b23a1e", naming: "#b83a72" };
+// How each print hangs: its resting tilt, and how much it swings.
+const HANG = [[-2.2, 1], [1.6, 1.25], [-1, .85], [2.4, 1.1], [-1.8, 1.3], [1, .9]];
+
+/**
+ * The occasions on a line, hung up like prints on a cord strung with marigolds and clipped on with wooden pegs. As
+ * the page scrolls the line slides along; the prints swing a little as it moves and settle when it stops. The one in
+ * the middle comes forward and its drawing draws itself, its words show below, and the section takes its colour.
+ */
 function OccasionReel({ reduced }: { reduced: boolean }) {
   const root = useRef<HTMLElement>(null);
-  const track = useRef<HTMLDivElement>(null);
+  const line = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLElement | null)[]>([]);
-  const count = useRef<HTMLSpanElement>(null);
-  const bar = useRef<HTMLSpanElement>(null);
-  useEffect(() => onSceneFrame(() => {
-    if (!root.current || !track.current || reduced) return;
-    const { p, rect } = progress(root.current);
-    if (rect.bottom < 0 || rect.top > innerHeight) return;
-    const k = range(p, 0.04, 0.96);
-    const travel = Math.max(0, track.current.scrollWidth + track.current.offsetLeft - innerWidth * 0.94);
-    track.current.style.transform = `translate3d(${-k * travel}px,0,0)`;
+  const [active, setActive] = useState(0);
+  const [cord, setCord] = useState<{ width: number; height: number; path: string; flowers: [number, number, string][] } | null>(null);
+  const current = useRef(0);
+  // The cord is one line across the whole row, drawn through the pegs (measured, and again when the size changes), so
+  // the prints can swing on their pegs without ever breaking it.
+  useEffect(() => {
+    const track = line.current;
+    if (!track) return;
+    const measure = () => {
+      const pegs = cards.current.map((card) => card ? [card.offsetLeft + card.offsetWidth / 2, card.offsetTop - 14] as const : null).filter((p): p is readonly [number, number] => !!p);
+      if (pegs.length < 2) return;
+      const sag = 26, colours = ["#f0a03a", "#c2412d", "#f6c453"];
+      const flowers: [number, number, string][] = [];
+      const [x0, y] = pegs[0];
+      const step = pegs[1][0] - x0;
+      const points = [[x0 - step, y] as const, ...pegs, [pegs[pegs.length - 1][0] + step, y] as const];
+      let path = `M${points[0][0]} ${y}`;
+      for (let i = 1; i < points.length; i++) {
+        const a = points[i - 1][0], b = points[i][0];
+        path += `Q${(a + b) / 2} ${y + sag * 2} ${b} ${y}`;
+        [0.25, 0.5, 0.75].forEach((t, j) => flowers.push([a + (b - a) * t, y + sag * 4 * t * (1 - t), colours[j]]));
+      }
+      setCord({ width: track.scrollWidth, height: y + sag * 2 + 20, path, flowers });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, []);
+  const show = (i: number) => { if (i !== current.current) { current.current = i; setActive(i); } };
+  useEffect(() => {
+    let previous = 0, swing = 0;
+    return onSceneFrame(() => {
+      const section = root.current, track = line.current;
+      const first = cards.current[0], last = cards.current[occasions.length - 1];
+      if (!section || !track || !first || !last || reduced) return;
+      const { p, rect } = progress(section);
+      if (rect.bottom < 0 || rect.top > innerHeight) return;
+      const k = range(p, 0.05, 0.95);
+      track.style.transform = `translate3d(${-k * (last.offsetLeft - first.offsetLeft)}px,0,0)`;
+      // The line's speed swings the prints on their pegs; when it stops they settle.
+      const pull = Math.max(-7, Math.min(7, -(k - previous) * 2400));
+      previous = k;
+      swing += (pull - swing) * 0.08;
+      track.style.setProperty("--swing", swing.toFixed(2));
+      show(Math.round(k * (occasions.length - 1)));
+    });
+  }, [reduced]);
+  // With reduced motion the line is a row to scroll sideways: the print nearest the middle is the one shown.
+  const onRowScroll = () => {
+    const track = line.current;
+    if (!track) return;
+    const middle = track.scrollLeft + track.clientWidth / 2;
     let nearest = 0, best = Infinity;
     cards.current.forEach((card, i) => {
-      if (!card) return;
-      const r = card.getBoundingClientRect();
-      const delta = (r.left + r.width / 2 - innerWidth * (innerWidth < 768 ? 0.5 : 0.65)) / innerWidth;
-      const dim = clamp(Math.abs(delta) * 1.5);
-      card.style.opacity = String(1 - dim * 0.55);
-      card.style.transform = `scale(${1 - dim * 0.05})`;
-      const image = card.querySelector<HTMLElement>(".cin-photo > img");
-      if (image) image.style.transform = `translate3d(${-delta * 35}px,0,0) scale(1.14)`;
-      if (Math.abs(delta) < best) { best = Math.abs(delta); nearest = i; }
+      const d = card ? Math.abs(card.offsetLeft + card.offsetWidth / 2 - middle) : Infinity;
+      if (d < best) { best = d; nearest = i; }
     });
-    count.current!.textContent = String(nearest + 1);
-    bar.current!.style.transform = `scaleX(${k})`;
-  }), [reduced]);
-  return <section className="cin-reel theme-paper" id="occasions" ref={root}><div className="cin-reel-sticky">
-    <div className="cin-reel-intro"><h2>Every occasion gets its own drawing.</h2><p>Pick a sketch made for your day, then make it yours.</p><span className="cin-note cin-reel-note">tap a drawing to peek inside <ArrowCurl className="doodle-curl"/></span><div className="cin-reel-meter" aria-hidden="true"><span><b ref={count}>1</b> / {occasions.length}</span><span className="cin-meter"><span ref={bar}/></span></div><Link className="cin-text-link" href="/templates">Browse all templates <span aria-hidden="true">→</span></Link></div>
-    <div className="cin-reel-track" ref={track}>{occasions.map((item, i) => <article key={item.id} className="cin-occasion-card" ref={(el) => { cards.current[i] = el; }}>
-      <Link className="cin-occasion-image" href={`/e/preview?template=${item.id}`} aria-label={`Preview the ${item.kind.toLowerCase()} invitation`}><span className="cin-photo"><ArtImage name={item.id} fit="slice"/></span><span className="cin-card-title"><span className="cin-card-kind">{item.kind}{!STARTER_OCCASIONS.includes(item.id as TemplateId) && <span className="studio-pro-badge cin-card-pro">Creator studio</span>}</span><h3>{item.title}</h3></span></Link>
-      <div className="cin-card-bottom"><p>{item.detail}</p><Link href={`/create?template=${item.id}`}>Make it yours <span aria-hidden="true">→</span></Link></div>
-    </article>)}</div>
-  </div></section>;
+    show(nearest);
+  };
+  const item = occasions[active];
+  return <section className="cin-reel theme-paper" id="occasions" ref={root} style={{ "--tone": TONES[item.id] } as CSSProperties}>
+    <div className="cin-reel-sticky">
+      <div className="reel-head">
+        <h2>Every occasion gets its own drawing.</h2>
+        <Link className="cin-text-link" href="/templates">Browse all templates <span aria-hidden="true">→</span></Link>
+      </div>
+      <div className="reel-line" ref={line} onScroll={reduced ? onRowScroll : undefined}>
+        {cord && <svg className="reel-cord" width={cord.width} height={cord.height} aria-hidden="true">
+          <path d={cord.path}/>
+          {cord.flowers.map(([x, y, fill], i) => <circle key={i} cx={x} cy={y} r={i % 3 === 1 ? 8.5 : 7.5} fill={fill}/>)}
+        </svg>}
+        {occasions.map((o, i) => <article key={o.id} ref={(el) => { cards.current[i] = el; }} className={`reel-card${i === active ? " is-active" : ""}`} style={{ "--tilt": `${HANG[i % HANG.length][0]}deg`, "--k": HANG[i % HANG.length][1] } as CSSProperties}>
+          <svg className="reel-peg" viewBox="0 0 18 44" aria-hidden="true"><path d="M5 2h8a2 2 0 0 1 2 2v34a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V4a2 2 0 0 1 2-2Z"/><path d="M9 4v36M4 17h10" strokeOpacity=".45"/></svg>
+          <Link className="reel-print" href={`/e/preview?template=${o.id}`} aria-label={`Peek inside the ${o.kind.toLowerCase()} invitation`}>
+            <span className="cin-photo">{i === active && !reduced ? <Art name={o.id} drawing decorative fit="slice"/> : <ArtImage name={o.id} fit="slice"/>}</span>
+            <span className="reel-label">{o.kind}{!STARTER_OCCASIONS.includes(o.id as TemplateId) && <span className="studio-pro-badge">Creator studio</span>}</span>
+          </Link>
+        </article>)}
+      </div>
+      <div className="reel-now">
+        <span className="reel-kind"><b>{String(active + 1).padStart(2, "0")}</b> / {occasions.length} · {item.kind}</span>
+        <h3 key={item.id}>{item.title}</h3>
+        <p>{item.detail}</p>
+        <div className="reel-actions">
+          <Link className="cin-cta cin-cta-light" href={`/create?template=${item.id}`}>Make it yours</Link>
+          <Link className="cin-text-link" href={`/e/preview?template=${item.id}`}>Peek inside <span aria-hidden="true">→</span></Link>
+        </div>
+      </div>
+    </div>
+  </section>;
 }
 
 const journeySteps = [

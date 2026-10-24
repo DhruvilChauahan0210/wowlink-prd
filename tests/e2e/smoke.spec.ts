@@ -39,8 +39,11 @@ test("the home page hero is a real invitation to open, each print tries another,
   await sheet.locator(".inv-trigger").click();
   await expect(sheet.locator(".inv-scene")).toHaveClass(/is-open/);
   await expect(sheet.locator(".inv-card .art.is-drawing")).toBeVisible();
-  await expect(page.locator(".cin-occasion-card")).toHaveCount(12);
-  await expect(page.locator(".cin-occasion-card h3")).toHaveText(["For your forever.", "Say yes, together.", "Make a wish.", "Feel the rhythm.", "Little blessings.", "Step inside.", "Still us.", "Here’s to new.", "Light it up.", "A sacred thread.", "With faith.", "Hello, little one."]);
+  // The occasions hang on a line; the one in the middle has its words below.
+  await expect(page.locator(".reel-card")).toHaveCount(12);
+  await expect(page.locator(".reel-label")).toHaveText([/Weddings/, /Engagements/, /Birthdays/, /Garba/, /Baby showers/, /Housewarmings/, /Anniversaries/, /Grand openings/, /Diwali/, /Janoi/, /Katha/, /Naamkaran/]);
+  await expect(page.locator(".reel-now h3")).toHaveText("For your forever.");
+  await expect(page.locator(".reel-now").getByRole("link", { name: "Make it yours" })).toHaveAttribute("href", "/create?template=wedding");
 });
 
 test("an invitation link that doesn't open says so plainly, in all three languages, without selling", async ({ page }) => {
