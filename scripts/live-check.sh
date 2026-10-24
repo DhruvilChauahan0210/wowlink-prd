@@ -18,12 +18,17 @@ page /create
 page /api/account
 
 # What search engines and link previews read names the site itself: the sitemap, robots.txt and a page's canonical link.
+# Right after a deploy the edge can still serve the old copy for a few seconds: try for up to a minute.
 own() {
-  local body
-  body=$(curl -s --max-time 20 "$SITE$1?t=$(date +%s)")
-  if echo "$body" | grep -q "localhost"; then echo "FAIL  $1 names localhost, not $SITE (is NEXT_PUBLIC_SITE_URL set for the build?)"; fail=1
-  elif ! echo "$body" | grep -q "$SITE"; then echo "FAIL  $1 doesn't name $SITE"; fail=1
-  else echo "ok    $1 names $SITE"; fi
+  local body attempt
+  for attempt in 1 2 3 4 5 6; do
+    body=$(curl -s --max-time 20 -H "Cache-Control: no-cache" "$SITE$1?t=$(date +%s)")
+    if ! echo "$body" | grep -q "localhost" && echo "$body" | grep -q "$SITE"; then echo "ok    $1 names $SITE"; return; fi
+    [ "$attempt" -lt 6 ] && sleep 10
+  done
+  if echo "$body" | grep -q "localhost"; then echo "FAIL  $1 names localhost, not $SITE (is NEXT_PUBLIC_SITE_URL set for the build?)"
+  else echo "FAIL  $1 doesn't name $SITE"; fi
+  fail=1
 }
 own /sitemap.xml
 own /robots.txt
