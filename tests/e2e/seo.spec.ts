@@ -92,6 +92,14 @@ test("an occasion's page in Gujarati and Hindi: its own words and address, linke
   expect(built.headers().location).toMatch(/\/templates\/garba\?lang=hi$/);
 });
 
+test("every occasion's page is built ahead in every language, as the live site needs", async () => {
+  // `next start` would render a page missing from the build on demand; on Vercel it's a 404 (dynamicParams = false).
+  const { readFileSync } = await import("node:fs");
+  const built = Object.keys(JSON.parse(readFileSync(".next-test/prerender-manifest.json", "utf8")).routes);
+  for (const id of OCCASIONS) for (const page of [`/templates/${id}`, `/templates/${id}/gu`, `/templates/${id}/hi`]) expect(built, page).toContain(page);
+  for (const slug of GUIDES) expect(built).toContain(`/wording/${slug}`);
+});
+
 test("the wording guides: each wording in three languages, ready to copy, and a way to send it", async ({ page, context }) => {
   await page.goto("/wording");
   await expect(page.locator(".wording-index a")).toHaveCount(GUIDES.length);
