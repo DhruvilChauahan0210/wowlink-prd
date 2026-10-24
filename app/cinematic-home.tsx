@@ -193,6 +193,9 @@ const TONES: Record<string, string> = { wedding: "#c2412d", engagement: "#9c2f55
 // How each print hangs: its resting tilt, and how much it swings.
 const HANG = [[-2.2, 1], [1.6, 1.25], [-1, .85], [2.4, 1.1], [-1.8, 1.3], [1, .9]];
 
+// The line shows the occasions that are free to make; the rest are in the Creator studio (the link under the heading).
+const line = occasions.filter((o) => STARTER_OCCASIONS.includes(o.id as TemplateId));
+
 /**
  * The occasions on a line, hung up like prints on a cord strung with marigolds and clipped on with wooden pegs. As
  * the page scrolls the line slides along; the prints swing a little as it moves and settle when it stops. The one in
@@ -200,7 +203,7 @@ const HANG = [[-2.2, 1], [1.6, 1.25], [-1, .85], [2.4, 1.1], [-1.8, 1.3], [1, .9
  */
 function OccasionReel({ reduced }: { reduced: boolean }) {
   const root = useRef<HTMLElement>(null);
-  const line = useRef<HTMLDivElement>(null);
+  const row = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLElement | null)[]>([]);
   const [active, setActive] = useState(0);
   const [cord, setCord] = useState<{ width: number; height: number; path: string; flowers: [number, number, string][] } | null>(null);
@@ -208,7 +211,7 @@ function OccasionReel({ reduced }: { reduced: boolean }) {
   // The cord is one line across the whole row, drawn through the pegs (measured, and again when the size changes), so
   // the prints can swing on their pegs without ever breaking it.
   useEffect(() => {
-    const track = line.current;
+    const track = row.current;
     if (!track) return;
     const measure = () => {
       const pegs = cards.current.map((card) => card ? [card.offsetLeft + card.offsetWidth / 2, card.offsetTop - 14] as const : null).filter((p): p is readonly [number, number] => !!p);
@@ -235,24 +238,24 @@ function OccasionReel({ reduced }: { reduced: boolean }) {
   useEffect(() => {
     let previous = 0, swing = 0;
     return onSceneFrame(() => {
-      const section = root.current, track = line.current;
-      const first = cards.current[0], last = cards.current[occasions.length - 1];
+      const section = root.current, track = row.current;
+      const first = cards.current[0], last = cards.current[line.length - 1];
       if (!section || !track || !first || !last || reduced) return;
       const { p, rect } = progress(section);
       if (rect.bottom < 0 || rect.top > innerHeight) return;
       const k = range(p, 0.05, 0.95);
       track.style.transform = `translate3d(${-k * (last.offsetLeft - first.offsetLeft)}px,0,0)`;
       // The line's speed swings the prints on their pegs; when it stops they settle.
-      const pull = Math.max(-7, Math.min(7, -(k - previous) * 2400));
+      const pull = Math.max(-7, Math.min(7, -(k - previous) * (line.length - 1) * 220));
       previous = k;
       swing += (pull - swing) * 0.08;
       track.style.setProperty("--swing", swing.toFixed(2));
-      show(Math.round(k * (occasions.length - 1)));
+      show(Math.round(k * (line.length - 1)));
     });
   }, [reduced]);
   // With reduced motion the line is a row to scroll sideways: the print nearest the middle is the one shown.
   const onRowScroll = () => {
-    const track = line.current;
+    const track = row.current;
     if (!track) return;
     const middle = track.scrollLeft + track.clientWidth / 2;
     let nearest = 0, best = Infinity;
@@ -262,28 +265,28 @@ function OccasionReel({ reduced }: { reduced: boolean }) {
     });
     show(nearest);
   };
-  const item = occasions[active];
+  const item = line[active];
   return <section className="cin-reel theme-paper" id="occasions" ref={root} style={{ "--tone": TONES[item.id] } as CSSProperties}>
     <div className="cin-reel-sticky">
       <div className="reel-head">
         <h2>Every occasion gets its own drawing.</h2>
-        <Link className="cin-text-link" href="/templates">Browse all templates <span aria-hidden="true">→</span></Link>
+        <Link className="cin-text-link" href="/templates">{occasions.length - line.length} more in the Creator studio <span aria-hidden="true">→</span></Link>
       </div>
-      <div className="reel-line" ref={line} onScroll={reduced ? onRowScroll : undefined}>
+      <div className="reel-line" ref={row} onScroll={reduced ? onRowScroll : undefined}>
         {cord && <svg className="reel-cord" width={cord.width} height={cord.height} aria-hidden="true">
           <path d={cord.path}/>
           {cord.flowers.map(([x, y, fill], i) => <circle key={i} cx={x} cy={y} r={i % 3 === 1 ? 8.5 : 7.5} fill={fill}/>)}
         </svg>}
-        {occasions.map((o, i) => <article key={o.id} ref={(el) => { cards.current[i] = el; }} className={`reel-card${i === active ? " is-active" : ""}`} style={{ "--tilt": `${HANG[i % HANG.length][0]}deg`, "--k": HANG[i % HANG.length][1] } as CSSProperties}>
+        {line.map((o, i) => <article key={o.id} ref={(el) => { cards.current[i] = el; }} className={`reel-card${i === active ? " is-active" : ""}`} style={{ "--tilt": `${HANG[i % HANG.length][0]}deg`, "--k": HANG[i % HANG.length][1] } as CSSProperties}>
           <svg className="reel-peg" viewBox="0 0 18 44" aria-hidden="true"><path d="M5 2h8a2 2 0 0 1 2 2v34a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V4a2 2 0 0 1 2-2Z"/><path d="M9 4v36M4 17h10" strokeOpacity=".45"/></svg>
           <Link className="reel-print" href={`/e/preview?template=${o.id}`} aria-label={`Peek inside the ${o.kind.toLowerCase()} invitation`}>
             <span className="cin-photo">{i === active && !reduced ? <Art name={o.id} drawing decorative fit="slice"/> : <ArtImage name={o.id} fit="slice"/>}</span>
-            <span className="reel-label">{o.kind}{!STARTER_OCCASIONS.includes(o.id as TemplateId) && <span className="studio-pro-badge">Creator studio</span>}</span>
+            <span className="reel-label">{o.kind}</span>
           </Link>
         </article>)}
       </div>
       <div className="reel-now">
-        <span className="reel-kind"><b>{String(active + 1).padStart(2, "0")}</b> / {occasions.length} · {item.kind}</span>
+        <span className="reel-kind"><b>{String(active + 1).padStart(2, "0")}</b> / {line.length} · {item.kind}</span>
         <h3 key={item.id}>{item.title}</h3>
         <p>{item.detail}</p>
         <div className="reel-actions">

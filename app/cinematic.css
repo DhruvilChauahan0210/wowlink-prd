@@ -235,7 +235,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 
 /* ---------- Occasion reel (paper) ---------- */
 /* the reel scrolls sideways as you scroll down: about 55svh of scrolling per occasion */
-.cin-reel{height:460svh;position:relative}
+.cin-reel{height:280svh;position:relative}
 /* The occasions on a line: prints hung from a cord strung with marigolds, clipped on with pegs, sliding past as the
    page scrolls (the line is moved in cinematic-home.tsx, which also sets --swing from its speed). */
 .cin-reel-sticky{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,2.4svh,30px);padding:clamp(100px,12svh,116px) 0 clamp(20px,4svh,44px);overflow:hidden;isolation:isolate}
@@ -563,9 +563,9 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cin-finale .doodle{display:none}
 
 
-  .cin-reel{height:460svh}
+  .cin-reel{height:280svh}
   .reel-head{flex-direction:column;gap:4px}
-  .reel-head .cin-text-link{display:none}
+  .reel-head .cin-text-link{font-size:20px}
   .reel-line{--w:min(54vw,calc((100svh - 450px) * .78));--gap:44px}
   .reel-now{min-height:0}
   .cin-occasion-card{width:76vw;flex-basis:76vw}

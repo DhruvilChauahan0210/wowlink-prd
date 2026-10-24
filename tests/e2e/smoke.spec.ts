@@ -25,7 +25,7 @@ for (const { path, check } of PAGES) {
   });
 }
 
-test("the home page hero is a real invitation to open, each print tries another, and the reel shows all twelve occasions", async ({ page }) => {
+test("the home page hero is a real invitation to open, each print tries another, and the free occasions hang on a line", async ({ page }) => {
   await page.goto("/");
   const sheet = page.locator(".hero-sheet");
   await expect(sheet.locator(".inv-scene.inv-wedding")).toBeVisible();
@@ -39,9 +39,9 @@ test("the home page hero is a real invitation to open, each print tries another,
   await sheet.locator(".inv-trigger").click();
   await expect(sheet.locator(".inv-scene")).toHaveClass(/is-open/);
   await expect(sheet.locator(".inv-card .art.is-drawing")).toBeVisible();
-  // The occasions hang on a line; the one in the middle has its words below.
-  await expect(page.locator(".reel-card")).toHaveCount(12);
-  await expect(page.locator(".reel-label")).toHaveText([/Weddings/, /Engagements/, /Birthdays/, /Garba/, /Baby showers/, /Housewarmings/, /Anniversaries/, /Grand openings/, /Diwali/, /Janoi/, /Katha/, /Naamkaran/]);
+  // The occasions free to make hang on a line (the rest are a link away); the one in the middle has its words below.
+  await expect(page.locator(".reel-label")).toHaveText(["Weddings", "Birthdays & milestones", "Garba & Navratri", "Grand openings"]);
+  await expect(page.locator(".reel-head").getByRole("link", { name: /8 more in the Creator studio/ })).toHaveAttribute("href", "/templates");
   await expect(page.locator(".reel-now h3")).toHaveText("For your forever.");
   await expect(page.locator(".reel-now").getByRole("link", { name: "Make it yours" })).toHaveAttribute("href", "/create?template=wedding");
 });
