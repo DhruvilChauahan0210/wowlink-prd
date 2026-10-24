@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { PlanCards } from "./ui/plan-cards";
 import { STARTER_OCCASIONS } from "./lib/plans";
-import type { TemplateId } from "./lib/invitations";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { Art, ArtImage } from "./ui/art";
-import { ArrowCurl, Diya, Flower, Pen, Star } from "./ui/doodles";
+import { getInvitationTemplate, initialDraft, type TemplateId } from "./lib/invitations";
+import type { ArtName } from "./ui/art";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { ArtImage } from "./ui/art";
+import { InvitationScene } from "./ui/invitation-scene";
+import { ArrowCurl, Diya, Flower, Star } from "./ui/doodles";
 import { clamp, ease, onSceneFrame, progress, range, sceneNavigate, startSceneScroll } from "./lib/scene-scroll";
 
 function Mark() {
@@ -37,32 +39,138 @@ function Chrome() {
   </header>;
 }
 
-function InvitationScene() {
-  return <section id="top" className="cin-hero theme-paper">
-    <div className="cin-hero-grid">
-      <div className="cin-hero-copy">
-        <span className="cin-hero-gu"><Flower className="doodle"/><span lang="gu">આમંત્રણ</span><Flower className="doodle"/></span>
-        <h1>Invitations,<br/><em>drawn with love.</em></h1>
-        <p>Hand-drawn invitation pages for weddings, birthdays, Garba and grand openings. Pick a drawing, add your story, and share it with one link.</p>
-        <div className="cin-hero-actions">
-          <Link className="cin-cta cin-cta-light" href="/templates">Create your invitation</Link>
-          <Link className="cin-text-link" href="/e/preview?template=wedding">See a sample <span aria-hidden="true">→</span></Link>
-        </div>
-        <span className="cin-note cin-hero-note">watch it draw itself <ArrowCurl className="doodle-curl"/></span>
+/**
+ * A bandhanwar across the top of the hero, drawn like the occasions' art (ink over washes of colour): mango leaves
+ * hanging from a cord, small marigolds between them, and here and there a short string of marigolds ending in a
+ * brass bell.
+ */
+function Toran() {
+  const width = 2400, step = 240;
+  // Whole-number arithmetic, rounded: the server and the browser draw exactly the same garland (Math.sin can differ
+  // in the last digits between them, and React would see a mismatch).
+  const rand = (n: number) => ((n * 2654435761 + 1013904223) % 4294967296) / 4294967296;
+  const round = (n: number) => Math.round(n * 100) / 100;
+  const greens = ["#6f8f4e", "#7d9a52", "#5e7d43", "#88a35b"];
+  const cord: string[] = [];
+  const leaves: { x: number; y: number; turn: number; size: number; fill: string }[] = [];
+  const flowers: { x: number; y: number; r: number; fill: string }[] = [];
+  const drops: number[] = [];
+  for (let k = 0; k * step < width; k++) {
+    const x0 = k * step;
+    cord.push(`M${x0} 10Q${x0 + step / 2} 40 ${x0 + step} 10`);
+    const at = (t: number) => ({ x: round(x0 + t * step), y: round(10 + 60 * t * (1 - t)) });
+    for (let j = 0; j < 8; j++) {
+      const n = k * 8 + j;
+      const leaf = at((j + 0.5) / 8);
+      leaves.push({ ...leaf, turn: round((rand(n) - 0.5) * 16), size: round(0.84 + rand(n + 7) * 0.3), fill: greens[n % greens.length] });
+      if (j > 0) flowers.push({ ...at(j / 8), r: round(6 + rand(n + 3) * 1.5), fill: j % 4 === 0 ? "#c2412d" : j % 2 ? "#f0a03a" : "#f6c453" });
+    }
+    drops.push(x0);
+  }
+  const leaf = "M0 0C-9 9-11 29 0 47C11 29 9 9 0 0Z";
+  return <svg className="hero-toran" viewBox={`0 0 ${width} 84`} preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+    <g filter="url(#wash)">
+      {leaves.map((l, i) => <path key={i} d={leaf} fill={l.fill} transform={`translate(${l.x} ${l.y}) rotate(${l.turn}) scale(${l.size})`}/>)}
+      {flowers.map((f, i) => <circle key={i} cx={f.x} cy={f.y} r={f.r} fill={f.fill}/>)}
+      {drops.map((x) => <g key={x} transform={`translate(${x} 0)`}>
+        {[22, 35, 48].map((y, i) => <circle key={y} cy={y} r="6.5" fill={i % 2 ? "#f6c453" : "#f0a03a"}/>)}
+        <path d="M-7 68C-7 58 7 58 7 68L9 72H-9Z" fill="#e5b36a"/>
+        <circle cy="10" r="8.5" fill="#c2412d"/>
+      </g>)}
+    </g>
+    <g filter="url(#wobble)" fill="none" stroke="#2a1d14" strokeLinecap="round" strokeLinejoin="round">
+      {cord.map((d, i) => <path key={i} d={d} strokeOpacity=".55" strokeWidth="1.5"/>)}
+      {leaves.map((l, i) => <g key={i} transform={`translate(${l.x} ${l.y}) rotate(${l.turn}) scale(${l.size})`} strokeOpacity=".6" strokeWidth="1.3">
+        <path d={leaf}/><path d="M0 3C1 18 1 32 0 44" strokeOpacity=".35"/>
+      </g>)}
+      {flowers.map((f, i) => <circle key={i} cx={f.x} cy={f.y} r={f.r} strokeOpacity=".5" strokeWidth="1.2" strokeDasharray="2.2 1.7"/>)}
+      {drops.map((x) => <g key={x} transform={`translate(${x} 0)`} strokeOpacity=".55" strokeWidth="1.2">
+        <path d="M0 14V62" strokeOpacity=".4"/>
+        {[22, 35, 48].map((y) => <circle key={y} cy={y} r="6.5" strokeDasharray="2.2 1.7"/>)}
+        <path d="M-7 68C-7 58 7 58 7 68L9 72H-9Z"/><circle cy="75" r="2" fill="#2a1d14" fillOpacity=".6"/>
+        <circle cy="10" r="8.5" strokeDasharray="2.6 2"/>
+      </g>)}
+    </g>
+  </svg>;
+}
+
+// The occasions pinned up around the invitation like prints on a wall: drawn, taped, a little askew. Each one is also
+// a way to try that occasion's invitation in the middle. They drift only a few pixels with the mouse (depth), so a
+// print never slides out from under a click.
+const PRINTS: { id: ArtName; label: string; depth: number }[] = [
+  { id: "wedding", label: "Shaadi", depth: 6 },
+  { id: "garba", label: "Garba night", depth: 9 },
+  { id: "diwali", label: "Diwali", depth: 5 },
+  { id: "birthday", label: "Make a wish", depth: 7 },
+  { id: "housewarming", label: "Griha pravesh", depth: 10 },
+  { id: "engagement", label: "Sagai", depth: 6 },
+];
+/** What the sample's own link would look like. */
+const linkFor = (title: string) => title.toLowerCase().replace(/&/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "your-occasion";
+
+/**
+ * The home page's first screen. The whole page is the scene: a real invitation in the middle, the very one guests get,
+ * to open right here (left alone, it opens itself once); the other occasions pinned up around it, each one a way to
+ * try that occasion's opening; a marigold toran across the top; and the words small at the bottom. On a computer
+ * the prints drift a little with the mouse, for depth.
+ */
+function Hero() {
+  const hero = useRef<HTMLElement>(null);
+  const [occasion, setOccasion] = useState<ArtName>("wedding");
+  const [opened, setOpened] = useState(false);
+  const touched = useRef(false);
+  useEffect(() => {
+    const el = hero.current;
+    if (!el || !matchMedia("(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)").matches) return;
+    let frame = 0;
+    const move = (event: PointerEvent) => {
+      if ((event.target as Element | null)?.closest?.(".hero-print")) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        el.style.setProperty("--px", ((event.clientX / innerWidth) * 2 - 1).toFixed(3));
+        el.style.setProperty("--py", ((event.clientY / innerHeight) * 2 - 1).toFixed(3));
+      });
+    };
+    addEventListener("pointermove", move, { passive: true });
+    return () => { removeEventListener("pointermove", move); cancelAnimationFrame(frame); };
+  }, []);
+  // Left alone for a few seconds, the invitation opens itself once, so everyone sees what a guest sees.
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = setTimeout(() => { if (!touched.current) setOpened(true); }, 5200);
+    return () => clearTimeout(timer);
+  }, []);
+  const template = getInvitationTemplate(occasion);
+  const draft = useMemo(() => initialDraft(template), [template]);
+  const choose = (id: ArtName) => { touched.current = true; setOccasion(id); setOpened(false); };
+  const name = (id: ArtName) => getInvitationTemplate(id).category.toLowerCase();
+  return <section id="top" ref={hero} className="cin-hero theme-paper">
+    <Toran/>
+    <div className="hero-wall" role="group" aria-label="Try another occasion’s invitation">
+      {PRINTS.map((print, i) => <button key={print.id} type="button" className={`cin-print hero-print hero-print-${i + 1}${occasion === print.id ? " is-chosen" : ""}`} style={{ "--depth": print.depth } as CSSProperties} aria-pressed={occasion === print.id} aria-label={`Try the ${name(print.id)} invitation`} onClick={() => choose(print.id)}>
+        <span className="cin-photo"><ArtImage name={print.id} fit="slice"/></span>
+        <span className="hero-print-label">{print.label}</span>
+      </button>)}
+      <Diya className="doodle hero-wall-diya hero-wall-diya-a"/><Diya className="doodle hero-wall-diya hero-wall-diya-b"/>
+      <Star className="doodle hero-wall-star hero-wall-star-a"/><Flower className="doodle hero-wall-star hero-wall-star-b"/>
+    </div>
+    <div className="hero-stage">
+      <div className="hero-sheet">
+        <InvitationScene key={occasion} template={template} draft={draft} compact opened={opened} onOpen={() => { touched.current = true; setOpened(true); }} onReplay={() => { touched.current = true; setOpened(false); }}/>
+        <span className="hero-link"><Mark/>wowlink-one.vercel.app/e/{linkFor(draft.title)}</span>
       </div>
-      <div className="cin-hero-stage">
-        <div className="cin-sketchbook">
-          <svg className="cin-spiral" viewBox="0 0 400 34" preserveAspectRatio="none" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <g key={i}><circle cx={18 + i * 24.4} cy="27" r="3.4"/><path d={`M${18 + i * 24.4} 27C${12 + i * 24.4} 12 ${26 + i * 24.4} 2 ${30 + i * 24.4} 14`}/></g>)}</svg>
-          <Art name="wedding" drawing className="cin-hero-art boil"/>
-          <div className="cin-sketch-text">
-            <span className="cin-event-eyebrow">together with their families</span>
-            <h2>Aarav <i>&amp;</i> Meera</h2>
-            <p><span>8 November 2026</span><span className="cin-dot" aria-hidden="true">·</span><span>Surat, Gujarat</span></p>
-            <Link className="cin-text-link" href="/e/preview?template=wedding">Open their invitation <span aria-hidden="true">→</span></Link>
-          </div>
-        </div>
-        <Pen className="cin-pen"/>
-        <Star className="doodle sk-star"/>
+      <span className="cin-note hero-try" aria-hidden="true">{opened ? "what guests see" : "go on, open it"}<small>{opened ? "tap a print for another" : "or tap a print"}</small><ArrowCurl className="hero-try-arrow"/></span>
+    </div>
+    <div className="hero-picker" role="group" aria-label="Try another occasion’s invitation">
+      {PRINTS.map(print => <button key={print.id} type="button" aria-pressed={occasion === print.id} aria-label={`Try the ${name(print.id)} invitation`} onClick={() => choose(print.id)}>{print.label}</button>)}
+    </div>
+    <div className="cin-hero-copy">
+      <span className="hero-eyebrow"><span lang="gu">આમંત્રણ</span><span aria-hidden="true">·</span><span lang="hi">निमंत्रण</span><span aria-hidden="true">·</span><span>Invitation</span></span>
+      <h1>One link. <em>A whole celebration.</em></h1>
+      <p>Hand-drawn invitations your guests open on any phone, and reply to in a tap.</p>
+      <div className="cin-hero-actions">
+        <Link className="cin-cta cin-cta-light" href="/templates">Create your invitation</Link>
+        <Link className="cin-text-link" href="/e/preview?template=wedding">See the full sample <span aria-hidden="true">→</span></Link>
       </div>
     </div>
   </section>;
@@ -198,7 +306,7 @@ export default function CinematicHome() {
     return () => query.removeEventListener("change", change);
   }, []);
   useEffect(() => startSceneScroll(reduced), [reduced]);
-  return <div className={`cinema${reduced ? " cin-reduced" : ""}`}><Chrome/><main><InvitationScene/><OccasionReel reduced={reduced}/><ShareJourney reduced={reduced}/><Plans/><section className="cin-finale theme-paper">
+  return <div className={`cinema${reduced ? " cin-reduced" : ""}`}><Chrome/><main><Hero/><OccasionReel reduced={reduced}/><ShareJourney reduced={reduced}/><Plans/><section className="cin-finale theme-paper">
     <div className="cin-print fin-print fin-p1"><span className="cin-photo"><ArtImage name="birthday" fit="slice"/></span></div>
     <div className="cin-print fin-print fin-p2"><span className="cin-photo"><ArtImage name="garba" fit="slice"/></span></div>
     <Flower className="doodle fin-a"/><Star className="doodle fin-b"/><Diya className="doodle fin-c"/><Flower className="doodle fin-d"/>

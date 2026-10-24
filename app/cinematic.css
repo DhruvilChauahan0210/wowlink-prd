@@ -81,7 +81,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .doodle{display:block;width:34px;height:34px;color:var(--accent);flex:none}
 
 /* A shared recipe: a wobbly ink outline (::before) or fill that stretches to any box. */
-.sketch-card::before,.sketch-card::after,.cin-sketchbook::before,.cin-sketchbook::after,.inv-card::before,.inv-card::after,.cin-cta::before,.cin-cta::after,.cin-nav-cta::before,.cin-plan::before,.cin-plan::after,.studio-template::before,.inv-rsvp-card::before,.inv-rsvp-card::after,.inv-attendance label::before{
+.sketch-card::before,.sketch-card::after,.inv-card::before,.inv-card::after,.cin-cta::before,.cin-cta::after,.cin-nav-cta::before,.cin-plan::before,.cin-plan::after,.studio-template::before,.inv-rsvp-card::before,.inv-rsvp-card::after,.inv-attendance label::before{
   content:"";position:absolute;pointer-events:none;
   -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;mask-size:100% 100%;
 }
@@ -122,36 +122,102 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-nav-cta:hover::before{-webkit-mask-image:var(--rough-f);mask-image:var(--rough-f)}
 .cin-menu-toggle,.cin-menu{display:none}
 
-/* ---------- Hero: a sketchbook page that draws itself ---------- */
-.cin-hero{position:relative;min-height:100svh;display:flex;align-items:center;padding:152px var(--gutter) 80px;overflow:hidden}
-.cin-hero:before{content:"";position:absolute;top:76px;left:0;right:0;height:48px;background:var(--torana) 0 0/72px 48px repeat-x}
-.cin-hero-grid{position:relative;width:min(1240px,100%);margin:0 auto;display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);gap:clamp(32px,5vw,84px);align-items:center}
-.cin-hero-gu{display:inline-flex;align-items:center;gap:14px;font:500 clamp(20px,1.8vw,26px)/1 var(--gu);color:var(--accent);margin-bottom:22px}
-.cin-hero-gu .doodle{width:28px;height:28px;color:#d9822b;rotate:-8deg}
-.cin-hero-gu .doodle:last-child{rotate:12deg}
-.cin-hero-copy h1{font-size:clamp(46px,5.1vw,86px);line-height:.98;letter-spacing:-.03em;margin:0 0 26px}
+/* ---------- Hero: one link, a whole celebration ---------- */
+.cin-hero{position:relative;isolation:isolate;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:clamp(18px,3svh,34px);padding:150px var(--gutter) clamp(28px,5svh,56px);overflow:hidden;text-align:center}
+.hero-toran{position:absolute;z-index:3;top:66px;left:0;width:100%;height:84px;pointer-events:none;overflow:visible;animation:hero-unroll 1.6s cubic-bezier(.3,.7,.2,1) both}
+@keyframes hero-unroll{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.cin-hero-copy{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;max-width:980px}
+.cin-hero-copy::before{content:"";pointer-events:none;position:absolute;z-index:-1;inset:-30px -60px -20px;border-radius:50%;background:radial-gradient(closest-side,#f3ebdcf2 55%,#f3ebdc00)}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;font:500 clamp(16px,1.25vw,19px)/1 var(--gu);color:var(--accent)}
+.hero-eyebrow [lang=hi]{font-family:var(--font-devanagari),var(--serif)}
+.hero-eyebrow>span:last-child{font:italic 400 1.05em/1 var(--serif)}
+.cin-hero-copy h1{font-size:clamp(40px,4.6vw,72px);line-height:1;letter-spacing:-.03em;margin:0 0 14px}
 .cin-hero-copy h1 em{display:inline-block}
-.cin-hero-copy>p{max-width:29em;margin:0 0 34px;font-size:clamp(16px,1.3vw,19px);line-height:1.6;color:var(--muted)}
-.cin-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:18px 32px}
-.cin-hero-note{display:flex;align-items:center;gap:6px;margin-top:38px;rotate:-2deg;font-size:30px}
+.cin-hero-copy>p{max-width:44em;margin:0 0 24px;text-wrap:balance;font-size:clamp(15px,1.15vw,18px);line-height:1.55;color:var(--muted)}
+.cin-hero-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:16px 30px}
 .doodle-curl{width:64px;height:38px;flex:none;rotate:-6deg}
+/* The copy rises in, line by line */
+.cin-hero-copy>*{animation:hero-rise .8s cubic-bezier(.2,.8,.2,1) both}
+.cin-hero-copy>:nth-child(2){animation-delay:.08s}
+.cin-hero-copy>:nth-child(3){animation-delay:.16s}
+.cin-hero-copy>:nth-child(4){animation-delay:.24s}
+.cin-hero-copy>:nth-child(5){animation-delay:.32s}
+@keyframes hero-rise{from{opacity:0;transform:translateY(18px)}}
+@keyframes hero-fade{from{opacity:0;transform:translateY(6px)}}
+@keyframes hero-pop{from{opacity:0;transform:translateY(14px) scale(.94)}}
+
+/* The middle: a real invitation (the guest's, ui/invitation-scene.tsx) on a sheet taped to the wall, to open right
+   here, with its link above it. */
+.hero-stage{--sheet-h:clamp(380px,calc(100svh - 470px),540px);position:relative;z-index:1;flex:1;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;translate:calc(var(--px,0) * -6px) calc(var(--py,0) * -4px);transition:translate .8s cubic-bezier(.2,.8,.2,1)}
+.hero-stage::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:min(620px,120%);aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(closest-side,#f6c4535c,#f6c4531f 62%,transparent)}
+.hero-link{display:flex;align-items:center;justify-content:center;gap:7px;height:38px;font:600 13.5px/1 var(--sans);color:#1f6f8b;white-space:nowrap;overflow:hidden}
+.hero-link svg{flex:none;width:17px;height:17px;color:var(--accent)}
+.hero-sheet{pointer-events:auto;position:relative;display:flex;flex-direction:column;height:var(--sheet-h);aspect-ratio:4/5;padding:10px 10px 0;background:#fbf6ec;border-radius:2px;rotate:-1deg;box-shadow:0 1px 2px #2a1d1433,0 30px 50px -24px #2a1d1480;animation:hero-pin 1s cubic-bezier(.2,.8,.2,1) .1s both}
+.hero-sheet::before{content:"";position:absolute;z-index:5;top:-15px;left:50%;width:120px;height:30px;margin-left:-60px;rotate:-3deg;background:#e0922fb3;clip-path:polygon(0 0,100% 0,97% 20%,100% 40%,97% 60%,100% 80%,97% 100%,0 100%,3% 80%,0 60%,3% 40%,0 20%)}
+/* The invitation, fitted to the sheet */
+.hero-sheet .inv-scene.is-compact{flex:1;height:auto;min-height:0;max-height:none;padding:14px 12px}
+.cinema .hero-sheet .is-compact .inv-title{font-size:clamp(28px,2.5vw,40px)}
+.hero-sheet .is-compact .inv-overline{font-size:18px}
+/* the opened card shows what fits: the drawing, the names, the day and place (when there's room), and "watch again" */
+.hero-sheet .is-compact .inv-card-schedule{display:none}
+.hero-sheet .is-compact .inv-date{font-size:13px}
+.hero-sheet .is-compact .inv-object{width:min(100%,260px);margin-top:12px}
+.hero-sheet .is-compact .inv-hint{font-size:20px;margin-top:6px}
+.hero-sheet .is-compact .inv-card{padding:14px 12px}
+.hero-sheet .is-compact .inv-card-art{width:min(100%,150px)}
+.cinema .hero-sheet .is-compact .inv-card .inv-title{font-size:clamp(26px,2.2vw,34px);margin:4px 0 6px}
+/* the card's long message is for the full sample; here the names, the day and the place are enough */
+.hero-sheet .is-compact .inv-revealed-message{display:none}
+.hero-sheet .is-compact .inv-revealed-details{font-size:12px;margin-top:6px}
+.hero-sheet .is-compact .inv-open-button{min-height:40px;margin-top:10px;padding:0 22px;font-size:13px}
+.hero-sheet .is-compact .inv-backdrop .doodle{width:24px;height:24px}
+/* Handwritten nudges */
+.hero-try{position:absolute;left:calc(50% - var(--sheet-h) * .4 - 150px);top:44%;width:128px;rotate:-5deg;font-size:24px;line-height:1.05;text-align:right;animation:hero-fade .8s ease 1.4s both}
+.hero-try-arrow{display:block;width:58px;height:36px;margin:4px 0 0 auto;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;rotate:18deg}
+.hero-try small{display:block;margin-top:4px;font-size:18px;color:var(--muted)}
+.hero-picker{display:none}
+/* The wall: the occasions pinned up around the invitation (each one tries that occasion), and a few doodles. They drift with the mouse, each by its
+   own --depth, so the page has a little depth. */
+.hero-wall{position:absolute;z-index:0;inset:0;pointer-events:none}
+.hero-wall .hero-print{position:absolute;pointer-events:auto;cursor:pointer;border:0;font:inherit;color:inherit;width:clamp(112px,10.5vw,178px);padding:9px 9px 0;translate:calc(var(--px,0) * var(--depth) * 1px) calc(var(--py,0) * var(--depth) * .7px);transition:translate .9s cubic-bezier(.2,.8,.2,1);animation:hero-pin .9s cubic-bezier(.2,.8,.2,1) both}
+.hero-print .cin-photo{aspect-ratio:4/5}
+.hero-print-label{display:block;padding:7px 0 9px;font:700 clamp(17px,1.4vw,22px)/1 var(--hand);color:var(--muted);text-align:center}
+.hero-print-1{left:max(32px,4.5%);top:max(21%,206px);rotate:-6deg;animation-delay:.5s}
+.hero-print-2{left:max(190px,16%);top:max(37%,330px);rotate:5deg;animation-delay:.75s}
+.hero-print-3{left:max(36px,5%);top:max(62%,520px);rotate:-3deg;animation-delay:1s}
+.hero-print-4{right:max(32px,4.5%);top:max(20%,200px);rotate:6deg;animation-delay:.6s}
+.hero-print-5{right:max(190px,16%);top:max(39%,340px);rotate:-5deg;animation-delay:.85s}
+.hero-print-6{right:max(36px,5%);top:max(63%,530px);rotate:4deg;animation-delay:1.1s}
+/* Short screens (laptops): smaller words, more room for the invitation */
+@media(min-width:768px) and (max-height:800px){
+  .cin-hero{padding-top:138px;gap:14px}
+  .hero-stage{--sheet-h:clamp(340px,calc(100svh - 380px),540px);gap:0}
+  .hero-print-3{top:max(57%,440px)}.hero-print-6{top:max(55%,420px)}
+  /* the words keep to the headline and the button */
+  .cin-hero-copy>p{display:none}
+  .hero-sheet .is-compact .inv-card-art{width:min(100%,126px)}
+  .hero-sheet .is-compact .inv-revealed-details{display:none}
+  .cin-hero-copy h1{font-size:clamp(38px,4vw,56px);margin-bottom:10px}
+  .hero-eyebrow{margin-bottom:8px}
+  .cin-hero-copy>p{margin-bottom:18px}
+}
+.hero-print-2:before,.hero-print-5:before{background:#a8341f8c}
+.hero-print-3:before,.hero-print-6:before{background:#6f8f4e8c}
+@keyframes hero-pin{from{opacity:0;transform:translateY(-26px) scale(1.06)}}
+.hero-wall .hero-print::after{content:"";position:absolute;inset:-12px -12px -18px}
+.hero-wall .hero-print:hover{transform:translateY(-5px) rotate(2deg);box-shadow:0 1px 2px #2a1d1433,0 30px 44px -18px #2a1d1499}
+.hero-wall .hero-print:focus-visible{outline:2px dashed var(--accent);outline-offset:6px}
+.hero-wall .hero-print.is-chosen{transform:translateY(-4px) scale(1.05);box-shadow:0 0 0 2px #a8341f,0 30px 44px -18px #2a1d1499}
+.hero-print.is-chosen .hero-print-label{color:var(--accent)}
+.hero-wall .hero-print{transition:translate .9s cubic-bezier(.2,.8,.2,1),transform .25s ease,box-shadow .25s ease}
+.hero-wall-diya,.hero-wall-star{position:absolute;color:#d9822b;animation:hero-fade 1s ease 1.4s both}
+.hero-wall-diya{bottom:4%;width:54px;height:46px}
+.hero-wall-diya-a{left:27%}.hero-wall-diya-b{right:27%}
+.hero-wall-star{width:34px;height:34px}
+.hero-wall-star-a{left:30%;top:26%;rotate:-12deg}.hero-wall-star-b{right:31%;top:31%}
 
 .cin-print{position:relative;padding:10px;background:#fbf6ec;border-radius:2px;box-shadow:0 1px 2px #2a1d1433,0 22px 40px -16px #2a1d1480}
 .cin-print:before{content:"";position:absolute;z-index:3;top:-15px;left:50%;width:96px;height:28px;margin-left:-48px;rotate:-3deg;background:#e0922fb3;clip-path:polygon(0 0,100% 0,97% 20%,100% 40%,97% 60%,100% 80%,97% 100%,0 100%,3% 80%,0 60%,3% 40%,0 20%)}
-.cin-event-eyebrow{font:700 28px/1.1 var(--hand);color:var(--accent)}
-.cin-hero-stage{position:relative;padding:30px 6% 34px 4%}
-.cin-sketchbook{position:relative;isolation:isolate;rotate:1.4deg;padding:46px 30px 30px;display:flex;flex-direction:column;align-items:center;text-align:center;filter:drop-shadow(0 22px 24px #2a1d1424)}
-.cin-sketchbook::before{inset:-3px;z-index:-2;background:var(--surface);-webkit-mask-image:var(--rough-f2);mask-image:var(--rough-f2)}
-.cin-sketchbook::after{inset:-3px;z-index:-1;background:var(--text);-webkit-mask-image:var(--rough-b);mask-image:var(--rough-b)}
-.cin-spiral{position:absolute;top:-16px;left:6%;width:88%;height:34px;fill:var(--bg);stroke:var(--text);stroke-width:2.2;stroke-linecap:round;overflow:visible}
-.cin-hero-art{width:min(100%,330px);height:auto;aspect-ratio:360/440}
-.cin-sketch-text{margin-top:4px;display:flex;flex-direction:column;align-items:center;animation:wash-in .9s ease 2.7s both}
-.cin-sketch-text h2{font-size:clamp(34px,3vw,48px);line-height:1.02;margin:4px 0 10px;color:var(--text)}
-.cin-sketch-text h2 i{color:var(--accent);font-size:.8em}
-.cin-sketch-text p{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;font:500 15px/1.5 var(--sans);color:var(--muted);margin-bottom:12px}
-.cin-pen{position:absolute;width:30px;height:150px;left:94%;top:94%;translate:-50% -100%;rotate:32deg;transform-origin:50% 100%;z-index:4;pointer-events:none;filter:drop-shadow(6px 10px 6px #2a1d1433);animation:pen-sketch 3.4s cubic-bezier(.45,.05,.35,1) .25s both}
-@keyframes pen-sketch{0%{left:30%;top:16%}12%{left:66%;top:22%}24%{left:38%;top:34%}36%{left:70%;top:40%}48%{left:34%;top:50%}60%{left:64%;top:58%}72%{left:44%;top:66%}100%{left:94%;top:94%}}
-.sk-star{position:absolute;top:-4px;right:1%;width:44px!important;height:44px!important;color:#d9822b!important;rotate:12deg}
 
 /* ---------- Hand-drawn art (ui/art.tsx) ---------- */
 .art{display:block;overflow:visible}
@@ -163,7 +229,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .art.is-drawing .ink text,.art.is-drawing .wash{opacity:0;animation:wash-in 1s ease forwards;animation-delay:calc(var(--d,0s) + .2s)}
 @keyframes ink-draw{to{stroke-dashoffset:0}}
 @keyframes wash-in{from{opacity:0}to{opacity:1}}
-@media(prefers-reduced-motion:reduce){.art.is-drawing .ink :is(path,circle,ellipse,rect){stroke-dasharray:none!important}.art.is-drawing .wash,.art.is-drawing .ink text{opacity:1!important}.cin-pen{left:94%!important;top:94%!important}}
+@media(prefers-reduced-motion:reduce){.art.is-drawing .ink :is(path,circle,ellipse,rect){stroke-dasharray:none!important}.art.is-drawing .wash,.art.is-drawing .ink text{opacity:1!important}}
 
 /* ---------- Occasion reel (paper) ---------- */
 /* the reel scrolls sideways as you scroll down: about 55svh of scrolling per occasion */
@@ -430,12 +496,10 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 /* ---------- Responsive ---------- */
 @media(max-width:960px){
 
-  .cin-hero{display:block;min-height:0;padding:168px var(--gutter) 72px}
-  .cin-hero-grid{grid-template-columns:1fr;gap:56px}
-  .cin-hero-note{display:none}
-  .cin-hero-stage{max-width:520px;margin:0 auto;padding:26px 4%}
-
-  .cin-sketch-text p .cin-dot{display:none}
+  .hero-stage{--sheet-h:clamp(360px,calc(100svh - 480px),500px)}
+  .hero-wall .hero-print{width:clamp(110px,15vw,150px)}
+  .hero-print-2{left:max(24px,4%);top:50%}.hero-print-5{right:max(24px,4%);top:52%}
+  .hero-print-3,.hero-print-6,.hero-try,.hero-wall-note{display:none}
 }
 @media(max-width:1100px){
   .cin-nav nav{gap:24px}
@@ -454,18 +518,27 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cin-menu>a{font:400 38px/1.2 var(--serif);padding:10px 0;border-bottom:1px dashed var(--line-strong)}
   .cin-menu>a:last-child{font:600 16px/1 var(--sans);margin-top:24px;padding:18px 20px;text-align:center;background:var(--btn-bg);color:var(--btn-fg);border:0;border-radius:var(--r-sm)}
 
-  .cin-hero{display:block;min-height:0;padding:148px var(--gutter) 56px}
-  .cin-hero:before{top:64px}
-  .cin-hero-grid{grid-template-columns:1fr;gap:38px}
-  .cin-hero-gu .doodle{width:24px;height:24px}
-  .cin-hero-copy h1{font-size:clamp(44px,12.5vw,70px);margin-bottom:20px}
-  .cin-hero-copy>p{font-size:16px;margin-bottom:28px}
-
-  .cin-hero-note{display:none}
-  .cin-hero-stage{padding:22px 2% 10px}
-  .cin-sketchbook{padding:38px 18px 22px}
-  .cin-sketch-text h2{font-size:clamp(32px,10vw,44px)}
-  .cin-pen{width:22px;height:110px}
+  .cin-hero{gap:16px;padding:146px var(--gutter) 30px}
+  .hero-toran{top:56px;height:84px}
+  .hero-eyebrow{gap:8px;margin-bottom:10px;font-size:15px}
+  .cin-hero-copy h1{font-size:clamp(36px,10vw,52px);margin-bottom:12px}
+  .cin-hero-copy>p{font-size:15px;margin-bottom:20px}
+  .cin-hero-copy::before{inset:-24px -20px -10px}
+  /* Phones: the invitation and a row of occasions to try; the wall is for bigger screens */
+  .hero-stage{--sheet-h:auto;gap:10px}
+  .hero-sheet{width:min(68vw,300px);height:auto;aspect-ratio:auto;padding:8px 8px 0}
+  .hero-sheet .inv-scene.is-compact{flex:none;aspect-ratio:4/5}
+  .hero-sheet::before{width:90px;height:24px;margin-left:-45px;top:-12px}
+  .hero-link{height:32px;gap:5px;font-size:11.5px}
+  .hero-link svg{width:14px;height:14px}
+  .hero-wall,.hero-try{display:none}
+  .hero-sheet .is-compact .inv-card-art{width:min(100%,128px)}
+  .hero-sheet .is-compact .inv-object{width:min(100%,220px)}
+  .cinema .hero-sheet .is-compact .inv-title{font-size:28px}
+  .hero-picker{position:relative;z-index:2;display:flex;gap:8px;max-width:100%;margin-top:-6px;padding:4px 2px;overflow-x:auto;scrollbar-width:none}
+  .hero-picker::-webkit-scrollbar{display:none}
+  .hero-picker button{flex:none;padding:8px 14px;border:1.5px dashed var(--line-strong);border-radius:99px;background:#fbf6ec;color:var(--text);font:600 13px/1 var(--sans);cursor:pointer}
+  .hero-picker button[aria-pressed=true]{border-style:solid;border-color:var(--text);background:var(--text);color:var(--bg)}
   .cin-finale{padding:150px var(--gutter) 150px;min-height:0}
   .cin-finale h2{font-size:clamp(46px,14vw,80px)}
   .fin-print{width:34vw}

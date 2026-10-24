@@ -3,7 +3,7 @@ import { collectErrors } from "../helpers";
 
 // Every page loads, renders its key content, and logs no errors (including React hydration warnings).
 const PAGES = [
-  { path: "/", check: "Invitations," },
+  { path: "/", check: "One link." },
   { path: "/templates", check: "Pick a" },
   { path: "/create", check: "Make it" },
   { path: "/e/preview?template=wedding", check: "Aarav & Meera" },
@@ -25,9 +25,20 @@ for (const { path, check } of PAGES) {
   });
 }
 
-test("the home page hero draws itself, and the reel shows all twelve occasions", async ({ page }) => {
+test("the home page hero is a real invitation to open, each print tries another, and the reel shows all twelve occasions", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".cin-hero-art.is-drawing")).toBeVisible();
+  const sheet = page.locator(".hero-sheet");
+  await expect(sheet.locator(".inv-scene.inv-wedding")).toBeVisible();
+  await expect(sheet.locator(".hero-link")).toContainText("/e/aarav-meera");
+  // A print on the wall (a chip on a phone) brings that occasion's invitation, closed, to open.
+  const garba = page.locator(".hero-print-2:visible, .hero-picker button:nth-child(2):visible").first();
+  await garba.click();
+  await expect(garba).toHaveAttribute("aria-pressed", "true");
+  await expect(sheet.locator(".inv-scene.inv-garba")).toBeVisible();
+  await expect(sheet.locator(".hero-link")).toContainText("/e/raas-under-the-stars");
+  await sheet.locator(".inv-trigger").click();
+  await expect(sheet.locator(".inv-scene")).toHaveClass(/is-open/);
+  await expect(sheet.locator(".inv-card .art.is-drawing")).toBeVisible();
   await expect(page.locator(".cin-occasion-card")).toHaveCount(12);
   await expect(page.locator(".cin-occasion-card h3")).toHaveText(["For your forever.", "Say yes, together.", "Make a wish.", "Feel the rhythm.", "Little blessings.", "Step inside.", "Still us.", "Here’s to new.", "Light it up.", "A sacred thread.", "With faith.", "Hello, little one."]);
 });
