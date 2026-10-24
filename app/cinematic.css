@@ -106,7 +106,12 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-text-link:hover{gap:16px}
 
 /* ---------- Navigation ---------- */
-.cin-nav{position:fixed;inset:0 0 auto;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:32px;height:76px;padding:0 var(--gutter);color:var(--text);transition:background-color .3s}
+/* Every page's header is laid out the same way (the others are in studio.css): 72px tall, the site's margins, the logo
+   on the left, a label or the links in the true middle, the actions together on the right, a hand-drawn line below. */
+.cin-nav{position:fixed;inset:0 0 auto;z-index:100;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:24px;height:72px;padding:0 var(--gutter);color:var(--text);transition:background-color .3s}
+.cin-nav>a:first-child{justify-self:start;display:flex}
+.cin-nav-actions{grid-column:3;justify-self:end;display:flex;align-items:center;gap:28px}
+.header-cta{min-height:44px;padding:0 22px;font-size:14px;white-space:nowrap}
 .cin-nav:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--text);opacity:0;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat;transition:opacity .3s}
 .cin-nav.is-scrolled,.cin-nav.is-menu-open{background-color:#f3ebdcf5}
 .cin-nav.is-scrolled:after,.cin-nav.is-menu-open:after{opacity:.55}
@@ -117,16 +122,13 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-nav nav{display:flex;gap:36px;font:700 26px/1 var(--hand)}
 .cin-nav nav a{color:var(--muted);transition:color .2s}
 .cin-nav nav a:hover{color:var(--accent)}
-.cin-nav-mine{font:700 22px/1 var(--hand);color:var(--accent-soft);text-decoration:underline wavy;text-underline-offset:6px;white-space:nowrap}
-.cin-nav-cta{position:relative;isolation:isolate;display:inline-flex;align-items:center;min-height:44px;padding:0 22px;font:600 14px/1 var(--sans);transition:color .2s}
-.cin-nav-cta::before{inset:0;z-index:-1;background:var(--text);-webkit-mask-image:var(--rough-a);mask-image:var(--rough-a)}
-.cin-nav-cta:hover{color:var(--bg)}
-.cin-nav-cta:hover::before{-webkit-mask-image:var(--rough-f);mask-image:var(--rough-f)}
+.cin-nav-mine{font:700 24px/1 var(--hand);color:var(--muted);white-space:nowrap;transition:color .2s}
+.cin-nav-mine:hover{color:var(--accent)}
 .cin-menu-toggle,.cin-menu{display:none}
 
 /* ---------- Hero: one link, a whole celebration ---------- */
 .cin-hero{position:relative;isolation:isolate;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:clamp(18px,3svh,34px);padding:150px var(--gutter) clamp(28px,5svh,56px);overflow:hidden;text-align:center}
-.hero-toran{position:absolute;z-index:3;top:66px;left:0;width:100%;height:84px;pointer-events:none;overflow:visible;animation:hero-unroll 1.6s cubic-bezier(.3,.7,.2,1) both}
+.hero-toran{position:absolute;z-index:3;top:64px;left:0;width:100%;height:84px;pointer-events:none;overflow:visible;animation:hero-unroll 1.6s cubic-bezier(.3,.7,.2,1) both}
 @keyframes hero-unroll{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 .cin-hero-copy{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;max-width:980px}
 .cin-hero-copy::before{content:"";pointer-events:none;position:absolute;z-index:-1;inset:-30px -60px -20px;border-radius:50%;background:radial-gradient(closest-side,#f3ebdcf2 55%,#f3ebdc00)}
@@ -369,9 +371,11 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 
 /* ---------- Templates catalog (paper) ---------- */
 .cin-catalog{padding:0 var(--gutter)}
-.cin-catalog-nav{position:relative;height:84px;display:flex;align-items:center;justify-content:space-between}
+.cin-catalog-nav{position:sticky;top:0;z-index:30;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:24px;height:72px;margin:0 calc(-1 * var(--gutter));padding:0 var(--gutter);background:#f3ebdc}
+.cin-catalog-nav>:first-child{justify-self:start}
+.cin-catalog-nav>:last-child:not(:first-child){grid-column:3;justify-self:end}
 .cin-catalog-nav:after,.cin-catalog-footer:before{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--text);opacity:.5;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
-.cin-catalog-back{font:600 26px/1 var(--hand);color:var(--muted);transition:color .2s}
+.cin-catalog-back{font:700 24px/1 var(--hand);color:var(--muted);white-space:nowrap;transition:color .2s}
 .cin-catalog-back:hover{color:var(--accent)}
 .cin-catalog-heading{padding:clamp(56px,8vw,110px) 0 clamp(48px,5vw,72px)}
 .cin-catalog-heading h1{font-size:clamp(44px,5.6vw,92px);line-height:1}
@@ -392,8 +396,6 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cin-catalog-footer:before{bottom:auto;top:-4px}
 .cin-catalog-footer-links{display:flex;flex-wrap:wrap;gap:8px 20px}
 .page-header-actions{display:flex;align-items:center;gap:28px}
-.page-create{font:600 24px/1 var(--hand);color:var(--accent);white-space:nowrap}
-.page-create:hover{color:var(--text)}
 .cin-catalog-footer a:hover{color:var(--text)}
 
 /* ---------- Privacy ---------- */
@@ -414,8 +416,8 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 
 /* ---------- Help and pricing ---------- */
 .page-langs{display:flex;gap:18px;align-items:center}
-.page-langs a{font:600 24px/1 var(--hand);color:var(--muted)}
-.page-langs a:hover{color:var(--text)}
+.page-langs a{font:700 23px/1 var(--hand);color:var(--muted);text-decoration:underline wavy var(--line-strong);text-decoration-thickness:1px;text-underline-offset:6px;transition:color .2s}
+.page-langs a:hover{color:var(--accent)}
 .help{max-width:820px;margin:0 auto;padding:clamp(40px,6vw,80px) 0 clamp(64px,8vw,112px)}
 .help h1,.pricing h1{font-size:clamp(38px,4.6vw,68px);line-height:1.04;text-wrap:balance}
 .help .help-intro,.pricing .help-intro{margin-top:18px;font-size:18px;line-height:1.6;color:var(--muted);max-width:40em}
@@ -526,8 +528,8 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 }
 @media(max-width:767px){
   .cinema{font-size:16px}
-  .cin-nav{height:64px;gap:16px}
-  .cin-nav nav,.cin-nav-cta,.cin-nav-mine{display:none}
+  .cin-nav{height:64px}
+  .cin-nav nav,.cin-nav-mine,.cin-nav .header-cta{display:none}
   .cin-logo{font-size:21px}
   .cinema .cin-menu-toggle{display:block;border:0;background:none;color:var(--text);font:700 26px/1 var(--hand);padding:10px 0}
   .cin-menu{display:flex;position:fixed;inset:64px 0 0;z-index:-1;flex-direction:column;justify-content:flex-start;gap:6px;padding:28px var(--gutter);background-color:#f3ebdc;background-image:var(--grain);opacity:0;pointer-events:none;transition:opacity .25s}
@@ -594,7 +596,7 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
   .cin-plan-note{top:22px;right:26px;font-size:26px}
   .cin-footer{grid-template-columns:1fr;gap:28px;padding:48px var(--gutter)}
 
-  .cin-catalog-nav{height:68px}
+  .cin-catalog-nav{height:64px}
   .cin-catalog-heading{padding:48px 0 36px}
   .cin-catalog-heading>p{font-size:26px}
   .cin-catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 16px}

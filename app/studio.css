@@ -2,17 +2,21 @@
 .studio-page,.invitation-page,.inv-not-found{min-height:100svh}
 
 /* ---------- Headers ---------- */
-.studio-header,.invitation-header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:24px;height:72px;padding:0 clamp(20px,3vw,40px);background:#f3ebdcf5}
+/* The app's headers, laid out like every page's (cinematic.css): logo, a label in the true middle, actions on the right */
+.studio-header,.invitation-header{position:sticky;top:0;z-index:30;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:24px;height:72px;padding:0 var(--gutter);background:#f3ebdc}
+.studio-header>:first-child,.invitation-header>:first-child{justify-self:start}
+.studio-header-label,.invitation-context{grid-column:2;grid-row:1;justify-self:center;white-space:nowrap}
+.studio-header-actions,.invitation-header-actions{grid-column:3;grid-row:1;justify-self:end}
 .studio-header:after,.invitation-header:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--text);opacity:.5;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
 .studio-header-label,.invitation-context{font:600 24px/1 var(--hand);color:var(--faint)}
 .invitation-context>i{font-style:normal;margin:0 10px;color:#ffffff40}
 .studio-header-actions{display:flex;align-items:center;gap:24px}
-.studio-fullscreen{font:700 26px/1 var(--hand);color:var(--muted);transition:color .2s}
+.studio-fullscreen{font:700 24px/1 var(--hand);color:var(--muted);white-space:nowrap;transition:color .2s}
 .studio-fullscreen:hover{color:var(--text)}
-.studio-save,.invitation-header .cin-cta{min-height:44px;padding:0 22px;font-size:14px}
+.studio-save,.invitation-header .cin-cta{min-height:44px;padding:0 22px;font-size:14px;white-space:nowrap}
 .invitation-header-actions{display:flex;align-items:center;gap:20px}
-.cinema .inv-lang{border:0;background:none;padding:6px 0;cursor:pointer;font:700 24px/1 var(--hand);color:var(--accent);text-decoration:underline wavy;text-underline-offset:6px;white-space:nowrap}
-.cinema .inv-lang:hover{color:var(--text)}
+.cinema .inv-lang{border:0;background:none;padding:6px 0;cursor:pointer;font:700 23px/1 var(--hand);color:var(--muted);text-decoration:underline wavy var(--line-strong);text-decoration-thickness:1px;text-underline-offset:6px;white-space:nowrap;transition:color .2s}
+.cinema .inv-lang:hover{color:var(--accent)}
 .studio-save:disabled{opacity:.5;cursor:wait}
 
 /* ---------- Studio layout ---------- */
@@ -378,7 +382,10 @@
 
 /* ---------- 404 ---------- */
 .inv-not-found{min-height:100svh}
-.inv-not-found>header{display:flex;justify-content:space-between;align-items:center;height:72px;padding:0 var(--gutter);border-bottom:1px solid var(--line-strong)}
+.inv-not-found>header{position:sticky;top:0;z-index:30;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:24px;height:72px;padding:0 var(--gutter);background:#f3ebdc}
+.inv-not-found>header>:first-child{justify-self:start}
+.inv-not-found>header>:last-child:not(:first-child){grid-column:3;justify-self:end}
+.inv-not-found>header:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--text);opacity:.5;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
 .inv-nf-code{font:700 26px/1 var(--hand);color:var(--faint)}
 .cinema .inv-nf-other{margin-top:14px;max-width:34em;font-size:15px;color:var(--muted)}
 .inv-nf-other strong{color:var(--text);font-weight:600}
@@ -892,13 +899,16 @@
   .share-url{flex-direction:column}
   .publish-actions{justify-content:stretch}
   .publish-actions>*{flex:1}
-  .studio-header,.invitation-header{height:64px;padding:0 var(--gutter);gap:14px}
+  /* Phones: the logo and the actions (the middle label is hidden), the actions taking what they need */
+  .studio-header,.invitation-header,.inv-not-found>header,.cin-catalog-nav,.cin-nav{grid-template-columns:auto minmax(0,1fr);column-gap:14px}
+  .studio-header,.invitation-header{height:64px;padding:0 var(--gutter)}
   .studio-header-label,.invitation-context{display:none}
   .studio-header-actions{gap:16px}
   .studio-fullscreen{font-size:14px}
   .studio-save,.invitation-header .cin-cta{min-height:40px;padding:0 16px}
   .invitation-header-actions{gap:14px}
   .cinema .inv-lang{font-size:21px}
+  .studio-header-actions,.invitation-header-actions{gap:14px}
   .studio-grid{display:block}
   .studio-mobile-tabs{display:grid;grid-template-columns:1fr 1fr;position:sticky;top:64px;z-index:20;background:#f3ebdcf7;border-bottom:1px dashed var(--line);padding:0 var(--gutter)}
   .studio-mobile-tabs>button{min-height:50px;border:0;border-bottom:2px solid transparent;background:none;color:var(--faint);font:700 26px/1 var(--hand)}
@@ -932,3 +942,13 @@
   .inv-not-found>main{min-height:calc(100svh - 64px)}
 }
 
+/* Narrow phones: the app's headers have the most to fit (languages and an action), so the seal alone stands for WowLink;
+   on the narrowest, everything in them is a little smaller */
+@media(max-width:440px){.invitation-header .cin-wordmark,.studio-header .cin-wordmark{display:none}}
+@media(max-width:360px){
+  .studio-header,.invitation-header,.cin-catalog-nav{column-gap:10px}
+  .studio-header-actions,.invitation-header-actions,.inv-langs{gap:10px}
+  .cinema .inv-lang{font-size:19px}
+  .studio-save,.invitation-header .cin-cta{padding:0 12px;font-size:13px}
+  .cin-catalog-back{font-size:20px}
+}

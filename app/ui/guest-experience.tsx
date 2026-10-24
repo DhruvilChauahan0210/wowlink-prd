@@ -295,7 +295,7 @@ export function GuestExperience({ template, draft, mode, slug, guest, reply, pre
       {previewOnly && <span className="invitation-context" lang="en">{previewLabel}</span>}
       <div className="invitation-header-actions">
         <span className="inv-langs">{LANGS.filter(other => other !== lang).map(other => <button key={other} type="button" className="inv-lang" aria-label={t.readIn[other]} onClick={() => switchLanguage(other)}><span lang={other}>{LANG_NAMES[other]}</span></button>)}</span>
-        <Link className="cin-cta cin-cta-outline" href={`/create?template=${template.id}`} onClick={() => carryLangToStudio(lang)}>{mode === "draft" ? "Back to editor" : live ? t.makeYourOwn : "Make it yours"}</Link>
+        <Link className="cin-cta cin-cta-light" href={`/create?template=${template.id}`} onClick={() => carryLangToStudio(lang)}>{mode === "draft" ? "Back to editor" : live ? t.makeYourOwn : "Make it yours"}</Link>
       </div>
     </header>
     <main>

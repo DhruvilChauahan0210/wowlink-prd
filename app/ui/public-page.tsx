@@ -28,7 +28,7 @@ export function PublicPage({ lang, path, className, children }: { lang: Lang; pa
       <WowLinkBrand/>
       <div className="page-header-actions">
         <nav className="page-langs" aria-label="Language">{LANGS.filter(other => other !== lang).map(other => <Link key={other} href={langHref(path, other)} hrefLang={other} lang={other}>{LANG_NAMES[other]}</Link>)}</nav>
-        <Link className="page-create" href="/templates">{FOOTER[lang].create} <span aria-hidden="true">→</span></Link>
+        <Link className="cin-cta cin-cta-light header-cta page-create" href="/templates">{FOOTER[lang].create}</Link>
       </div>
     </header>
     {children}
