@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function GuidesPage() {
-  return <div className="cinema cin-catalog theme-paper wording-page">
+  return <div className="cinema cin-catalog theme-paper wording-page guide-page">
     <JsonLd data={[breadcrumbs([["WowLink", "/"], ["Guides", "/guides"]]), itemList("Invitation guides", GUIDES.map((guide) => [guide.title, `/guides/${guide.slug}`] as const))]}/>
     <header className="cin-catalog-nav"><WowLinkBrand/><Link href="/wording" className="cin-catalog-back">Invitation wording <span aria-hidden="true">→</span></Link></header>
     <main>
