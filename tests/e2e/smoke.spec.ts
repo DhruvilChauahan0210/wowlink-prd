@@ -15,6 +15,8 @@ const PAGES = [
   { path: "/e/preview?template=wedding&lang=hi", check: "आरव और मीरा" },
   { path: "/wording", check: "Invitation wording" },
   { path: "/wording/navratri-garba-invitation-message", check: "Garba invitation messages" },
+  { path: "/guides", check: "Guides for sending your" },
+  { path: "/guides/collect-rsvp-on-whatsapp", check: "How to collect RSVPs" },
   { path: "/privacy", check: "What we keep" },
   { path: "/privacy?lang=gu", check: "અમે શું સાચવીએ છીએ" },
 ];

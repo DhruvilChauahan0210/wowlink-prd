@@ -64,3 +64,18 @@ export const itemList = (name: string, items: readonly (readonly [string, string
   name,
   itemListElement: items.map(([title, path], i) => ({ "@type": "ListItem", position: i + 1, name: title, url: `${siteUrl}${path}` })),
 });
+
+/** A how-to guide: its title, when it was written and by whom. */
+export const article = (headline: string, path: string, description: string, published: string) => ({
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline,
+  description,
+  url: `${siteUrl}${path}`,
+  mainEntityOfPage: `${siteUrl}${path}`,
+  datePublished: published,
+  dateModified: published,
+  author: { "@id": ORG },
+  publisher: { "@id": ORG },
+  inLanguage: "en",
+});

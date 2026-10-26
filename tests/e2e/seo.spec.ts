@@ -10,13 +10,15 @@ import { publish } from "../helpers";
 const OCCASIONS = ["wedding", "engagement", "birthday", "garba", "babyshower", "housewarming", "anniversary", "opening", "diwali", "janoi", "puja", "naming"];
 const GUIDES = ["wedding-invitation-wording", "engagement-invitation-wording", "birthday-invitation-wording", "navratri-garba-invitation-message", "seemant-baby-shower-invitation-wording", "griha-pravesh-invitation-message", "anniversary-invitation-wording", "shop-opening-invitation-message", "diwali-party-invitation-message", "janoi-upanayan-invitation-wording", "satyanarayan-katha-invitation-message", "naming-ceremony-invitation-wording"];
 
+const HOWTOS = ["send-wedding-invitation-on-whatsapp", "online-invitation-vs-pdf-vs-printed-card", "collect-rsvp-on-whatsapp", "when-to-send-wedding-invitations", "invitation-in-gujarati-hindi-and-english"];
+
 test("the sitemap lists the public pages and nothing private", async ({ request }) => {
   const response = await request.get("/sitemap.xml");
   expect(response.status()).toBe(200);
   const xml = await response.text();
   const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => new URL(m[1]).pathname + new URL(m[1]).search);
   const everyLanguage = (path: string) => [path, `${path}?lang=gu`, `${path}?lang=hi`];
-  expect(urls).toEqual(["/", "/templates", ...OCCASIONS.flatMap(id => everyLanguage(`/templates/${id}`)), "/wording", ...GUIDES.map(slug => `/wording/${slug}`), ...everyLanguage("/pricing"), ...everyLanguage("/help"), ...everyLanguage("/privacy")]);
+  expect(urls).toEqual(["/", "/templates", ...OCCASIONS.flatMap(id => everyLanguage(`/templates/${id}`)), "/wording", ...GUIDES.map(slug => `/wording/${slug}`), "/guides", ...HOWTOS.map(slug => `/guides/${slug}`), ...everyLanguage("/pricing"), ...everyLanguage("/help"), ...everyLanguage("/privacy")]);
   expect(xml).toContain('hreflang="gu"');
   expect(xml).toContain('hreflang="x-default"');
 });
@@ -105,6 +107,23 @@ test("every occasion's page is built ahead in every language, as the live site n
     expect(built).toContain(`/templates/${id}${lang}/opengraph-image`);
   }
   for (const slug of GUIDES) expect(built).toContain(`/wording/${slug}`);
+  for (const slug of HOWTOS) {
+    expect(built).toContain(`/guides/${slug}`);
+    expect(built).toContain(`/guides/${slug}/opengraph-image`);
+  }
+});
+
+test("the how-to guides: sections, questions, and the way on to an invitation", async ({ page }) => {
+  await page.goto("/guides");
+  await expect(page.locator(".guide-index a")).toHaveCount(HOWTOS.length);
+  await page.getByRole("link", { name: /Collect RSVPs on WhatsApp/ }).click();
+  await expect(page).toHaveURL(/\/guides\/collect-rsvp-on-whatsapp$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("RSVPs");
+  await expect(page.locator(".guide-section").first()).toBeVisible();
+  await expect(page.locator(".occasion-faq dt").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Make yours, free" })).toHaveAttribute("href", "/create?template=wedding");
+  await expect(page.getByRole("link", { name: /Wedding invitation wording/ })).toHaveAttribute("href", "/wording/wedding-invitation-wording");
+  await expect(page.locator(".guide-more a")).toHaveCount(HOWTOS.length - 1);
 });
 
 test("the wording guides: each wording in three languages, ready to copy, and a way to send it", async ({ page, context }) => {
@@ -178,4 +197,6 @@ test("search engines get structured data, a share image, and a title and descrip
   // Every occasion's page in every language, and every wording guide, has a title and a description that fit.
   for (const id of OCCASIONS) for (const lang of ["", "?lang=gu", "?lang=hi"]) await types(`/templates/${id}${lang}`);
   for (const slug of GUIDES) expect((await types(`/wording/${slug}`)).map((b) => b["@type"])).toEqual(["BreadcrumbList"]);
+  expect((await types("/guides")).map((b) => b["@type"])).toEqual(["BreadcrumbList", "ItemList"]);
+  for (const slug of HOWTOS) expect((await types(`/guides/${slug}`)).map((b) => b["@type"])).toEqual(["BreadcrumbList", "Article", "FAQPage"]);
 });

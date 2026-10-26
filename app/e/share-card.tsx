@@ -212,6 +212,17 @@ export function wordingCard(id: TemplateId, title: string) {
   });
 }
 
+export function guideCard(id: TemplateId, title: string) {
+  return card({
+    name: id,
+    tone: TONE[id],
+    eyebrow: "Guide",
+    title,
+    lines: ["How to send it, and when", "Plain answers, in short steps"],
+    cta: "read the guide →",
+  });
+}
+
 /** The card for WowLink's own pages (the home page, pricing, help…), when they're shared. */
 export function siteCard() {
   return card({

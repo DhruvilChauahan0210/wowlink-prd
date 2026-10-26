@@ -530,6 +530,17 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .wording-index a:hover .cin-photo{rotate:0deg}
 .wording-index-name{font:700 26px/1 var(--hand);color:var(--accent)}
 .wording-index-title{font:400 20px/1.25 var(--serif);color:var(--text)}
+.guide-body{max-width:720px;margin:0 auto;padding:0 0 clamp(40px,6vw,72px)}
+.guide-section{scroll-margin-top:72px;padding-top:clamp(28px,4vw,48px)}
+.guide-section h2{font-size:clamp(28px,3vw,42px);line-height:1.1;margin-bottom:18px}
+.guide-section p{font-size:18px;line-height:1.75;color:var(--text);margin:0 0 16px}
+.guide-steps{margin:20px 0 0;padding:0 0 0 1.4em;display:grid;gap:12px;font-size:18px;line-height:1.65}
+.guide-steps li::marker{font:700 24px var(--hand);color:var(--accent)}
+.guide-lead{max-width:32em;margin:0 0 20px;font-size:17px;line-height:1.65;color:var(--muted)}
+.guide-more{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.guide-more a{font:400 22px/1.3 var(--serif);color:var(--text);text-decoration:underline wavy var(--line-strong);text-decoration-thickness:1px;text-underline-offset:6px}
+.guide-more a:hover{color:var(--accent)}
+.guide-index{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:1100px){.wording-grid{grid-template-columns:1fr 1fr}.wording-index{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:960px){.wording-hero{grid-template-columns:1fr}.wording-print{max-width:260px;margin:0 auto}}
 @media(max-width:700px){.wording-grid{grid-template-columns:1fr}.wording-index{grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 16px}.wording-index-title{font-size:17px}.wording-hero .occasion-intro{font-size:17px}}
