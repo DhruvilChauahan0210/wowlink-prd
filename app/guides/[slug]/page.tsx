@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GUIDES, guide as findGuide } from "../../lib/guides";
+import { GUIDES, guide as findGuide, readMinutes } from "../../lib/guides";
 import { getInvitationTemplate } from "../../lib/invitations";
 import { STARTER_OCCASIONS } from "../../lib/plans";
 import { article, breadcrumbs, faqPage } from "../../lib/structured-data";
@@ -46,10 +46,10 @@ export default async function GuidePage({ params }: Props) {
     <main>
       <section className="wording-hero">
         <div>
-          <span className="occasion-kind">Guide</span>
+          <span className="occasion-kind">Guide · {readMinutes(guide)} min read</span>
           <h1>{before && <>{before} </>}<span className="scribble">{drawn}</span>{after && <> {after}</>}</h1>
           <p className="occasion-intro">{guide.intro}</p>
-          <nav className="wording-jump" aria-label="On this page">{guide.sections.map((section, i) => <a key={section.title} href={`#guide-${i + 1}`}>{section.title}</a>)}</nav>
+          <nav className="wording-jump guide-jump" aria-label="On this page">{guide.sections.map((section, i) => <a key={section.title} href={`#guide-${i + 1}`}>{section.title}</a>)}</nav>
         </div>
         <Link className="wording-print" href={`/templates/${template.id}`}>
           <span className="cin-photo"><ArtImage name={template.id} fit="slice"/></span>
@@ -57,12 +57,21 @@ export default async function GuidePage({ params }: Props) {
         </Link>
       </section>
 
-      <div className="guide-body">
-        {guide.sections.map((section, i) => <section className="guide-section" id={`guide-${i + 1}`} aria-labelledby={`guide-${i + 1}-title`} key={section.title}>
-          <h2 id={`guide-${i + 1}-title`}>{section.title}</h2>
-          {section.paragraphs.map((text) => <p key={text}>{text}</p>)}
-          {section.steps && <ol className="guide-steps">{section.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
-        </section>)}
+      <div className="guide-layout">
+        <div className="guide-body">
+          {guide.sections.map((section, i) => <section className="guide-section" id={`guide-${i + 1}`} aria-labelledby={`guide-${i + 1}-title`} key={section.title}>
+            <h2 id={`guide-${i + 1}-title`}>{section.title}</h2>
+            {section.paragraphs.map((text) => <p key={text}>{text}</p>)}
+            {section.steps && <ol className="guide-steps">{section.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
+          </section>)}
+        </div>
+        <aside className="guide-aside" aria-label="About this guide">
+          <nav aria-label="On this page"><h2>On this page</h2><ol>{guide.sections.map((section, i) => <li key={section.title}><a href={`#guide-${i + 1}`}>{section.title}</a></li>)}<li><a href="#guide-faq">Questions people ask</a></li></ol></nav>
+          <div className="guide-aside-cta">
+            <p>Send it as an invitation that opens.</p>
+            <Link className="cin-cta cin-cta-light" href={`/create?template=${template.id}`}>{free ? "Make yours, free" : "Make yours"}</Link>
+          </div>
+        </aside>
       </div>
 
       <section className="occasion-section" aria-labelledby="guide-faq">
@@ -88,7 +97,7 @@ export default async function GuidePage({ params }: Props) {
 
       <section className="occasion-section" aria-labelledby="more-guides">
         <h2 id="more-guides">More guides</h2>
-        <ul className="guide-more">{GUIDES.filter((other) => other.slug !== guide.slug).map((other) => <li key={other.slug}><Link href={`/guides/${other.slug}`}>{other.title}</Link></li>)}</ul>
+        <ul className="guide-more">{GUIDES.filter((other) => other.slug !== guide.slug).map((other) => <li key={other.slug}><Link href={`/guides/${other.slug}`}><span>{other.title}</span><span className="guide-more-min">{readMinutes(other)} min read <span aria-hidden="true">→</span></span></Link></li>)}</ul>
       </section>
     </main>
     <SiteFooter/>

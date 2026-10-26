@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GUIDES } from "../lib/guides";
+import { GUIDES, readMinutes } from "../lib/guides";
 import { breadcrumbs, itemList } from "../lib/structured-data";
 import { ArtImage } from "../ui/art";
 import { WowLinkBrand } from "../ui/brand";
@@ -24,13 +24,17 @@ export default function GuidesPage() {
         <h1>Guides for sending your <span className="scribble">invitation</span></h1>
         <p>Short, practical answers to the questions that come up before you press send: how, when and in which language.</p>
       </div>
-      <ul className="wording-index guide-index">{GUIDES.map((guide) => <li key={guide.slug}>
+      <ol className="guide-list">{GUIDES.map((guide, i) => <li key={guide.slug}>
         <Link href={`/guides/${guide.slug}`}>
-          <span className="cin-photo"><ArtImage name={guide.template} fit="slice"/></span>
-          <span className="wording-index-name">{guide.name}</span>
-          <span className="wording-index-title">{guide.title}</span>
+          <span className="guide-list-num" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+          <span className="guide-list-text">
+            <span className="guide-list-title">{guide.title}</span>
+            <span className="guide-list-desc">{guide.description}</span>
+            <span className="guide-list-meta">{readMinutes(guide)} min read <span aria-hidden="true">→</span></span>
+          </span>
+          <span className="cin-photo guide-list-thumb"><ArtImage name={guide.template} fit="slice"/></span>
         </Link>
-      </li>)}</ul>
+      </li>)}</ol>
     </main>
     <SiteFooter/>
   </div>;

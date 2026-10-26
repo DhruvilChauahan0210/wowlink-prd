@@ -530,17 +530,42 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .wording-index a:hover .cin-photo{rotate:0deg}
 .wording-index-name{font:700 26px/1 var(--hand);color:var(--accent)}
 .wording-index-title{font:400 20px/1.25 var(--serif);color:var(--text)}
-.guide-body{max-width:720px;margin:0 auto;padding:0 0 clamp(40px,6vw,72px)}
+.guide-layout{display:grid;grid-template-columns:minmax(0,720px) minmax(220px,280px);gap:clamp(40px,6vw,96px);justify-content:space-between;align-items:start;padding-bottom:clamp(40px,6vw,72px)}
+.guide-body{min-width:0}
 .guide-section{scroll-margin-top:72px;padding-top:clamp(28px,4vw,48px)}
+.guide-section:first-child{padding-top:0}
 .guide-section h2{font-size:clamp(28px,3vw,42px);line-height:1.1;margin-bottom:18px}
 .guide-section p{font-size:18px;line-height:1.75;color:var(--text);margin:0 0 16px}
 .guide-steps{margin:20px 0 0;padding:0 0 0 1.4em;display:grid;gap:12px;font-size:18px;line-height:1.65}
 .guide-steps li::marker{font:700 24px var(--hand);color:var(--accent)}
+.guide-aside{position:sticky;top:24px;display:grid;gap:28px}
+.guide-aside nav h2{font:700 26px/1 var(--hand);color:var(--accent);margin:0 0 14px}
+.guide-aside nav ol{list-style:none;margin:0;padding:0;border-left:1.5px dashed var(--line-strong)}
+.guide-aside nav a{display:block;padding:8px 0 8px 16px;font-size:15.5px;line-height:1.35;color:var(--muted);transition:color .2s}
+.guide-aside nav a:hover{color:var(--text)}
+.guide-aside-cta{padding:22px;border:1.5px solid var(--text);border-radius:14px;background:#fbf6ec55}
+.guide-aside-cta p{margin:0 0 16px;font:400 21px/1.3 var(--serif)}
 .guide-lead{max-width:32em;margin:0 0 20px;font-size:17px;line-height:1.65;color:var(--muted)}
-.guide-more{list-style:none;margin:0;padding:0;display:grid;gap:14px}
-.guide-more a{font:400 22px/1.3 var(--serif);color:var(--text);text-decoration:underline wavy var(--line-strong);text-decoration-thickness:1px;text-underline-offset:6px}
+.guide-more{list-style:none;margin:0;padding:0;display:grid;gap:0;max-width:720px}
+.guide-more a{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:16px 0;border-bottom:1.5px dashed var(--line-strong);font:400 22px/1.3 var(--serif);color:var(--text);transition:color .2s}
 .guide-more a:hover{color:var(--accent)}
-.guide-index{grid-template-columns:repeat(3,minmax(0,1fr))}
+.guide-more-min{flex:none;font:600 14px/1 var(--sans);color:var(--muted)}
+.guide-list{list-style:none;margin:0;padding:0 0 clamp(56px,7vw,96px);max-width:960px}
+.guide-list li{border-top:1.5px dashed var(--line-strong)}
+.guide-list li:last-child{border-bottom:1.5px dashed var(--line-strong)}
+.guide-list a{display:grid;grid-template-columns:64px minmax(0,1fr) 112px;gap:clamp(16px,3vw,36px);align-items:center;padding:clamp(24px,3vw,36px) 0;transition:background .2s}
+.guide-list-num{font:700 40px/1 var(--hand);color:var(--accent)}
+.guide-list-text{display:grid;gap:10px}
+.guide-list-title{font:400 clamp(24px,2.6vw,34px)/1.15 var(--serif);color:var(--text);text-wrap:balance}
+.guide-list-desc{font-size:16.5px;line-height:1.6;color:var(--muted);max-width:40em}
+.guide-list-meta{font:700 22px/1 var(--hand);color:var(--accent)}
+.guide-list a:hover .guide-list-title{color:var(--accent)}
+.guide-list-thumb{display:block;aspect-ratio:4/5;padding:5px;background:#fbf6ec;box-shadow:0 1px 2px #2a1d1433,0 10px 20px -10px #2a1d1470;rotate:2deg;transition:rotate .3s}
+.guide-list li:nth-child(even) .guide-list-thumb{rotate:-2deg}
+.guide-list a:hover .guide-list-thumb{rotate:0deg}
+@media(min-width:1001px){.guide-jump{display:none}}
+@media(max-width:1000px){.guide-layout{grid-template-columns:minmax(0,1fr)}.guide-aside nav{display:none}.guide-aside{position:static}}
+@media(max-width:700px){.guide-list a{grid-template-columns:44px minmax(0,1fr);gap:14px}.guide-list-thumb{display:none}.guide-list-num{font-size:30px}.guide-list-desc{font-size:15.5px}.guide-more a{font-size:19px;flex-direction:column;gap:6px}}
 @media(max-width:1100px){.wording-grid{grid-template-columns:1fr 1fr}.wording-index{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:960px){.wording-hero{grid-template-columns:1fr}.wording-print{max-width:260px;margin:0 auto}}
 @media(max-width:700px){.wording-grid{grid-template-columns:1fr}.wording-index{grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 16px}.wording-index-title{font-size:17px}.wording-hero .occasion-intro{font-size:17px}}

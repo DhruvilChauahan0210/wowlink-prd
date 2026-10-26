@@ -115,7 +115,7 @@ test("every occasion's page is built ahead in every language, as the live site n
 
 test("the how-to guides: sections, questions, and the way on to an invitation", async ({ page }) => {
   await page.goto("/guides");
-  await expect(page.locator(".guide-index a")).toHaveCount(HOWTOS.length);
+  await expect(page.locator(".guide-list a")).toHaveCount(HOWTOS.length);
   await page.getByRole("link", { name: /Collect RSVPs on WhatsApp/ }).click();
   await expect(page).toHaveURL(/\/guides\/collect-rsvp-on-whatsapp$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("RSVPs");
@@ -124,6 +124,7 @@ test("the how-to guides: sections, questions, and the way on to an invitation", 
   await expect(page.getByRole("link", { name: "Make yours, free" })).toHaveAttribute("href", "/create?template=wedding");
   await expect(page.getByRole("link", { name: /Wedding invitation wording/ })).toHaveAttribute("href", "/wording/wedding-invitation-wording");
   await expect(page.locator(".guide-more a")).toHaveCount(HOWTOS.length - 1);
+  await expect(page.locator(".guide-aside nav a")).toHaveCount(5);
 });
 
 test("the wording guides: each wording in three languages, ready to copy, and a way to send it", async ({ page, context }) => {

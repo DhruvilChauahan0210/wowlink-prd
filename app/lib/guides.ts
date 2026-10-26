@@ -279,3 +279,9 @@ export const GUIDES: readonly Guide[] = [
 ];
 
 export const guide = (slug: string) => GUIDES.find((item) => item.slug === slug);
+
+/** Minutes to read it, at a calm 200 words a minute. */
+export const readMinutes = (item: Guide) => {
+  const words = [item.intro, ...item.sections.flatMap((section) => [section.title, ...section.paragraphs, ...(section.steps ?? [])]), ...item.faq.flatMap(({ q, a }) => [q, a])].join(" ").split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200));
+};
