@@ -17,6 +17,8 @@ const PAGES = [
   { path: "/wording/navratri-garba-invitation-message", check: "Garba invitation messages" },
   { path: "/guides", check: "Guides for sending your" },
   { path: "/guides/collect-rsvp-on-whatsapp", check: "How to collect RSVPs" },
+  { path: "/guides/collect-rsvp-on-whatsapp?lang=gu", check: "WhatsApp પર RSVP કેવી રીતે લેવા" },
+  { path: "/guides/when-to-send-wedding-invitations?lang=hi", check: "शादी के निमंत्रण कब भेजें" },
   { path: "/privacy", check: "What we keep" },
   { path: "/privacy?lang=gu", check: "અમે શું સાચવીએ છીએ" },
 ];

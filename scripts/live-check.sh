@@ -23,6 +23,8 @@ page /templates/wedding/gu/opengraph-image
 page /wording
 page /guides
 page /guides/collect-rsvp-on-whatsapp
+page "/guides/collect-rsvp-on-whatsapp?lang=gu"
+page /guides/collect-rsvp-on-whatsapp/gu/opengraph-image
 
 # What search engines and link previews read names the site itself: the sitemap, robots.txt and a page's canonical link.
 # Right after a deploy the edge can still serve the old copy for a few seconds: try for up to a minute.

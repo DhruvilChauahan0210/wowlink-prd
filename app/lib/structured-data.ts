@@ -66,7 +66,7 @@ export const itemList = (name: string, items: readonly (readonly [string, string
 });
 
 /** A how-to guide: its title, when it was written and by whom. */
-export const article = (headline: string, path: string, description: string, published: string) => ({
+export const article = (headline: string, path: string, description: string, published: string, lang = "en") => ({
   "@context": "https://schema.org",
   "@type": "Article",
   headline,
@@ -77,5 +77,5 @@ export const article = (headline: string, path: string, description: string, pub
   dateModified: published,
   author: { "@id": ORG },
   publisher: { "@id": ORG },
-  inLanguage: "en",
+  inLanguage: lang,
 });

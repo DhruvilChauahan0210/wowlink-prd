@@ -29,7 +29,7 @@ export function SiteFooter({ lang = "en" }: { lang?: Lang }) {
       </div>
       <nav className="site-footer-links" aria-label="Footer">
         <div><h2>{f.make}</h2><Link href="/templates">{f.occasions}</Link><Link href="/create">{f.studio}</Link><Link href="/mine">{f.mine}</Link></div>
-        <div><h2>{f.learn}</h2><Link href="/#experience">{f.how}</Link><Link href="/wording">{f.wording}</Link><Link href="/guides">{f.guides}</Link><Link href={langHref("/pricing", lang)}>{f.pricing}</Link><Link href={langHref("/help", lang)}>{f.help}</Link></div>
+        <div><h2>{f.learn}</h2><Link href="/#experience">{f.how}</Link><Link href="/wording">{f.wording}</Link><Link href={langHref("/guides", lang)}>{f.guides}</Link><Link href={langHref("/pricing", lang)}>{f.pricing}</Link><Link href={langHref("/help", lang)}>{f.help}</Link></div>
         <div><h2>{f.hello}</h2><FeedbackLink>{f.feedback}</FeedbackLink><Link href={langHref("/privacy", lang)}>{f.privacy}</Link></div>
       </nav>
     </div>

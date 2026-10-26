@@ -212,15 +212,16 @@ export function wordingCard(id: TemplateId, title: string) {
   });
 }
 
-export function guideCard(id: TemplateId, title: string) {
-  return card({
-    name: id,
-    tone: TONE[id],
-    eyebrow: "Guide",
-    title,
-    lines: ["How to send it, and when", "Plain answers, in short steps"],
-    cta: "read the guide →",
-  });
+const GUIDE_CARD: Record<Lang, { eyebrow: string; lines: string[]; cta: string }> = {
+  en: { eyebrow: "Guide", lines: ["How to send it, and when", "Plain answers, in short steps"], cta: "read the guide →" },
+  gu: { eyebrow: "માર્ગદર્શિકા", lines: ["કેવી રીતે અને ક્યારે મોકલવું", "સરળ જવાબ, ટૂંકાં પગલાંમાં"], cta: "માર્ગદર્શિકા વાંચો →" },
+  hi: { eyebrow: "गाइड", lines: ["कैसे और कब भेजें", "सरल जवाब, छोटे क़दमों में"], cta: "गाइड पढ़ें →" },
+};
+
+/** The card for a how-to guide (/guides/<slug>, in English, Gujarati or Hindi), when it's shared. */
+export function guideCard(id: TemplateId, title: string, lang: Lang = "en") {
+  const words = GUIDE_CARD[lang];
+  return card({ name: id, tone: TONE[id], eyebrow: words.eyebrow, title, lines: words.lines, cta: words.cta });
 }
 
 /** The card for WowLink's own pages (the home page, pricing, help…), when they're shared. */
