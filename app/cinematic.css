@@ -700,6 +700,11 @@ html:has(.cinema.theme-paper,.manage-page),body:has(.cinema.theme-paper,.manage-
 .cinema .site-footer-links h2{margin:0 0 12px;font:700 27px/1 var(--hand);letter-spacing:0;color:var(--accent)}
 .site-footer-links a,.site-footer-links .feedback-link{padding:6px 0;border:0;background:none;font:500 16px/1.4 var(--sans);color:var(--text);opacity:.82;text-align:left;cursor:pointer;transition:color .2s,opacity .2s}
 .site-footer-links a:hover,.site-footer-links .feedback-link:hover{color:var(--accent);opacity:1}
+.site-footer-occasions{max-width:1240px;margin:clamp(36px,4vw,56px) auto 0}
+.cinema .site-footer-occasions h2{margin:0 0 10px;font:700 27px/1 var(--hand);letter-spacing:0;color:var(--accent)}
+.site-footer-occasions ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:2px 28px}
+.site-footer-occasions a{display:block;padding:6px 0;font:500 15px/1.4 var(--sans);color:var(--text);opacity:.82;transition:color .2s,opacity .2s}
+.site-footer-occasions a:hover{color:var(--accent);opacity:1}
 .site-footer-base{position:relative;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px 24px;max-width:1240px;margin:clamp(44px,5vw,70px) auto 0;padding:24px 0 30px;font-size:13px;color:var(--faint)}
 .site-footer-base::before{content:"";position:absolute;top:-4px;left:0;right:0;height:8px;background:var(--text);opacity:.22;-webkit-mask:var(--rough-l) 0 0/100% 100% no-repeat;mask:var(--rough-l) 0 0/100% 100% no-repeat}
 .site-footer-trio{font:700 21px/1 var(--hand);color:var(--muted)}

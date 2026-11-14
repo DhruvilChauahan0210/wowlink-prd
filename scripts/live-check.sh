@@ -21,6 +21,8 @@ page /api/account
 page "/templates/wedding?lang=gu"
 page /templates/wedding/gu/opengraph-image
 page /wording
+page "/wording/wedding-invitation-wording?lang=hi"
+page /wording/wedding-invitation-wording/hi/opengraph-image
 page /guides
 page /guides/collect-rsvp-on-whatsapp
 page "/guides/collect-rsvp-on-whatsapp?lang=gu"

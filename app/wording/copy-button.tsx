@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 
 type State = "idle" | "copied" | "selected";
+type Labels = { copy: string; copied: string; copiedStatus: string; selectedStatus: string };
+const ENGLISH: Labels = { copy: "Copy", copied: "Copied", copiedStatus: "Copied {what}.", selectedStatus: "Couldn’t copy by itself: the words are selected, so copy them from the menu." };
 
 /**
  * Copies a wording as it's written, line breaks and all, and says so (to screen readers too, from a status line beside
  * the button rather than inside it). Where the browser won't copy, it selects the words on the card instead, for the
  * phone's own Copy.
  */
-export function CopyButton({ text, textId, what }: { text: string; textId: string; what: string }) {
+export function CopyButton({ text, textId, what, labels = ENGLISH }: { text: string; textId: string; what: string; labels?: Labels }) {
   const [state, setState] = useState<State>("idle");
   useEffect(() => {
     if (state !== "copied") return;
@@ -38,8 +40,8 @@ export function CopyButton({ text, textId, what }: { text: string; textId: strin
 
   return <>
     <button type="button" className={`wording-copy${state === "copied" ? " is-copied" : ""}`} onClick={copy}>
-      {state === "copied" ? "Copied" : "Copy"}<span className="studio-sr-only"> {what}</span>
+      {state === "copied" ? labels.copied : labels.copy}<span className="studio-sr-only"> {what}</span>
     </button>
-    <span className="studio-sr-only" role="status">{state === "copied" ? `Copied ${what}.` : state === "selected" ? `Couldn’t copy by itself: the words are selected, so copy them from the menu.` : ""}</span>
+    <span className="studio-sr-only" role="status">{state === "copied" ? labels.copiedStatus.replace("{what}", what) : state === "selected" ? labels.selectedStatus : ""}</span>
   </>;
 }

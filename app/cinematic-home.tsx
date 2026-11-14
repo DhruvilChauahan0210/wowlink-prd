@@ -113,7 +113,7 @@ function Hero() {
     <div className="cin-hero-copy">
       <span className="hero-eyebrow"><span lang="gu">આમંત્રણ</span><span aria-hidden="true">·</span><span lang="hi">निमंत्रण</span><span aria-hidden="true">·</span><span>Invitation</span></span>
       <h1>One link. <em>A whole celebration.</em></h1>
-      <p>Hand-drawn invitations your guests open on any phone, and reply to in a tap.</p>
+      <p>Hand-drawn online invitations for weddings, Garba, birthdays and pujas, in Gujarati, Hindi or English. Share one link on WhatsApp; guests open it on any phone and reply in a tap.</p>
       <div className="cin-hero-actions">
         <Link className="cin-cta cin-cta-light" href="/templates">Create your invitation</Link>
         <Link className="cin-text-link" href="/e/preview?template=wedding">See the full sample <span aria-hidden="true">→</span></Link>

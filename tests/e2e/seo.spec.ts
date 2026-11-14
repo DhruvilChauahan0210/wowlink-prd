@@ -18,7 +18,7 @@ test("the sitemap lists the public pages and nothing private", async ({ request 
   const xml = await response.text();
   const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => new URL(m[1]).pathname + new URL(m[1]).search);
   const everyLanguage = (path: string) => [path, `${path}?lang=gu`, `${path}?lang=hi`];
-  expect(urls).toEqual(["/", "/templates", ...OCCASIONS.flatMap(id => everyLanguage(`/templates/${id}`)), "/wording", ...GUIDES.map(slug => `/wording/${slug}`), ...everyLanguage("/guides"), ...HOWTOS.flatMap(slug => everyLanguage(`/guides/${slug}`)), ...everyLanguage("/pricing"), ...everyLanguage("/help"), ...everyLanguage("/privacy")]);
+  expect(urls).toEqual(["/", "/templates", ...OCCASIONS.flatMap(id => everyLanguage(`/templates/${id}`)), ...everyLanguage("/wording"), ...GUIDES.flatMap(slug => everyLanguage(`/wording/${slug}`)), ...everyLanguage("/guides"), ...HOWTOS.flatMap(slug => everyLanguage(`/guides/${slug}`)), ...everyLanguage("/pricing"), ...everyLanguage("/help"), ...everyLanguage("/privacy")]);
   expect(xml).toContain('hreflang="gu"');
   expect(xml).toContain('hreflang="x-default"');
 });
@@ -106,7 +106,10 @@ test("every occasion's page is built ahead in every language, as the live site n
     expect(built).toContain(`/templates/${id}${lang}`);
     expect(built).toContain(`/templates/${id}${lang}/opengraph-image`);
   }
-  for (const slug of GUIDES) expect(built).toContain(`/wording/${slug}`);
+  for (const slug of GUIDES) for (const lang of ["", "/gu", "/hi"]) {
+    expect(built).toContain(`/wording/${slug}${lang}`);
+    expect(built).toContain(`/wording/${slug}${lang}/opengraph-image`);
+  }
   for (const slug of HOWTOS) for (const lang of ["", "/gu", "/hi"]) {
     expect(built).toContain(`/guides/${slug}${lang}`);
     expect(built).toContain(`/guides/${slug}${lang}/opengraph-image`);
@@ -177,6 +180,34 @@ test("the wording guides: each wording in three languages, ready to copy, and a 
   await expect(page.getByRole("link", { name: /Wording ideas/ })).toHaveAttribute("href", "/wording/griha-pravesh-invitation-message");
 });
 
+test("the wording guides in Gujarati and Hindi: the same guide, found by what people there type", async ({ page, request }) => {
+  await page.goto("/wording?lang=gu");
+  await expect(page.locator(".cinema")).toHaveAttribute("lang", "gu");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("આમંત્રણના શબ્દો");
+  await expect(page.locator(".wording-index a")).toHaveCount(GUIDES.length);
+  await expect(page.locator(".wording-index a").first()).toHaveAttribute("href", "/wording/wedding-invitation-wording?lang=gu");
+  await page.locator(".wording-index a").first().click();
+  await expect(page).toHaveURL(/\/wording\/wedding-invitation-wording\?lang=gu$/);
+  await expect(page).toHaveTitle(/કંકોત્રી લખાણ/);
+  await expect(page.locator(".wording-section")).toHaveCount(3);
+  await expect(page.locator(".wording-section h2").first()).toHaveText("આમંત્રણ");
+  await expect(page.locator(".occasion-ticks li")).toHaveCount(4);
+  await expect(page.getByRole("link", { name: "આપનું આમંત્રણ બનાવો, મફત" }).first()).toHaveAttribute("href", "/create?template=wedding&lang=gu");
+  await expect(page.locator(".page-langs a")).toHaveText(["English", "हिन्दी"]);
+  // The copy button speaks the page's language, and copies the words as they are.
+  await expect(page.getByRole("button", { name: /નકલ કરો/ }).first()).toBeVisible();
+  await page.locator(".page-langs a[hreflang=hi]").click();
+  await expect(page).toHaveURL(/\/wording\/wedding-invitation-wording\?lang=hi$/);
+  await expect(page).toHaveTitle(/शादी कार्ड मैटर/);
+  await expect(page.getByRole("button", { name: /कॉपी करें/ }).first()).toBeVisible();
+  // Each names the others as alternates, and the built address sends anyone to the real one.
+  const html = await (await request.get("/wording/wedding-invitation-wording?lang=hi")).text();
+  expect(html).toMatch(/hrefLang="gu" href="[^"]*\/wording\/wedding-invitation-wording\?lang=gu"/i);
+  const built = await request.get("/wording/wedding-invitation-wording/gu", { maxRedirects: 0 });
+  expect(built.status()).toBe(308);
+  expect(built.headers().location).toContain("/wording/wedding-invitation-wording?lang=gu");
+});
+
 test("the catalogue leads to each occasion's page", async ({ page }) => {
   await page.goto("/templates");
   await expect(page.locator(".cin-catalog-grid .cin-occasion-image")).toHaveCount(12);
@@ -219,11 +250,11 @@ test("search engines get structured data, a share image, and a title and descrip
   const inGujarati = await types("/templates/garba?lang=gu");
   expect(inGujarati.map((b) => b["@type"])).toEqual(["BreadcrumbList", "FAQPage"]);
   expect((inGujarati[1] as { inLanguage?: string }).inLanguage).toBe("gu");
-  expect((await types("/wording")).map((b) => b["@type"])).toEqual(["BreadcrumbList", "ItemList"]);
+  for (const lang of ["", "?lang=gu", "?lang=hi"]) expect((await types(`/wording${lang}`)).map((b) => b["@type"])).toEqual(["BreadcrumbList", "ItemList"]);
   for (const path of ["/pricing", "/pricing?lang=hi", "/privacy"]) await types(path);
   // Every occasion's page in every language, and every wording guide, has a title and a description that fit.
   for (const id of OCCASIONS) for (const lang of ["", "?lang=gu", "?lang=hi"]) await types(`/templates/${id}${lang}`);
-  for (const slug of GUIDES) expect((await types(`/wording/${slug}`)).map((b) => b["@type"])).toEqual(["BreadcrumbList"]);
+  for (const slug of GUIDES) for (const lang of ["", "?lang=gu", "?lang=hi"]) expect((await types(`/wording/${slug}${lang}`)).map((b) => b["@type"])).toEqual(["BreadcrumbList"]);
   for (const lang of ["", "?lang=gu", "?lang=hi"]) {
     expect((await types(`/guides${lang}`)).map((b) => b["@type"])).toEqual(["BreadcrumbList", "ItemList"]);
     for (const slug of HOWTOS) expect((await types(`/guides/${slug}${lang}`)).map((b) => b["@type"])).toEqual(["BreadcrumbList", "Article", "FAQPage"]);

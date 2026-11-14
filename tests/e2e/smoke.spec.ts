@@ -15,6 +15,8 @@ const PAGES = [
   { path: "/e/preview?template=wedding&lang=hi", check: "आरव और मीरा" },
   { path: "/wording", check: "Invitation wording" },
   { path: "/wording/navratri-garba-invitation-message", check: "Garba invitation messages" },
+  { path: "/wording/wedding-invitation-wording?lang=gu", check: "લગ્નના આમંત્રણના શબ્દો" },
+  { path: "/wording/wedding-invitation-wording?lang=hi", check: "शादी के निमंत्रण के शब्द" },
   { path: "/guides", check: "Guides for sending your" },
   { path: "/guides/collect-rsvp-on-whatsapp", check: "How to collect RSVPs" },
   { path: "/guides/collect-rsvp-on-whatsapp?lang=gu", check: "WhatsApp પર RSVP કેવી રીતે લેવા" },

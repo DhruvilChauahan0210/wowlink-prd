@@ -200,16 +200,16 @@ export function occasionCard(id: TemplateId, lang: Lang = "en") {
   });
 }
 
-/** The card for an invitation wording guide (/wording/<slug>), when it's shared. */
-export function wordingCard(id: TemplateId, title: string) {
-  return card({
-    name: id,
-    tone: TONE[id],
-    eyebrow: "Invitation wording",
-    title,
-    lines: ["Ready to copy, in English, Gujarati and Hindi", "For the invitation and the WhatsApp message"],
-    cta: "copy the words →",
-  });
+const WORDING_CARD: Record<Lang, { eyebrow: string; lines: string[]; cta: string }> = {
+  en: { eyebrow: "Invitation wording", lines: ["Ready to copy, in English, Gujarati and Hindi", "For the invitation and the WhatsApp message"], cta: "copy the words →" },
+  gu: { eyebrow: "આમંત્રણના શબ્દો", lines: ["નકલ કરવા તૈયાર, અંગ્રેજી, ગુજરાતી અને હિન્દીમાં", "આમંત્રણ અને WhatsApp સંદેશ માટે"], cta: "શબ્દો નકલ કરો →" },
+  hi: { eyebrow: "निमंत्रण के शब्द", lines: ["कॉपी करने को तैयार, अंग्रेज़ी, गुजराती और हिंदी में", "निमंत्रण और WhatsApp संदेश के लिए"], cta: "शब्द कॉपी करें →" },
+};
+
+/** The card for an invitation wording guide (/wording/<slug>, in English, Gujarati or Hindi), when it's shared. */
+export function wordingCard(id: TemplateId, title: string, lang: Lang = "en") {
+  const words = WORDING_CARD[lang];
+  return card({ name: id, tone: TONE[id], eyebrow: words.eyebrow, title, lines: words.lines, cta: words.cta });
 }
 
 const GUIDE_CARD: Record<Lang, { eyebrow: string; lines: string[]; cta: string }> = {

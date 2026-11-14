@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { siteUrl } from "./lib/site";
 import { ArtFilters } from "./ui/art";
@@ -13,10 +13,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "WowLink — Make it a moment",
   description: "Create a beautiful, interactive invitation for the moments that matter.",
+  applicationName: "WowLink",
+  // Search engines may show a large picture with a result (the share card), and as much of the text as they like.
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+  // A date or a time in an invitation's words isn't a phone number to link.
+  formatDetection: { telephone: false, address: false, email: false },
   // Google Search Console's check that the site is ours (the "HTML tag" code; not a secret, it's in every page).
   // GOOGLE_SITE_VERIFICATION replaces it, for another site or account.
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION || "YoqGfQZL7m5WJ8R1G6sAfdsTC65Cj92IflXufuFmpoo" },
 };
+
+// The colour of a phone browser's address bar: WowLink's paper.
+export const viewport: Viewport = { themeColor: "#f3ebdc" };
 
 // Self-hosted (OFL-licensed, see app/fonts) so builds and visitors never depend on reaching Google Fonts.
 const serif = localFont({
