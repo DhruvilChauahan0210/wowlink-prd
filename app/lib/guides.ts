@@ -18,6 +18,8 @@ export type Guide = {
   slug: string;
   /** The occasion whose drawing and page the guide leads to. */
   template: TemplateId;
+  /** Advice that holds for any occasion, so every occasion's page links to it (the rest link only from their own). */
+  general?: true;
   /** The page's <title> (WowLink is added after it). */
   title: string;
   description: string;
@@ -87,6 +89,7 @@ export const GUIDES: readonly Guide[] = [
   {
     slug: "online-invitation-vs-pdf-vs-printed-card",
     template: "wedding",
+    general: true,
     published: "2026-10-26",
     title: "Online invitation, PDF or printed card: which to send?",
     description: "Online invitation, PDF or printed card? What each one does well, what it can’t do, and how families usually combine them for a wedding or a puja.",
@@ -132,6 +135,7 @@ export const GUIDES: readonly Guide[] = [
   {
     slug: "collect-rsvp-on-whatsapp",
     template: "wedding",
+    general: true,
     published: "2026-10-26",
     title: "How to collect RSVPs on WhatsApp without chasing everyone",
     description: "How to collect RSVPs for a wedding, puja or party on WhatsApp without a flood of messages: ask one clear question, set a date, keep replies in one place.",
@@ -232,6 +236,7 @@ export const GUIDES: readonly Guide[] = [
   {
     slug: "invitation-in-gujarati-hindi-and-english",
     template: "wedding",
+    general: true,
     published: "2026-10-26",
     title: "Invite guests in Gujarati, Hindi and English with one link",
     description: "Guests who read different languages? How to send one invitation that opens in Gujarati, Hindi or English, and how to word each so it sounds like family.",
@@ -279,6 +284,9 @@ export const GUIDES: readonly Guide[] = [
 ];
 
 export const guide = (slug: string) => GUIDES.find((item) => item.slug === slug);
+
+/** The guides an occasion's page links to: its own, then the ones that hold for every occasion. */
+export const guidesFor = (template: TemplateId) => GUIDES.filter((item) => item.template === template || item.general);
 
 /** Minutes to read it, at a calm 200 words a minute. */
 export const readMinutes = (item: Guide) => {

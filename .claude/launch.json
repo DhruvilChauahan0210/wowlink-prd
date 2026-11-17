@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "wowlink-dev", "runtimeExecutable": "npx", "runtimeArgs": ["next", "dev", "-p", "3010"], "port": 3010, "autoPort": false },
+    { "name": "wowlink-visual", "runtimeExecutable": "sh", "runtimeArgs": ["-c", "WOWLINK_DATA_FILE=/private/tmp/claude-501/-Users-dhruvilchauhan-Desktop-wowlink-prd/02c2fb9b-8130-4d2b-a4d9-90020dceb317/scratchpad/visual.json NEXT_DIST_DIR=.next-test npx next start -p 3110"], "port": 3110, "autoPort": false }
+  ]
+}

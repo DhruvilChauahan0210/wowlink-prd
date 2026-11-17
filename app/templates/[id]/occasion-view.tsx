@@ -12,6 +12,8 @@ import { STARTER_OCCASIONS } from "../../lib/plans";
 import { breadcrumbs, faqPage } from "../../lib/structured-data";
 import { JsonLd } from "../../ui/json-ld";
 import { guideFor } from "../../lib/wording";
+import { guidesFor, readMinutes } from "../../lib/guides";
+import { GUIDE_UI, guideIn } from "../../lib/guides-i18n";
 
 /*
  * Each occasion's own page, in English (/templates/<id>) or in Gujarati or Hindi (?lang=gu or hi, which middleware.ts
@@ -40,6 +42,8 @@ export function OccasionView({ id, lang }: { id: TemplateId; lang: Lang }) {
   const hint = OCCASION_WORDS[lang]?.[id].hint ?? OPEN_HINT[id];
   const [before, drawn, after] = page.heading;
   const guide = guideFor(id);
+  const guideUi = GUIDE_UI[lang];
+  const related = guidesFor(id).map((item) => guideIn(item, lang));
 
   return <div className="cinema cin-catalog theme-paper occasion-page" lang={lang}>
     <JsonLd data={[breadcrumbs([["WowLink", "/"], [ui.occasions, "/templates"], [names[id], langHref(path(id), lang)]]), faqPage(faq, lang)]}/>
@@ -94,6 +98,11 @@ export function OccasionView({ id, lang }: { id: TemplateId; lang: Lang }) {
         <h2 id="questions">{ui.questions}</h2>
         <dl className="occasion-faq">{faq.map(({ q, a }) => <div key={q}><dt>{q}</dt><dd>{a}</dd></div>)}</dl>
       </section>
+
+      {related.length > 0 && <section className="occasion-section" aria-labelledby="related-guides">
+        <h2 id="related-guides">{guideUi.relatedGuides}</h2>
+        <ul className="guide-more">{related.map((item) => <li key={item.slug}><Link href={langHref(`/guides/${item.slug}`, lang)}><span>{item.title}</span><span className="guide-more-min">{guideUi.minRead(readMinutes(item))} <span aria-hidden="true">→</span></span></Link></li>)}</ul>
+      </section>}
 
       <section className="occasion-section" aria-labelledby="other-occasions">
         <h2 id="other-occasions">{ui.others}</h2>

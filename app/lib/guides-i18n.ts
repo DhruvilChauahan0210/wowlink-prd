@@ -33,6 +33,8 @@ export type GuideUi = {
   sendTitle: string;
   sendText: string;
   moreGuides: string;
+  /** The heading over the guides an occasion's page links to. */
+  relatedGuides: string;
   seeHow: string;
   wordingNav: string;
   listHeading: readonly [string, string, string?];
@@ -57,6 +59,7 @@ export const GUIDE_UI: Record<Lang, GuideUi> = {
     sendTitle: "Send it as an invitation that opens",
     sendText: "Make a hand-drawn invitation, share one link on WhatsApp, and see who’s coming. Guests read it in English, Gujarati or Hindi and reply in a few taps.",
     moreGuides: "More guides",
+    relatedGuides: "Guides to read before you send it",
     seeHow: "see how it opens",
     wordingNav: "Invitation wording",
     listHeading: ["Guides for sending your", "invitation"],
@@ -79,6 +82,7 @@ export const GUIDE_UI: Record<Lang, GuideUi> = {
     sendTitle: "ખૂલતા આમંત્રણ તરીકે મોકલો",
     sendText: "હાથથી દોરેલું આમંત્રણ બનાવો, એક લિંક WhatsApp પર મોકલો, અને જુઓ કોણ આવી રહ્યું છે. મહેમાનો તેને અંગ્રેજી, ગુજરાતી કે હિન્દીમાં વાંચે છે અને થોડા ટૅપમાં જવાબ આપે છે.",
     moreGuides: "વધુ માર્ગદર્શિકા",
+    relatedGuides: "મોકલતાં પહેલાં વાંચવા જેવી માર્ગદર્શિકા",
     seeHow: "જુઓ તે કેવી રીતે ખૂલે છે",
     wordingNav: "આમંત્રણના શબ્દો",
     listHeading: ["આમંત્રણ મોકલવા માટેની", "માર્ગદર્શિકા"],
@@ -101,6 +105,7 @@ export const GUIDE_UI: Record<Lang, GuideUi> = {
     sendTitle: "खुलने वाले निमंत्रण के रूप में भेजें",
     sendText: "हाथ से बना निमंत्रण बनाएँ, एक लिंक WhatsApp पर भेजें, और देखें कि कौन आ रहा है। मेहमान उसे अंग्रेज़ी, गुजराती या हिंदी में पढ़ते हैं और कुछ टैप में जवाब देते हैं।",
     moreGuides: "और गाइड",
+    relatedGuides: "भेजने से पहले पढ़ने लायक गाइड",
     seeHow: "देखिए यह कैसे खुलता है",
     wordingNav: "निमंत्रण के शब्द",
     listHeading: ["निमंत्रण भेजने की", "गाइड"],
